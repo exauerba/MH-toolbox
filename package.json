@@ -10,10 +10,12 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:rls": "vitest run tests/rls-security.test.ts",
     "test:watch": "vitest",
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.0"

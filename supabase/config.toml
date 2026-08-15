@@ -1,0 +1,40 @@
+# steady — local Supabase configuration.
+# Used by `supabase start` / `supabase db reset` in local dev and the CI `rls`
+# job. The default ports below match the CI env (SUPABASE_URL=http://127.0.0.1:54321).
+# For full docs: https://supabase.com/docs/guides/local-development/cli/config
+
+project_id = "steady"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "52428800"
+
+[auth]
+enabled = true
+# No email verification (username auth mirrors bloom: username@bloom.app).
+enable_signup = true
+enable_confirmations = false
+site_url = "http://127.0.0.1:3000"
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = false
+enable_confirmations = false
