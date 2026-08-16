@@ -86,7 +86,7 @@ const ZONE_SETS: Record<'regained' | 'shutdown', Zone[]> = {
  * coloured strips whose NAME is always shown (never colour-alone); entries
  * carry title, date, zone tag, description and optional images.
  */
-export function TimelineHero() {
+export function TimelineHero({ spec = true }: { spec?: boolean }) {
   const [view, setView] = useState<'regained' | 'shutdown'>('regained')
   const [empty, setEmpty] = useState(false)
   const zones = ZONE_SETS[view]
@@ -222,8 +222,9 @@ export function TimelineHero() {
         )}
       </Card>
 
-      <SpecPanel
-        owner="WP9 · Personal Timeline"
+      {spec && (
+        <SpecPanel
+          owner="WP9 · Personal Timeline"
         title="Timeline zones & entry rendering"
         className="lg:w-80 xl:w-96"
         sections={[
@@ -289,7 +290,8 @@ export function TimelineHero() {
             ],
           },
         ]}
-      />
+        />
+      )}
     </div>
   )
 }
