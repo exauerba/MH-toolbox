@@ -72,7 +72,7 @@ function ToolCard({
         <span
           aria-hidden="true"
           className={cx(
-            'pixel-tile dither flex size-12 shrink-0 items-center justify-center',
+            'pixel-tile flex size-12 shrink-0 items-center justify-center',
             accentTileClass[tool.accent],
           )}
         >
@@ -148,7 +148,7 @@ export function HubHome() {
       <section aria-labelledby="pinned-heading">
         <h2
           id="pinned-heading"
-          className="font-display flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-ink-soft"
+          className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft"
         >
           <Icon name="star" size={15} filled pixel />
           Your tools
@@ -177,7 +177,7 @@ export function HubHome() {
       <section aria-labelledby="directory-heading">
         <h2
           id="directory-heading"
-          className="font-display text-sm font-bold uppercase tracking-wide text-ink-soft"
+          className="text-sm font-extrabold uppercase tracking-wide text-ink-soft"
         >
           All tools
         </h2>

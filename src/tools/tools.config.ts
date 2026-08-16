@@ -44,7 +44,7 @@ export const TOOLS: ToolConfig[] = [
     tagline: 'Spoon-theory tracker — see your energy at a glance.',
     description:
       'Your spoons for the day, kept in one place. Quick-add, gentle limits, and a jar you can actually see.',
-    icon: 'spoon',
+    icon: 'jar',
     accent: 'jar',
     route: '/tools/jar',
     pinnedByDefault: true,

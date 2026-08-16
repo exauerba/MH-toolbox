@@ -233,9 +233,9 @@ export function JarScreen() {
         <div className="flex items-center gap-2.5">
           <span
             aria-hidden="true"
-            className="pixel-tile dither flex size-10 items-center justify-center rounded-none bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300"
+            className="pixel-tile flex size-10 items-center justify-center rounded-none bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300"
           >
-            <Icon name="spoon" size={22} pixel />
+              <Icon name="jar" size={22} pixel />
           </span>
           <h1 className="font-display text-xl font-bold text-ink">Energy Jar</h1>
         </div>
@@ -321,7 +321,7 @@ export function JarScreen() {
 
         {/* Quick add */}
         <div className="mt-8">
-          <h3 className="font-display text-sm font-bold uppercase tracking-wide text-ink-soft">
+          <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">
             Log a spoonful
           </h3>
           <p className="mb-3 mt-1 text-sm text-ink-soft">
@@ -352,7 +352,7 @@ export function JarScreen() {
 
         {/* Today's log */}
         <div className="mt-6 rounded-xl border border-line p-4">
-          <h3 className="mb-2 font-display text-sm font-bold uppercase tracking-wide text-ink-soft">
+          <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
             Today's log
           </h3>
           {logs.length > 0 ? (
@@ -396,7 +396,7 @@ export function JarScreen() {
         {/* History + patterns */}
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <div>
-            <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-ink-soft">
+            <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
               Last 7 days
             </h3>
             <div className="flex items-end justify-between gap-2" aria-hidden="true">
@@ -420,7 +420,7 @@ export function JarScreen() {
             </div>
           </div>
           <div>
-            <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-ink-soft">
+            <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
               Where your spoons went
             </h3>
             <div className="flex flex-col gap-2">
