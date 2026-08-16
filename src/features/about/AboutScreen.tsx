@@ -35,7 +35,7 @@ export function AboutScreen() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">
+        <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">
           About steady
         </h1>
         <p className="mt-3 max-w-prose text-lg leading-relaxed text-ink-soft">
@@ -45,9 +45,9 @@ export function AboutScreen() {
         </p>
       </header>
 
-      <Card padding="lg" className="border-warning-line bg-warning-soft">
+      <Card padding="lg" className="pixel-card border-warning-line bg-warning-soft">
         <h2 className="flex items-center gap-2 text-lg font-extrabold text-warning-ink">
-          <Icon name="heart" size={18} />
+          <Icon name="heart" size={18} pixel />
           If you're in crisis right now
         </h2>
         <p className="mt-2 max-w-prose text-base leading-relaxed text-warning-ink">
@@ -63,9 +63,9 @@ export function AboutScreen() {
               >
                 <span
                   aria-hidden="true"
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-warning-soft text-warning-ink"
+                  className="pixel-tile flex size-10 shrink-0 items-center justify-center rounded-none bg-warning-soft text-warning-ink"
                 >
-                  <Icon name={resource.icon} size={18} />
+                  <Icon name={resource.icon} size={18} pixel />
                 </span>
                 <span className="min-w-0">
                   <span className="block font-bold text-ink">
@@ -81,9 +81,9 @@ export function AboutScreen() {
         </ul>
       </Card>
 
-      <Card padding="lg">
+      <Card padding="lg" className="pixel-card">
         <h2 className="flex items-center gap-2 text-lg font-extrabold text-ink">
-          <Icon name="info" size={18} />
+          <Icon name="info" size={18} pixel />
           What steady is — and isn't
         </h2>
         <div className="mt-3 flex flex-col gap-3 text-base leading-relaxed text-ink">
@@ -97,7 +97,7 @@ export function AboutScreen() {
             in. Your energy, your timeline, your words — they're yours.
           </p>
         </div>
-        <Alert variant="info" className="mt-5">
+        <Alert variant="info" pixel className="mt-5">
           If you're struggling, please reach out to a trusted person or a
           professional. steady will always point you back to the people who can
           help.

@@ -19,6 +19,7 @@ export function GuestBanner() {
       variant="info"
       title="Guest mode"
       dismissible
+      pixel
       onDismiss={() => {
         setDismissed(true);
         try {

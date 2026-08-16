@@ -95,13 +95,13 @@ export function TimelineHero({ spec = true }: { spec?: boolean }) {
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
-      <Card variant="raised" padding="none" className="flex-1 overflow-hidden">
+      <Card variant="raised" padding="none" className="pixel-card flex-1 overflow-hidden">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
           <div>
-            <h3 className="flex items-center gap-2 text-xl font-extrabold text-ink">
-              <span className="flex size-10 items-center justify-center rounded-full bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300">
-                <Icon name="timeline" size={22} />
+            <h3 className="font-display flex items-center gap-2 text-xl font-bold text-ink">
+              <span className="pixel-tile flex size-10 items-center justify-center rounded-none bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300">
+                <Icon name="timeline" size={22} pixel />
               </span>
               My timeline
             </h3>
@@ -117,6 +117,7 @@ export function TimelineHero({ spec = true }: { spec?: boolean }) {
                 { value: 'shutdown', label: 'Life chapters' },
               ]}
               className="max-w-72"
+              pixel
             />
             <Toggle
               checked={empty}
@@ -131,7 +132,7 @@ export function TimelineHero({ spec = true }: { spec?: boolean }) {
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
           <span className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">Zones</span>
           {zones.map((zone) => (
-            <Chip key={zone.id} icon={<span className="size-2.5 rounded-full" style={{ backgroundColor: zone.color }} />}>
+            <Chip key={zone.id} className="pixel-chip" icon={<span className="size-2.5 rounded-full" style={{ backgroundColor: zone.color }} />}>
               {zone.name}
             </Chip>
           ))}
@@ -181,12 +182,12 @@ export function TimelineHero({ spec = true }: { spec?: boolean }) {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <h4 className="text-base font-extrabold text-ink">{entry.title}</h4>
                         <div className="flex items-center gap-1">
-                          <IconButton icon="edit" label={`Edit “${entry.title}”`} variant="ghost" />
-                          <IconButton icon="trash" label={`Delete “${entry.title}”`} variant="ghost" />
+                          <IconButton icon="edit" label={`Edit “${entry.title}”`} variant="ghost" pixel />
+                          <IconButton icon="trash" label={`Delete “${entry.title}”`} variant="ghost" pixel />
                         </div>
                       </div>
                       <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-ink-soft">
-                        <Icon name="calendar" size={14} />
+                        <Icon name="calendar" size={14} pixel />
                         <time dateTime={entry.date}>{entry.date}</time>
                         {entry.period && (
                           <>
@@ -197,7 +198,7 @@ export function TimelineHero({ spec = true }: { spec?: boolean }) {
                       </p>
                       {zone && (
                         <p className="mt-2">
-                          <Chip tone="timeline" icon={<Icon name="flag" size={13} />}>
+                          <Chip tone="timeline" icon={<Icon name="flag" size={13} pixel />}>
                             {zone.name}
                           </Chip>
                         </p>
@@ -209,7 +210,7 @@ export function TimelineHero({ spec = true }: { spec?: boolean }) {
                           role="img"
                           aria-label={`Photo attached to “${entry.title}”`}
                         >
-                          <Icon name="image" size={22} />
+                          <Icon name="image" size={22} pixel />
                           <span className="text-sm font-bold">Photo</span>
                         </div>
                       )}

@@ -16,6 +16,8 @@ export interface SegmentedControlProps {
   /** Accessible name for the group, e.g. "Theme" or "Crisis region". */
   label: string
   disabled?: boolean
+  /** Cozy 16-bit mode — render option icons as pixel sprites. */
+  pixel?: boolean
   className?: string
 }
 
@@ -31,6 +33,7 @@ export function SegmentedControl({
   onChange,
   label,
   disabled,
+  pixel,
   className,
 }: SegmentedControlProps) {
   const groupId = useId()
@@ -63,7 +66,13 @@ export function SegmentedControl({
               className="sr-only"
             />
             {option.icon && (
-              <Icon name={option.icon} size={16} aria-hidden={true} filled={selected && option.icon === 'star'} />
+              <Icon
+                name={option.icon}
+                size={16}
+                pixel={pixel}
+                aria-hidden={true}
+                filled={selected && option.icon === 'star'}
+              />
             )}
             {option.label}
             {selected && <span className="sr-only">(selected)</span>}

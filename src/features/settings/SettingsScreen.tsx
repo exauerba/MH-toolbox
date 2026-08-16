@@ -11,7 +11,7 @@ export function SettingsScreen() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">
+        <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">
           Settings
         </h1>
         <p className="mt-3 max-w-prose text-lg leading-relaxed text-ink-soft">
@@ -19,9 +19,9 @@ export function SettingsScreen() {
         </p>
       </header>
 
-      <Card padding="lg">
+      <Card padding="lg" className="pixel-card">
         <h2 className="flex items-center gap-2 text-lg font-extrabold text-ink">
-          <Icon name="moon" size={18} />
+          <Icon name="moon" size={18} pixel />
           Appearance
         </h2>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
@@ -40,13 +40,14 @@ export function SettingsScreen() {
               { value: 'light', label: 'Light', icon: 'sun' },
               { value: 'dark', label: 'Dark', icon: 'moon' },
             ]}
+            pixel
           />
         </div>
       </Card>
 
-      <Card padding="lg">
+      <Card padding="lg" className="pixel-card">
         <h2 className="flex items-center gap-2 text-lg font-extrabold text-ink">
-          <Icon name="lock" size={18} />
+          <Icon name="lock" size={18} pixel />
           Your data
         </h2>
         <div className="mt-4 flex flex-col gap-3">
@@ -63,6 +64,7 @@ export function SettingsScreen() {
               label="Sign in — coming soon"
               variant="secondary"
               disabled
+              pixel
               className="disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
@@ -79,6 +81,7 @@ export function SettingsScreen() {
               label="Export data — coming soon"
               variant="secondary"
               disabled
+              pixel
               className="disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
@@ -95,6 +98,7 @@ export function SettingsScreen() {
               label="Delete data — coming soon"
               variant="secondary"
               disabled
+              pixel
               className="disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>

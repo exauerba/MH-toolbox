@@ -18,11 +18,11 @@ export function Header() {
           <p className="flex items-center gap-2.5">
             <span
               aria-hidden="true"
-              className="flex size-10 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300"
+              className="pixel-tile flex size-10 items-center justify-center rounded-none bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300"
             >
-              <Icon name="leaf" size={20} />
+              <Icon name="leaf" size={20} pixel />
             </span>
-            <span className="text-xl font-extrabold text-ink">steady</span>
+            <span className="font-display text-xl font-bold text-ink">steady</span>
           </p>
           <IconButton
             icon={theme === 'dark' ? 'sun' : 'moon'}
@@ -30,6 +30,7 @@ export function Header() {
               theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
             }
             variant="ghost"
+            pixel
             onClick={toggleTheme}
           />
         </div>
@@ -52,7 +53,7 @@ export function Header() {
                 )
               }
             >
-              <Icon name={item.icon} size={17} />
+              <Icon name={item.icon} size={17} pixel />
               {item.label}
             </NavLink>
           ))}

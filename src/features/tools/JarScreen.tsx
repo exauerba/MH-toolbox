@@ -259,6 +259,7 @@ export function JarScreen() {
               { value: 'low', label: 'Low' },
               { value: 'overdrawn', label: 'Overdrawn' },
             ]}
+            pixel
           />
         </div>
 
@@ -335,6 +336,7 @@ export function JarScreen() {
               step={0.5}
               min={0.5}
               max={5}
+              pixel
             />
             <Button
               onClick={logSpoon}

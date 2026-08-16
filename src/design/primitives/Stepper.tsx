@@ -12,6 +12,8 @@ export interface StepperProps {
   /** Accessible name for the control group, e.g. "Spoons spent". */
   label: string
   disabled?: boolean
+  /** Cozy 16-bit mode — render the increment buttons as pixel icons. */
+  pixel?: boolean
   className?: string
 }
 
@@ -33,6 +35,7 @@ export function Stepper({
   max = Infinity,
   label,
   disabled = false,
+  pixel,
   className,
 }: StepperProps) {
   const atMin = value <= min
@@ -53,6 +56,7 @@ export function Stepper({
         label={`Decrease by ${formatStep(step)} — now ${formatStep(value)}`}
         variant="soft"
         round
+        pixel={pixel}
         disabled={disabled || atMin}
         onClick={() => change(-step)}
       />
@@ -68,6 +72,7 @@ export function Stepper({
         label={`Increase by ${formatStep(step)} — now ${formatStep(value)}`}
         variant="soft"
         round
+        pixel={pixel}
         disabled={disabled || atMax}
         onClick={() => change(step)}
       />

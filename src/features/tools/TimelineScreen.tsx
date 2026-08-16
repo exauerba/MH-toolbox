@@ -16,16 +16,17 @@ export function TimelineScreen() {
           icon="arrowLeft"
           label="Back to home"
           variant="ghost"
+          pixel
           onClick={() => navigate('/')}
         />
         <div className="flex items-center gap-2.5">
           <span
             aria-hidden="true"
-            className="flex size-10 items-center justify-center rounded-full bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300"
+            className="pixel-tile flex size-10 items-center justify-center rounded-none bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300"
           >
-            <Icon name="timeline" size={22} />
+            <Icon name="timeline" size={22} pixel />
           </span>
-          <h1 className="text-xl font-extrabold text-ink">Personal Timeline</h1>
+          <h1 className="font-display text-xl font-bold text-ink">Personal Timeline</h1>
         </div>
       </div>
 

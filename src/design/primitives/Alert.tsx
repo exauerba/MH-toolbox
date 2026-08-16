@@ -13,6 +13,8 @@ export interface AlertProps {
   /** Shows a close button that calls onDismiss. */
   dismissible?: boolean
   onDismiss?: () => void
+  /** Cozy 16-bit mode — render the leading icon as a pixel sprite. */
+  pixel?: boolean
   className?: string
 }
 
@@ -51,7 +53,7 @@ const variantConfig: Record<
  * icon and title text. `role` follows the severity — only `error` is
  * assertive, so a calm app isn't constantly interrupting.
  */
-export function Alert({ variant = 'info', title, children, dismissible, onDismiss, className }: AlertProps) {
+export function Alert({ variant = 'info', title, children, dismissible, onDismiss, pixel, className }: AlertProps) {
   const config = variantConfig[variant]
   const containerClass = config.containerClass
 
@@ -68,7 +70,7 @@ export function Alert({ variant = 'info', title, children, dismissible, onDismis
         className={cx('flex size-10 shrink-0 items-center justify-center rounded-full', config.iconClass)}
         aria-hidden="true"
       >
-        <Icon name={config.icon} size={22} />
+        <Icon name={config.icon} size={22} pixel={pixel} />
       </span>
       <div className="min-w-0 flex-1">
         {title && <p className="text-base font-extrabold">{title}</p>}
