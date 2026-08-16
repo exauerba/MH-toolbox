@@ -29,6 +29,12 @@ file_size_limit = "52428800"
 
 [auth]
 enabled = true
+# Pin the well-known demo JWT secret so the CI `rls` job's hardcoded demo
+# keys (anon/service_role, iss=supabase-demo) validate against the local
+# stack. Without this the CLI generates a random secret per `supabase start`
+# and the RLS tests fail with "invalid JWT: token signature is invalid".
+# Local/CI only — the cloud project uses its own real keys.
+jwt_secret = "super-secret-jwt-token-with-at-least-32-characters-long"
 # No email verification (username auth mirrors bloom: username@bloom.app).
 enable_signup = true
 enable_confirmations = false
