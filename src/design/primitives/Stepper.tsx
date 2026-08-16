@@ -63,8 +63,7 @@ export function Stepper({
       />
       <span
         className={cx(
-          'min-w-12 text-center text-xl tabular-nums text-ink',
-          pixel ? 'font-bold font-display' : 'font-extrabold',
+          'min-w-12 text-center text-xl font-extrabold tabular-nums text-ink',
         )}
         role="status"
         aria-live="polite"

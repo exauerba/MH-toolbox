@@ -178,7 +178,7 @@ function LedgerStat({
       aria-live={live ? 'polite' : undefined}
     >
       <Icon name={icon} size={16} pixel />
-      <span className="font-display font-bold">{value}</span>
+      <span className="font-extrabold tabular-nums">{value}</span>
       <span className="font-semibold">{label}</span>
     </span>
   );
