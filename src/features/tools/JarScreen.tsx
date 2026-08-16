@@ -178,7 +178,7 @@ function LedgerStat({
       aria-live={live ? 'polite' : undefined}
     >
       <Icon name={icon} size={16} pixel />
-      <span>{value}</span>
+      <span className="font-display font-bold">{value}</span>
       <span className="font-semibold">{label}</span>
     </span>
   );
@@ -266,7 +266,7 @@ export function JarScreen() {
         {/* State banner — icon + label + copy, never colour alone */}
         <div
           className={cx(
-            'mt-5 flex items-start gap-3 rounded-xl border p-4',
+            'mt-5 flex items-start gap-3 rounded-sm border-2 p-4',
             state === 'overdrawn' &&
               'border-overdrawn-line bg-overdrawn-soft text-overdrawn-ink',
             state === 'low' &&
@@ -288,7 +288,7 @@ export function JarScreen() {
         </div>
 
         {/* The jar */}
-        <div className="mt-8">
+        <div className="mt-8 rounded-sm border-2 border-line-strong bg-surface px-4 py-8 shadow-pixel-sm">
           <JarVessel total={total} remaining={remaining} borrowed={borrowed} />
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             <LedgerStat
@@ -353,7 +353,7 @@ export function JarScreen() {
         </div>
 
         {/* Today's log */}
-        <div className="mt-6 rounded-xl border border-line p-4">
+        <div className="mt-6 rounded-sm border-2 border-line p-4">
           <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
             Today's log
           </h3>
@@ -362,7 +362,7 @@ export function JarScreen() {
               {logs.map((log) => (
                 <li
                   key={log.id}
-                  className="flex items-center justify-between gap-3 rounded-lg bg-surface-muted px-3 py-2"
+                  className="flex items-center justify-between gap-3 rounded-sm border border-line bg-surface-muted px-3 py-2"
                 >
                   <span className="flex items-center gap-2 text-ink">
                     <Icon name="spoon" size={16} pixel className="text-jar-600" />
@@ -411,7 +411,7 @@ export function JarScreen() {
                     {day.value}
                   </span>
                   <span
-                    className="w-full rounded-t-md bg-jar-300"
+                    className="w-full rounded-t-sm border-2 border-b-0 border-jar-200 bg-jar-300"
                     style={{ height: `${(day.value / maxHistory) * 56}px` }}
                   />
                   <span className="text-xs font-bold text-ink-soft">
@@ -431,9 +431,9 @@ export function JarScreen() {
                   <span className="w-28 shrink-0 truncate font-semibold text-ink-soft">
                     {pattern.label}
                   </span>
-                  <span className="h-3 flex-1 overflow-hidden rounded-full bg-surface-strong">
+                  <span className="h-3 flex-1 overflow-hidden rounded-none border border-line bg-surface-strong">
                     <span
-                      className="block h-full rounded-full bg-jar-400"
+                      className="block h-full rounded-none bg-jar-400"
                       style={{
                         width: `${(pattern.value / maxPattern) * 100}%`,
                       }}

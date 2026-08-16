@@ -61,13 +61,18 @@ export function Alert({ variant = 'info', title, children, dismissible, onDismis
     <div
       role={config.role}
       className={cx(
-        'flex items-start gap-3 rounded-xl border p-4 shadow-soft animate-fade-in',
+        'flex items-start gap-3 p-4 animate-fade-in',
+        pixel ? 'rounded-sm border-2 shadow-pixel-sm' : 'rounded-xl border shadow-soft',
         containerClass,
         className,
       )}
     >
       <span
-        className={cx('flex size-10 shrink-0 items-center justify-center rounded-full', config.iconClass)}
+        className={cx(
+          'flex size-10 shrink-0 items-center justify-center',
+          pixel ? 'rounded-none' : 'rounded-full',
+          config.iconClass,
+        )}
         aria-hidden="true"
       >
         <Icon name={config.icon} size={22} pixel={pixel} />

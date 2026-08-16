@@ -55,13 +55,17 @@ export function Stepper({
         icon="minus"
         label={`Decrease by ${formatStep(step)} — now ${formatStep(value)}`}
         variant="soft"
-        round
+        round={!pixel}
         pixel={pixel}
         disabled={disabled || atMin}
         onClick={() => change(-step)}
+        className={pixel ? 'rounded-none! border-2 border-line-strong shadow-pixel-sm' : undefined}
       />
       <span
-        className="min-w-12 text-center text-xl font-extrabold tabular-nums text-ink"
+        className={cx(
+          'min-w-12 text-center text-xl tabular-nums text-ink',
+          pixel ? 'font-bold font-display' : 'font-extrabold',
+        )}
         role="status"
         aria-live="polite"
       >
@@ -71,10 +75,11 @@ export function Stepper({
         icon="plus"
         label={`Increase by ${formatStep(step)} — now ${formatStep(value)}`}
         variant="soft"
-        round
+        round={!pixel}
         pixel={pixel}
         disabled={disabled || atMax}
         onClick={() => change(step)}
+        className={pixel ? 'rounded-none! border-2 border-line-strong shadow-pixel-sm' : undefined}
       />
     </div>
   )

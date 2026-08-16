@@ -43,7 +43,13 @@ export function SegmentedControl({
     <div
       role="radiogroup"
       aria-label={label}
-      className={cx('inline-flex w-full rounded-full border border-line bg-surface-muted p-1', className)}
+      className={cx(
+        'inline-flex w-full bg-surface-muted',
+        pixel
+          ? 'rounded-none border-2 border-line-strong p-0.5'
+          : 'rounded-full border border-line p-1',
+        className,
+      )}
     >
       {options.map((option) => {
         const selected = option.value === value
@@ -51,8 +57,13 @@ export function SegmentedControl({
           <label
             key={option.value}
             className={cx(
-              'relative flex min-h-11 flex-1 cursor-pointer select-none items-center justify-center gap-2 rounded-full px-3 text-sm font-bold transition-colors',
-              selected ? 'bg-surface text-ink shadow-soft' : 'text-ink-soft hover:text-ink',
+              'relative flex min-h-11 flex-1 cursor-pointer select-none items-center justify-center gap-2 px-3 text-sm font-bold transition-colors',
+              pixel ? 'rounded-none' : 'rounded-full',
+              selected
+                ? pixel
+                  ? 'bg-parchment text-ink shadow-pixel-sm'
+                  : 'bg-surface text-ink shadow-soft'
+                : 'text-ink-soft hover:text-ink',
               disabled && 'cursor-not-allowed opacity-50',
             )}
           >
