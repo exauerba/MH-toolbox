@@ -1,10 +1,11 @@
 /**
  * RLS security tests (CI-gated).
  *
- * Requires a LOCAL Supabase stack (`supabase start` / `supabase db reset`,
- * standard local ports). The suite SELF-SKIPS when SUPABASE_URL is not set or
- * does not point at the local instance, or when SUPABASE_SERVICE_ROLE_KEY is
- * absent. CI runs this on ubuntu (Docker available) via the `rls` job.
+ * Runs against the shared hosted Supabase project (xxtavjeetzvtlhwoenho) —
+ * the same backend bloom uses. The suite SELF-SKIPS unless SUPABASE_URL,
+ * SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY are all set (CI provides
+ * them via repo secrets). The service role key is used only to create and
+ * delete throwaway test users; all assertions run as normal users or anon.
  *
  * Asserts, for EVERY steady_* table:
  *   (a) unauthenticated select returns nothing,
@@ -19,14 +20,10 @@ const envUrl = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL
 const envAnonKey = process.env.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
 const envServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-const isLocalUrl = (url: string | undefined): boolean =>
-  !!url && (url.includes('127.0.0.1:54321') || url.includes('localhost:54321'))
-
-const canRun =
-  !!envUrl && isLocalUrl(envUrl) && !!envAnonKey && !!envServiceKey
+const canRun = !!envUrl && !!envAnonKey && !!envServiceKey
 
 if (!canRun) {
-  console.warn('RLS tests skipped: no local Supabase (CI runs them on ubuntu with Docker)')
+  console.warn('RLS tests skipped: SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY not all set')
 }
 
 const suite = canRun ? describe : describe.skip

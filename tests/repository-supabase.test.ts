@@ -1,6 +1,7 @@
 /**
- * Supabase parity suite. Self-skips unless a local Supabase stack is running
- * (same pattern as tests/rls-security.test.ts) — CI starts one via `supabase start`.
+ * Supabase parity suite. Self-skips unless SUPABASE_URL / SUPABASE_ANON_KEY /
+ * SUPABASE_SERVICE_ROLE_KEY are all set (CI provides them via repo secrets;
+ * same pattern as tests/rls-security.test.ts).
  */
 import { createClient } from '@supabase/supabase-js'
 import { SupabaseRepository } from '../src/data/supabase/SupabaseRepository'
@@ -10,13 +11,11 @@ const url = process.env.SUPABASE_URL
 const anonKey = process.env.SUPABASE_ANON_KEY
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-const isLocal =
-  typeof url === 'string' && (url.includes('127.0.0.1:54321') || url.includes('localhost:54321'))
-const run = isLocal && url && anonKey && serviceKey ? describe : describe.skip
+const run = url && anonKey && serviceKey ? describe : describe.skip
 
 run('ToolboxRepository parity — supabase', () => {
-  it('runs against a local stack', () => {
-    expect(url).toMatch(/127\.0\.0\.1:54321|localhost:54321/)
+  it('runs against the configured Supabase project', () => {
+    expect(url).toBeTruthy()
   })
 
   runRepositorySuite('supabase', async () => {
