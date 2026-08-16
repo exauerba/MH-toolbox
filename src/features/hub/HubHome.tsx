@@ -35,11 +35,12 @@ function ToolCard({
     <Button
       size="md"
       variant={pinned ? 'primary' : 'secondary'}
-      className="min-w-0 flex-1"
+      className="pixel-btn min-w-0 flex-1"
       leadingIcon={
         <Icon
           name={tool.externalUrl ? 'external' : 'arrowRight'}
           size={16}
+          pixel
         />
       }
       onClick={() => onOpen(tool)}
@@ -54,6 +55,7 @@ function ToolCard({
       label={pinned ? `Unpin ${tool.name} from home` : `Pin ${tool.name} to home`}
       variant={pinned ? 'soft' : 'ghost'}
       filled={pinned}
+      pixel
       aria-pressed={pinned}
       onClick={() => onTogglePin(tool.id)}
     />
@@ -64,21 +66,21 @@ function ToolCard({
       as="article"
       variant="tile"
       padding="md"
-      className="flex h-full flex-col gap-3"
+      className="pixel-card flex h-full flex-col gap-3"
     >
       <div className="flex items-start justify-between gap-3">
         <span
           aria-hidden="true"
           className={cx(
-            'flex size-12 shrink-0 items-center justify-center rounded-xl',
+            'pixel-tile dither flex size-12 shrink-0 items-center justify-center',
             accentTileClass[tool.accent],
           )}
         >
-          <Icon name={tool.icon} size={26} />
+          <Icon name={tool.icon} size={26} pixel />
         </span>
         {showGrip && (
           <span aria-hidden="true" className="text-ink-faint">
-            <Icon name="grip" size={18} />
+            <Icon name="grip" size={18} pixel />
           </span>
         )}
       </div>
@@ -86,7 +88,11 @@ function ToolCard({
       <div className="min-w-0 flex-1">
         <h3 className="flex flex-wrap items-center gap-2 text-base font-extrabold text-ink">
           {tool.name}
-          {tool.comingSoon && <Chip tone="neutral">Soon</Chip>}
+          {tool.comingSoon && (
+            <Chip tone="neutral" className="pixel-chip">
+              Soon
+            </Chip>
+          )}
         </h3>
         <p className="mt-1 text-sm leading-relaxed text-ink-soft">
           {tool.tagline}
@@ -130,7 +136,7 @@ export function HubHome() {
   return (
     <div className="flex flex-col gap-10">
       <header>
-        <h1 className="max-w-2xl text-3xl font-extrabold leading-tight text-ink sm:text-4xl">
+        <h1 className="font-display max-w-2xl text-3xl font-bold leading-tight text-ink sm:text-4xl">
           A toolbox you can hold onto.
         </h1>
         <p className="mt-3 max-w-prose text-lg leading-relaxed text-ink-soft">
@@ -142,9 +148,9 @@ export function HubHome() {
       <section aria-labelledby="pinned-heading">
         <h2
           id="pinned-heading"
-          className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft"
+          className="font-display flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-ink-soft"
         >
-          <Icon name="star" size={15} filled />
+          <Icon name="star" size={15} filled pixel />
           Your tools
         </h2>
         {pinnedTools.length > 0 ? (
@@ -171,7 +177,7 @@ export function HubHome() {
       <section aria-labelledby="directory-heading">
         <h2
           id="directory-heading"
-          className="text-sm font-extrabold uppercase tracking-wide text-ink-soft"
+          className="font-display text-sm font-bold uppercase tracking-wide text-ink-soft"
         >
           All tools
         </h2>

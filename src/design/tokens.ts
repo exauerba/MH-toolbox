@@ -23,6 +23,11 @@ export const colors = {
   lineStrong: '#d8c6ba',
   focus: '#b04a33',
 
+  /* Cozy 16-bit skin — earthy accents (hub & jar) */
+  parchment: '#f1e8d5',
+  moss: { 100: '#e7ebd3', 300: '#b6bd85', 500: '#828a4e', 600: '#656d38', 700: '#4c5226' },
+  walnut: { 100: '#e9dfd0', 300: '#c9ae8f', 500: '#97724d', 600: '#74552f', 700: '#553c1f' },
+
   /* Brand — warm rose / terracotta (steady hub) */
   brand: {
     50: '#fdf5f1',
@@ -107,6 +112,10 @@ export const colorsDark = {
   line: '#362c25',
   lineStrong: '#463a31',
   focus: '#f0a48f',
+  /* Cozy 16-bit skin — earthy accents (dark) */
+  parchment: '#2b241b',
+  moss: { 200: '#8f9664', 300: '#a9b078' },
+  walnut: { 200: '#a98c6b', 300: '#c0a98d' },
   brand: { 300: '#ecb19e', 400: '#de8d74', 500: '#c56a4f' },
   jar: { 200: '#f6d795', 300: '#eebc5d', 400: '#e19e33' },
   timeline: { 200: '#c4d5bb', 300: '#a7c09d' },
@@ -124,6 +133,8 @@ export const colorsDark = {
 export const typography = {
   fontFamily:
     "'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+  display:
+    "'Pixelify Sans', 'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   weights: { regular: 400, semibold: 600, bold: 700, extrabold: 800 },
   baseSize: '1rem',
   scale: {
@@ -168,6 +179,7 @@ export const radius = {
   lg: '1.125rem', // bloom's card radius
   xl: '1.5rem',
   full: '9999px',
+  pixel: '0.25rem', // cozy 16-bit — stepped corners
 } as const
 
 /** Soft, warm-tinted shadows. */
@@ -176,6 +188,8 @@ export const shadow = {
   lift: '0 1px 3px rgb(80 44 30 / 0.07), 0 14px 30px -12px rgb(80 44 30 / 0.13)',
   press: '0 1px 1px rgb(80 44 30 / 0.04), 0 3px 8px -4px rgb(80 44 30 / 0.07)',
   pop: '0 24px 48px -12px rgb(40 18 12 / 0.28), 0 4px 16px -8px rgb(40 18 12 / 0.18)',
+  pixel: '4px 4px 0 0 rgb(80 44 30 / 0.3)',
+  pixelSm: '2px 2px 0 0 rgb(80 44 30 / 0.3)',
 } as const
 
 /**

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Pixelify+Sans:wght@400;700&display=swap');
 @import 'tailwindcss';
 
 /* ------------------------------------------------------------------ *
@@ -19,6 +19,9 @@
   --font-sans:
     'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
+  --font-display:
+    'Pixelify Sans', 'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
 
   /* 16px base. Line-heights are generous for dysregulated readers. */
   --text-2xs: 0.75rem;
@@ -54,6 +57,19 @@
   --color-line: #e7dbd2; /* hairlines, borders */
   --color-line-strong: #d8c6ba; /* emphasized borders */
   --color-focus: #b04a33; /* visible focus ring (3:1+ on all surfaces) */
+
+  /* Cozy 16-bit skin — earthy accents (hub & jar) */
+  --color-parchment: #f1e8d5;
+  --color-moss-100: #e7ebd3;
+  --color-moss-300: #b6bd85;
+  --color-moss-500: #828a4e;
+  --color-moss-600: #656d38;
+  --color-moss-700: #4c5226;
+  --color-walnut-100: #e9dfd0;
+  --color-walnut-300: #c9ae8f;
+  --color-walnut-500: #97724d;
+  --color-walnut-600: #74552f;
+  --color-walnut-700: #553c1f;
 
   /* ---- Brand ramp — warm rose / terracotta (steady hub) ---------- */
   --color-brand-50: #fdf5f1;
@@ -143,6 +159,7 @@
   --radius-lg: 1.125rem; /* bloom's card radius — brand continuity */
   --radius-xl: 1.5rem;
   --radius-full: 9999px;
+  --radius-pixel: 0.25rem; /* cozy 16-bit — stepped corners */
 
   /* ---- Shadows — soft, warm-tinted, low elevation ----------------- */
   --shadow-soft:
@@ -153,6 +170,8 @@
     0 1px 1px rgb(80 44 30 / 0.04), 0 3px 8px -4px rgb(80 44 30 / 0.07);
   --shadow-pop:
     0 24px 48px -12px rgb(40 18 12 / 0.28), 0 4px 16px -8px rgb(40 18 12 / 0.18);
+  --shadow-pixel: 4px 4px 0 0 rgb(80 44 30 / 0.3);
+  --shadow-pixel-sm: 2px 2px 0 0 rgb(80 44 30 / 0.3);
 
   /* ---- Motion — calm by default, all zero-motion-equivalent ------ */
   --dur-fast: 120ms; /* press feedback */
@@ -190,6 +209,13 @@
   --color-line: #362c25;
   --color-line-strong: #463a31;
   --color-focus: #f0a48f;
+
+  /* Cozy 16-bit skin — earthy accents (dark) */
+  --color-parchment: #2b241b;
+  --color-moss-200: #8f9664;
+  --color-moss-300: #a9b078;
+  --color-walnut-200: #a98c6b;
+  --color-walnut-300: #c0a98d;
 
   --color-brand-300: #ecb19e;
   --color-brand-400: #de8d74;
@@ -233,6 +259,8 @@
   --shadow-lift: none;
   --shadow-press: none;
   --shadow-pop: 0 24px 48px -12px rgb(0 0 0 / 0.6);
+  --shadow-pixel: 4px 4px 0 0 rgb(0 0 0 / 0.55);
+  --shadow-pixel-sm: 2px 2px 0 0 rgb(0 0 0 / 0.55);
 }
 
 @layer base {
@@ -313,6 +341,50 @@
    * final layout; this animation is skipped entirely by reduced-motion. */
   .animate-chip-pour {
     animation: steady-chip-pour var(--dur-jar) var(--ease-spring);
+  }
+
+  /* ---- Cozy 16-bit skin — opt-in utilities (hub & jar) ------------ */
+  /* !important beats the primitives' Tailwind utility classes (utilities
+     layer renders after components in Tailwind v4). */
+  .font-display {
+    font-family: var(--font-display) !important;
+  }
+  .pixel-card {
+    border-radius: var(--radius-pixel) !important;
+    border-width: 3px !important;
+    border-style: solid !important;
+    border-color: var(--color-line-strong) !important;
+    background-color: var(--color-parchment) !important;
+    box-shadow: var(--shadow-pixel) !important;
+  }
+  .pixel-chip {
+    border-radius: var(--radius-pixel) !important;
+    border-width: 2px !important;
+    border-style: solid !important;
+    box-shadow: var(--shadow-pixel-sm) !important;
+  }
+  .pixel-btn {
+    border-radius: var(--radius-pixel) !important;
+    box-shadow: var(--shadow-pixel-sm) !important;
+  }
+  .pixel-tile {
+    border-radius: var(--radius-pixel) !important;
+    border-width: 2px !important;
+    border-style: solid !important;
+    border-color: var(--color-line-strong) !important;
+  }
+  .dither {
+    background-image: repeating-conic-gradient(
+      rgb(80 44 30 / 0.06) 0% 25%,
+      transparent 0% 50%
+    );
+    background-size: 6px 6px;
+  }
+  .dark .dither {
+    background-image: repeating-conic-gradient(
+      rgb(243 234 227 / 0.05) 0% 25%,
+      transparent 0% 50%
+    );
   }
 }
 

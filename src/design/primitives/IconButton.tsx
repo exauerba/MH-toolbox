@@ -13,6 +13,8 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   variant?: IconButtonVariant
   /** Use the "filled" icon variant (e.g. a pinned star). */
   filled?: boolean
+  /** Cozy 16-bit mode — render the pixel sprite for this icon. */
+  pixel?: boolean
   /** Rounded-circle look (steppers, date nav). */
   round?: boolean
 }
@@ -34,6 +36,7 @@ export function IconButton({
   label,
   variant = 'ghost',
   filled = false,
+  pixel = false,
   round = false,
   className,
   type = 'button',
@@ -52,7 +55,7 @@ export function IconButton({
       title={label}
       {...rest}
     >
-      <Icon name={icon} size={20} filled={filled} />
+      <Icon name={icon} size={20} filled={filled} pixel={pixel} />
     </button>
   )
 }

@@ -13,6 +13,12 @@ type IconProps = SVGProps<SVGSVGElement> & {
   filled?: boolean
   /** Provide to make the icon meaningful to assistive tech. */
   label?: string
+  /**
+   * Cozy 16-bit mode — render the hand-authored pixel sprite for this
+   * icon when one exists (falls back to the stroke path otherwise).
+   * Opt-in so the rest of the app keeps its stroke icons.
+   */
+  pixel?: boolean
 }
 
 export type IconName =
@@ -292,7 +298,221 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
   ),
 }
 
-export function Icon({ name, size = 20, filled = false, label, ...rest }: IconProps) {
+/**
+ * Cozy 16-bit pixel sprites — hand-authored ASCII grids.
+ * 'X' = filled pixel, '.' = empty. Icons without a sprite here fall
+ * back to their stroke path. `filled` icons render a solid variant;
+ * otherwise an outline variant (star, heart) or the single art.
+ */
+const PIXEL_SPRITES: Partial<Record<IconName, string[] | { solid: string[]; outline: string[] }>> = {
+  spoon: [
+    '..XXXX..',
+    '.XXXXXX.',
+    '.XXXXXX.',
+    '..XXXX..',
+    '...XX...',
+    '...XX...',
+    '...XX...',
+    '........',
+  ],
+  star: {
+    solid: [
+      '...XX...',
+      '..XXXX..',
+      '.XXXXXX.',
+      'XXXXXXXX',
+      'XXXXXXXX',
+      '.XXXXXX.',
+      '..XXXX..',
+      '...XX...',
+    ],
+    outline: [
+      '...XX...',
+      '..X..X..',
+      '.X....X.',
+      'X......X',
+      'X......X',
+      '.X....X.',
+      '..X..X..',
+      '...XX...',
+    ],
+  },
+  heart: {
+    solid: [
+      '.XX..XX.',
+      'XXXXXXXX',
+      'XXXXXXXX',
+      'XXXXXXXX',
+      '.XXXXXX.',
+      '..XXXX..',
+      '...XX...',
+      '........',
+    ],
+    outline: [
+      '.XX..XX.',
+      'X.XX.XX.',
+      'X......X',
+      'X......X',
+      '.X....X.',
+      '..X..X..',
+      '...XX...',
+      '........',
+    ],
+  },
+  sparkle: [
+    '...X....',
+    '..XXX...',
+    '.XXXXX..',
+    'XXXXXXX.',
+    '.XXXXX..',
+    '..XXX...',
+    '...X....',
+    '........',
+  ],
+  timeline: [
+    '.X......',
+    '.X......',
+    '.XXXXXX.',
+    '..X.....',
+    '..XXXX..',
+    '....X...',
+    '....X...',
+    '........',
+  ],
+  grip: [
+    'XX..XX..',
+    'XX..XX..',
+    '........',
+    'XX..XX..',
+    'XX..XX..',
+    '........',
+    'XX..XX..',
+    'XX..XX..',
+  ],
+  arrowLeft: [
+    '.....X..',
+    '....XX..',
+    '...XXX..',
+    'XXXXXXX.',
+    'XXXXXXX.',
+    '...XXX..',
+    '....XX..',
+    '.....X..',
+  ],
+  arrowRight: [
+    '..X.....',
+    '..XX....',
+    '..XXX...',
+    '.XXXXXXX',
+    '.XXXXXXX',
+    '..XXX...',
+    '..XX....',
+    '..X.....',
+  ],
+  external: [
+    '......XX',
+    '.....XX.',
+    '...XXXX.',
+    '...X..X.',
+    '..X...X.',
+    '.X....X.',
+    'X.....X.',
+    'XXXXXXX.',
+  ],
+  plus: [
+    '...XX...',
+    '...XX...',
+    '...XX...',
+    'XXXXXXXX',
+    'XXXXXXXX',
+    '...XX...',
+    '...XX...',
+    '...XX...',
+  ],
+  close: [
+    'XX....XX',
+    '.XX..XX.',
+    '..XXXX..',
+    '...XX...',
+    '...XX...',
+    '..XXXX..',
+    '.XX..XX.',
+    'XX....XX',
+  ],
+  check: [
+    '........',
+    '........',
+    '........',
+    'XX......',
+    'X.XX....',
+    'X..XX...',
+    'X...XXXX',
+    '........',
+  ],
+  gauge: [
+    '..XXXX..',
+    '.XXXXXX.',
+    'X.XX...X',
+    'X..XX..X',
+    'X...XX.X',
+    'X....XXX',
+    '.XXXXXX.',
+    '........',
+  ],
+  edit: [
+    '.....XX.',
+    '....XXX.',
+    '...XXX..',
+    '..XXX...',
+    '.XXX....',
+    'XX......',
+    '........',
+    '........',
+  ],
+  trash: [
+    '..XXXX..',
+    '.XXXXXX.',
+    'XXXXXXXX',
+    'XX.XX.XX',
+    'XX.XX.XX',
+    'XX.XX.XX',
+    '.XXXXXX.',
+    '........',
+  ],
+}
+
+export function Icon({ name, size = 20, filled = false, pixel = false, label, ...rest }: IconProps) {
+  const sprite = PIXEL_SPRITES[name]
+  const rows =
+    sprite == null ? null : Array.isArray(sprite) ? sprite : filled ? sprite.solid : sprite.outline
+
+  if (pixel && rows) {
+    const height = rows.length
+    const width = rows[0].length
+    return (
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width={size}
+        height={size}
+        focusable="false"
+        shapeRendering="crispEdges"
+        aria-hidden={label ? undefined : true}
+        role={label ? 'img' : undefined}
+        aria-label={label}
+        data-icon={name}
+        {...rest}
+      >
+        {rows.map((row, y) =>
+          row.split('').map((cell, x) =>
+            cell === 'X' ? (
+              <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill="currentColor" />
+            ) : null,
+          ),
+        )}
+      </svg>
+    )
+  }
+
   return (
     <svg
       viewBox="0 0 24 24"

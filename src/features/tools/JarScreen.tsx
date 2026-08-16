@@ -99,22 +99,29 @@ function JarVessel({ total, remaining, borrowed }: JarVesselProps) {
       className="mx-auto w-fit pt-2"
       style={{ width: '10.5rem' }}
     >
-      {/* Lid */}
-      <div className="mx-auto h-3 w-24 rounded-t-md border-2 border-b-0 border-line-strong bg-surface-strong" />
+      {/* Lid — pixel jar, hard stepped walnut */}
+      <div className="mx-auto h-3 w-24 rounded-t-sm border-[3px] border-b-0 border-walnut-600 bg-walnut-500" />
       {/* Neck */}
-      <div className="mx-auto h-4 w-28 border-2 border-b-0 border-line-strong bg-surface" />
+      <div className="mx-auto h-4 w-28 rounded-none border-[3px] border-b-0 border-walnut-600 bg-parchment" />
       {/* Body */}
-      <div className="relative mx-auto h-56 w-36 overflow-hidden rounded-b-2xl rounded-t-sm border-2 border-line-strong bg-surface shadow-soft">
+      <div className="relative mx-auto h-56 w-36 overflow-hidden rounded-t-sm rounded-b-[6px] border-[3px] border-walnut-600 bg-parchment shadow-pixel">
         {/* Liquid — fills from the bottom, animates on spend */}
         <div
-          className="absolute inset-x-0 bottom-0 h-full origin-bottom rounded-b-2xl bg-jar-300 transition-transform duration-[var(--dur-jar)] ease-[var(--ease-out)]"
+          className="absolute inset-x-0 bottom-0 h-full origin-bottom rounded-none bg-jar-300 transition-transform duration-[var(--dur-jar)] ease-[var(--ease-out)]"
           style={{ transform: `scaleY(${ratio})` }}
         />
         {/* A calmer liquid band so the fill reads as depth, not flat colour */}
         <div
-          className="absolute inset-x-0 bottom-0 h-full origin-bottom rounded-b-2xl bg-jar-400/25 transition-transform duration-[var(--dur-jar)] ease-[var(--ease-out)]"
+          className="absolute inset-x-0 bottom-0 h-full origin-bottom rounded-none bg-jar-400/25 transition-transform duration-[var(--dur-jar)] ease-[var(--ease-out)]"
           style={{ transform: `scaleY(${Math.max(0, ratio - 0.08)})` }}
         />
+        {/* Retro liquid surface line — a crisp 3px edge at the fill top */}
+        {ratio > 0 && (
+          <div
+            className="pointer-events-none absolute inset-x-0 h-[3px] bg-jar-500 transition-[bottom] duration-[var(--dur-jar)] ease-[var(--ease-out)]"
+            style={{ bottom: `calc(${ratio * 100}% - 3px)` }}
+          />
+        )}
         {/* Spoons sitting in the liquid */}
         {remaining > 0 && (
           <div className="absolute inset-x-0 bottom-0 flex flex-col-reverse items-center justify-end gap-1 pb-2">
@@ -123,6 +130,7 @@ function JarVessel({ total, remaining, borrowed }: JarVesselProps) {
                 key={i}
                 name="spoon"
                 size={13}
+                pixel
                 className="animate-chip-pour text-jar-800"
               />
             ))}
@@ -136,6 +144,7 @@ function JarVessel({ total, remaining, borrowed }: JarVesselProps) {
                 key={i}
                 name="plus"
                 size={13}
+                pixel
                 className="animate-chip-pour text-overdrawn-strong"
               />
             ))}
@@ -162,13 +171,13 @@ function LedgerStat({
   return (
     <span
       className={cx(
-        'flex min-h-11 items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-bold',
+        'pixel-chip flex min-h-11 items-center gap-2 border px-4 py-1.5 text-sm font-bold',
         tone,
       )}
       role={live ? 'status' : undefined}
       aria-live={live ? 'polite' : undefined}
     >
-      <Icon name={icon} size={16} />
+      <Icon name={icon} size={16} pixel />
       <span>{value}</span>
       <span className="font-semibold">{label}</span>
     </span>
@@ -224,18 +233,18 @@ export function JarScreen() {
         <div className="flex items-center gap-2.5">
           <span
             aria-hidden="true"
-            className="flex size-10 items-center justify-center rounded-full bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300"
+            className="pixel-tile dither flex size-10 items-center justify-center rounded-none bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300"
           >
-            <Icon name="spoon" size={22} />
+            <Icon name="spoon" size={22} pixel />
           </span>
-          <h1 className="text-xl font-extrabold text-ink">Energy Jar</h1>
+          <h1 className="font-display text-xl font-bold text-ink">Energy Jar</h1>
         </div>
       </div>
 
-      <Card variant="raised" padding="lg" className="flex-1">
+      <Card variant="raised" padding="lg" className="pixel-card flex-1">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-extrabold text-ink">Today's jar</h2>
+            <h2 className="font-display text-lg font-bold text-ink">Today's jar</h2>
             <p className="mt-1 text-sm text-ink-soft">
               Reset at midnight · {total} spoons today
             </p>
@@ -268,7 +277,7 @@ export function JarScreen() {
             tone={
               state === 'healthy' ? 'jar' : state === 'low' ? 'low' : 'overdrawn'
             }
-            icon={<Icon name={meta.icon} size={15} />}
+            icon={<Icon name={meta.icon} size={15} pixel />}
           >
             {meta.label}
           </Chip>
@@ -312,7 +321,7 @@ export function JarScreen() {
 
         {/* Quick add */}
         <div className="mt-8">
-          <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+          <h3 className="font-display text-sm font-bold uppercase tracking-wide text-ink-soft">
             Log a spoonful
           </h3>
           <p className="mb-3 mt-1 text-sm text-ink-soft">
@@ -327,7 +336,11 @@ export function JarScreen() {
               min={0.5}
               max={5}
             />
-            <Button onClick={logSpoon} leadingIcon={<Icon name="plus" size={18} />}>
+            <Button
+              onClick={logSpoon}
+              className="pixel-btn"
+              leadingIcon={<Icon name="plus" size={18} pixel />}
+            >
               Log {formatAmount(step)}
             </Button>
           </div>
@@ -339,7 +352,7 @@ export function JarScreen() {
 
         {/* Today's log */}
         <div className="mt-6 rounded-xl border border-line p-4">
-          <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+          <h3 className="mb-2 font-display text-sm font-bold uppercase tracking-wide text-ink-soft">
             Today's log
           </h3>
           {logs.length > 0 ? (
@@ -350,7 +363,7 @@ export function JarScreen() {
                   className="flex items-center justify-between gap-3 rounded-lg bg-surface-muted px-3 py-2"
                 >
                   <span className="flex items-center gap-2 text-ink">
-                    <Icon name="spoon" size={16} className="text-jar-600" />
+                    <Icon name="spoon" size={16} pixel className="text-jar-600" />
                     {log.label ?? 'No label'}
                   </span>
                   <span className="flex items-center gap-1 text-sm font-bold tabular-nums text-ink-soft">
@@ -359,12 +372,14 @@ export function JarScreen() {
                       icon="edit"
                       label={`Edit "${log.label ?? 'untitled'}"`}
                       variant="ghost"
+                      pixel
                       onClick={() => undefined}
                     />
                     <IconButton
                       icon="trash"
                       label={`Delete "${log.label ?? 'untitled'}"`}
                       variant="ghost"
+                      pixel
                       onClick={() => deleteLog(log.id)}
                     />
                   </span>
@@ -381,7 +396,7 @@ export function JarScreen() {
         {/* History + patterns */}
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <div>
-            <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+            <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-ink-soft">
               Last 7 days
             </h3>
             <div className="flex items-end justify-between gap-2" aria-hidden="true">
@@ -405,7 +420,7 @@ export function JarScreen() {
             </div>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+            <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-ink-soft">
               Where your spoons went
             </h3>
             <div className="flex flex-col gap-2">
