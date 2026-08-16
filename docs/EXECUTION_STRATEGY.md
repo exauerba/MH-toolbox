@@ -1,6 +1,7 @@
 # Steady — Subagent Execution Strategy
 
 **Partners with:** `docs/BUILD_PLAN.md` (the what). This doc is the **how** — how subagents run, who owns what, and where the gates are.
+**Status:** Wave 1–2 merged on `main` (WP0, WP2 partial, WP3, WP4, WP5 partial, WP7, plus the `wp10-retro-skin` skin pass). See `BUILD_PLAN.md §0` for the full WP status table.
 
 ---
 
@@ -58,26 +59,28 @@ The load-bearing files — `src/data/types.ts`, `src/data/repository.ts` — are
 
 Rule: two agents never write the same file in the same wave. When a later WP legitimately extends an earlier file (WP11 → hub, WP12 → e2e), it lands in a *later* wave — sequential, no conflict.
 
+> **Current-layout note (2026-08-16):** the plan's `src/features/jar/**` and `src/features/timeline/**` do not exist yet — the Jar and Timeline previews live in `src/features/tools/JarScreen.tsx` and `src/features/tools/TimelineScreen.tsx`. WP6/WP9 should either move into their own folders (matching the plan) or the ownership map should be updated to `src/features/tools/**`; decide at WP6 kickoff.
+
 ---
 
 ## 5. Wave-by-wave execution
 
 ```
-Wave 1  WP0 ───────────────────────────► main
-             └──▶ WP2 ║ WP3 ───────────► main        (after WP0)
-                  └──▶ WP1 ────────────► main        (after WP2; Supabase half)
+Wave 1  WP0 ───────────────────────────► main        ✅ merged
+             └──▶ WP2 ║ WP3 ───────────► main        ✅ merged (WP2 partial: no delete fn)
+                  └──▶ WP1 ────────────► main        ❌ not started
              GATE: design direction (user) + contract review (orchestrator)
 
-Wave 2  WP4 ───────────────────────────► main
-             └──▶ WP5 ║ WP6 ║ WP7 ║ WP8► main        (after WP4 + WP3 tokens)
+Wave 2  WP4 ───────────────────────────► main        ✅ merged
+             └──▶ WP5 ║ WP6 ║ WP7 ║ WP8► main        ⚠️ WP5/WP8 partial, WP6 preview, WP7 merged
              GATE: design checkpoint #2 + user smoke test
 
-Wave 3  WP9 ║ WP10 ║ WP11 ────────────► main         (after WP5; WP10 after WP2)
+Wave 3  WP9 ║ WP10 ║ WP11 ────────────► main         ⚠️ WP9 preview; WP10 (migration) + WP11 not started
              GATE: design checkpoint #3 + user smoke test
 
-Wave 4  WP12 (solo, hardening) ───────► main
+Wave 4  WP12 (solo, hardening) ───────► main         ❌ not started
              GATE: full audit + user manual QA (WP13 QA script)
-             WP13 (release) ───────────► main   [needs explicit user go-live yes]
+             WP13 (release) ───────────► main         ❌ not started   [needs explicit user go-live yes]
 ```
 
 Notes:
@@ -85,19 +88,20 @@ Notes:
 - WP3 (design) starts in Wave 1 as a parallel track — its *output* (tokens, styleguide) is what WP6/WP9 need; it must be approved at the Wave-1 gate before Wave-2 agents start.
 - WP1 has two halves: types/interface/Dexie/fake+parity harness can start right after WP0 (parallel with WP2); the Supabase implementation + integration tests land after WP2's tables exist.
 - WP12 is **solo by design** — broad ownership (every route, both modes, Lighthouse, axe, console sweep). Parallelism here would cause conflict, not speed.
+- **Naming caveat:** the merged `wp10-retro-skin` branch is a *skin* pass, not the plan's WP10 (guest→account migration). The migration WP10 is still unstarted and belongs in Wave 3.
 
 ---
 
 ## 6. Review gates
 
-| Gate | When | Who | What must pass |
-|------|------|-----|----------------|
-| G1 — Design direction | End of Wave 1 | You | Styleguide + hero visuals approved (§15) — *"would I hand this to a dysregulated person?"* |
-| G1b — Contract review | End of Wave 1 | Orchestrator | types.ts/repository.ts stable; parity suite green on both backends |
-| G2 — Design checkpoint | End of Wave 2 | Design agent + you | Built hub/jar/bloom/settings match approved direction; tokens used, not reinvented |
-| G3 — Design checkpoint | End of Wave 3 | Design agent + you | Timeline + migration + reorder match direction |
-| G4 — Full audit | End of WP12 | You | Lighthouse budgets, axe, manual QA script, E2E green in both modes, no console errors |
-| G5 — Go-live | Before WP13 merge | You | Explicit "yes" to public Pages deploy |
+| Gate | When | Who | What must pass | Status |
+|------|------|-----|----------------|--------|
+| G1 — Design direction | End of Wave 1 | You | Styleguide + hero visuals approved (§15) — *"would I hand this to a dysregulated person?"* | ✅ passed (WP3 merged) |
+| G1b — Contract review | End of Wave 1 | Orchestrator | types.ts/repository.ts stable; parity suite green on both backends | ⏳ pending (WP1 not started) |
+| G2 — Design checkpoint | End of Wave 2 | Design agent + you | Built hub/jar/bloom/settings match approved direction; tokens used, not reinvented | ⏳ pending (jar/settings still preview) |
+| G3 — Design checkpoint | End of Wave 3 | Design agent + you | Timeline + migration + reorder match direction | ⏳ pending |
+| G4 — Full audit | End of WP12 | You | Lighthouse budgets, axe, manual QA script, E2E green in both modes, no console errors | ⏳ pending |
+| G5 — Go-live | Before WP13 merge | You | Explicit "yes" to public Pages deploy | ⏳ pending |
 
 A gate failing means the wave's fixes go back to the owning agent (or the design brief, at G1) — never silently carried forward.
 

@@ -2,6 +2,38 @@
 
 **Status:** Approved for build · **Date:** August 15, 2026
 **Source:** `therapeutic-toolbox-prd.md` (v1) + decisions from plan-sharpening session.
+**Last status update:** August 16, 2026 (see §0).
+
+---
+
+## 0. Current status (updated 2026-08-16)
+
+**HEAD:** `1aac9b9` on `main` — the `wp10-retro-skin` branch is fully merged (merge-base = its tip `1534748`). The retro skin is the current visual state of the app.
+
+**The short version:** the *visual* product is done and merged (WP3 design system + WP10 retro skin). The *functional* product is still preview-stage — the data layer (WP1) does not exist, auth is not wired to any UI, and the Jar/Timeline screens are hardcoded demos.
+
+| WP | Title | Status | Notes |
+|----|-------|--------|-------|
+| WP0 | Repo scaffold | ✅ merged | Vite+React+TS+Tailwind, ESLint/Prettier, Vitest, Playwright, GH Actions |
+| WP1 | Data layer | ❌ not started | **No `src/data/` at all** — the load-bearing abstraction is absent |
+| WP2 | Supabase + auth | ⚠️ partial | Migrations + RLS + `authCore`/`lockout` merged; `steady-delete-account` edge function missing; RLS tests red in CI |
+| WP3 | Design system | ✅ merged | Tokens, primitives, hero visuals, styleguide, pixel sprites |
+| WP4 | App shell | ✅ merged | Shell, header, guest banner, theme, routing |
+| WP5 | Hub + pinning | ⚠️ partial | Hub + localStorage pinning work; no drag-reorder (WP11), no Supabase sync |
+| WP6 | Energy Jar | ⚠️ preview | `JarScreen` is a hardcoded demo (presets, fake logs/history); no persistence, no `dayForDate` |
+| WP7 | bloom hand-off | ✅ merged | Card + same-tab link-out via `tools.config.ts` |
+| WP8 | Settings / About | ⚠️ partial | Theme works; Account/Export/Delete are disabled "coming soon"; About has hardcoded US resources, not the config-driven switchable list |
+| WP9 | Personal Timeline | ⚠️ preview | `TimelineScreen` renders the hero only; no CRUD/zones/images |
+| WP10 | Guest→account migration | ❌ not started | ⚠️ **naming collision:** the merged `wp10-retro-skin` branch is a *skin* pass, not this WP |
+| WP11 | Pin drag-to-reorder | ❌ not started | |
+| WP12 | Hardening pass | ❌ not started | E2E specs exist (hub/smoke/styleguide) but the full suite doesn't |
+| WP13 | Release | ❌ not started | |
+
+**Also missing (not WP-scoped):** PWA (`vite-plugin-pwa` TODO still in `vite.config.ts`), `src/shared/` (day math, strings module), crisis-resources config, auth UI wiring, guest→account migration.
+
+**CI (latest commit `1aac9b9`):** Typecheck / Lint / Unit / Build / E2E / Deploy all green · **RLS security tests red** — the non-negotiable gate (§9).
+
+**Next steps (in order):** ① fix the RLS test failure in CI, ② build WP1 (data layer), ③ wire auth UI + repository swap, ④ replace the Jar/Timeline previews with repository-backed features.
 
 ---
 
@@ -285,22 +317,24 @@ Constraints: WCAG 2.1 AA contrast; never color-alone (states carry icon/text); l
 
 Each WP is self-contained with explicit files, contracts, tests, and Definition of Done. Dependencies are listed; WPs on the same "wave" can run in parallel on separate branches.
 
-| WP | Title | Contents | Depends on | Wave |
-|----|-------|----------|------------|------|
-| WP0 | Repo scaffold | Vite+React+TS+Tailwind, hash router, PWA plugin, ESLint/Prettier, Vitest+Playwright wiring, GH Actions ci/deploy, `.gitignore` (node_modules), README stub | — | 1 |
-| WP1 | Data layer | Domain types (`data/types.ts`), `ToolboxRepository`, Dexie schema + LocalRepository, SupabaseRepository, StorageService, `migrateLocal`, unit tests (fake backend + table-driven both-impl suite) | WP0 | 1 |
-| WP2 | Supabase migrations + auth + delete fn | `steady_*` SQL, RLS, `steady-media` bucket + policies, username auth service + lockout, `steady-delete-account` edge function, local dev setup (`supabase/` config + seed) | WP0 | 1 |
-| WP3 | Design system | Tokens, primitives, per-tool accents, jar + timeline hero visuals, styleguide, reduced-motion, bloom-token reference | WP0 (can proceed while WP1–2 finish) | 1 |
-| WP4 | App shell | Providers (Auth/Repository/Theme), routing, header/nav, guest banner, offline banner, first-launch onboarding explainer | WP1, WP2, WP3 | 2 |
-| WP5 | Hub home + pinning | `tools.config.ts`, Pinned section + directory, pin/unpin + persistence, pre-pin defaults | WP1, WP3, WP4 | 2 |
-| WP6 | Energy Jar | Jar math (`dayForDate`, states), quick-add, visualization (chips, low/overdrawn, reduced-motion), history, edit/delete | WP1, WP3, WP5 | 2 |
-| WP7 | bloom hand-off | Card (bloom accent), same-tab link-out, URL config, hand-off copy | WP3, WP4 | 2 |
-| WP8 | Settings / About | Account, export (JSON/CSV), delete data, theme toggle, about/crisis resources, privacy copy | WP1, WP4 | 2 |
-| WP9 | Personal Timeline | Entries CRUD, zones, vertical timeline view, images (Dexie blobs / Storage), edit flows | WP1, WP3, WP5 | 3 |
-| WP10 | Guest→account migration | Import modal, idempotent copy Dexie→Supabase incl. image re-upload, post-import state | WP1, WP2, WP4 | 3 |
-| WP11 | Pin drag-to-reorder | Drag/reorder + a11y alternatives, persistence | WP5 | 3 |
-| WP12 | Hardening pass | Complete E2E suite (all flows × both modes), Lighthouse budgets, full axe audit, design review fixes, console-error sweep | WP6–WP11 | 4 |
-| WP13 | Release | Public go-live, README, crisis-resources finalization, docs, manual QA script | WP12 | 4 |
+| WP | Title | Contents | Depends on | Wave | Status |
+|----|-------|----------|------------|------|--------|
+| WP0 | Repo scaffold | Vite+React+TS+Tailwind, hash router, PWA plugin, ESLint/Prettier, Vitest+Playwright wiring, GH Actions ci/deploy, `.gitignore` (node_modules), README stub | — | 1 | ✅ merged |
+| WP1 | Data layer | Domain types (`data/types.ts`), `ToolboxRepository`, Dexie schema + LocalRepository, SupabaseRepository, StorageService, `migrateLocal`, unit tests (fake backend + table-driven both-impl suite) | WP0 | 1 | ❌ not started |
+| WP2 | Supabase migrations + auth + delete fn | `steady_*` SQL, RLS, `steady-media` bucket + policies, username auth service + lockout, `steady-delete-account` edge function, local dev setup (`supabase/` config + seed) | WP0 | 1 | ⚠️ partial (no delete fn) |
+| WP3 | Design system | Tokens, primitives, per-tool accents, jar + timeline hero visuals, styleguide, reduced-motion, bloom-token reference | WP0 (can proceed while WP1–2 finish) | 1 | ✅ merged |
+| WP4 | App shell | Providers (Auth/Repository/Theme), routing, header/nav, guest banner, offline banner, first-launch onboarding explainer | WP1, WP2, WP3 | 2 | ✅ merged |
+| WP5 | Hub home + pinning | `tools.config.ts`, Pinned section + directory, pin/unpin + persistence, pre-pin defaults | WP1, WP3, WP4 | 2 | ⚠️ partial (localStorage only) |
+| WP6 | Energy Jar | Jar math (`dayForDate`, states), quick-add, visualization (chips, low/overdrawn, reduced-motion), history, edit/delete | WP1, WP3, WP5 | 2 | ⚠️ preview (demo data) |
+| WP7 | bloom hand-off | Card (bloom accent), same-tab link-out, URL config, hand-off copy | WP3, WP4 | 2 | ✅ merged |
+| WP8 | Settings / About | Account, export (JSON/CSV), delete data, theme toggle, about/crisis resources, privacy copy | WP1, WP4 | 2 | ⚠️ partial (theme only) |
+| WP9 | Personal Timeline | Entries CRUD, zones, vertical timeline view, images (Dexie blobs / Storage), edit flows | WP1, WP3, WP5 | 3 | ⚠️ preview (hero only) |
+| WP10 | Guest→account migration | Import modal, idempotent copy Dexie→Supabase incl. image re-upload, post-import state | WP1, WP2, WP4 | 3 | ❌ not started |
+| WP11 | Pin drag-to-reorder | Drag/reorder + a11y alternatives, persistence | WP5 | 3 | ❌ not started |
+| WP12 | Hardening pass | Complete E2E suite (all flows × both modes), Lighthouse budgets, full axe audit, design review fixes, console-error sweep | WP6–WP11 | 4 | ❌ not started |
+| WP13 | Release | Public go-live, README, crisis-resources finalization, docs, manual QA script | WP12 | 4 | ❌ not started |
+
+> **Note on WP10:** the merged `wp10-retro-skin` branch is a *skin* work package (retro pixel styling across the app), not the plan's WP10 (guest→account migration). The migration WP10 remains unstarted.
 
 Definition of Done (every WP): code merged on a feature branch → CI green (typecheck, lint, tests) → E2E coverage where applicable → design-review sign-off (for visual WPs) → no open console errors.
 
