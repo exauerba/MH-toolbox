@@ -117,9 +117,13 @@ jobs:
           done
       - run: supabase db reset
       - run: npm ci
-      # Standard local-stack keys (well-known demo JWTs from `supabase start`).
+      # Extract the real local-stack keys at runtime. CLI v2.114.0+ generates
+      # fresh keys per `supabase start` (and prints sb_publishable_/sb_secret_
+      # instead of the old demo JWTs), so hardcoded keys no longer validate.
+      # `supabase status -o env` still emits the working legacy anon/service
+      # role keys, which the RLS tests consume.
+      - name: Export Supabase keys
+        run: |
+          supabase status -o env > /tmp/supabase.env
+          grep -E '^(SUPABASE_URL|SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)=' /tmp/supabase.env >> $GITHUB_ENV
       - run: npm run test:rls
-        env:
-          SUPABASE_URL: http://127.0.0.1:54321
-          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-          SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJZDJvoHhS0GmGIQ
