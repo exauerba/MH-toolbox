@@ -109,7 +109,7 @@ export interface AuthService {
 
 export interface AuthServiceOptions {
   /** Injectable client (defaults to the app's shared `supabase` client). */
-  client?: SupabaseClient
+  client?: SupabaseClient | null
   /** Injectable lockout (defaults to a fresh 5/60s FailedAttemptLockout). */
   lockout?: FailedAttemptLockout
 }
@@ -119,11 +119,12 @@ export interface AuthServiceOptions {
  * tests can inject a fake client + clock.
  */
 export function createAuthService(options: AuthServiceOptions = {}): AuthService {
-  const client = options.client ?? supabase
+  const client = options.client === undefined ? supabase : options.client
   const lockout = options.lockout ?? new FailedAttemptLockout()
 
   return {
     async signUp(username: string, password: string): Promise<AuthResult<AuthUser | null>> {
+      if (!client) return { ok: false, error: MESSAGES.NOT_CONFIGURED }
       if (!USERNAME_RE.test(username)) {
         return { ok: false, error: MESSAGES.USERNAME_INVALID }
       }
@@ -140,6 +141,7 @@ export function createAuthService(options: AuthServiceOptions = {}): AuthService
     },
 
     async signIn(username: string, password: string): Promise<AuthResult<AuthUser>> {
+      if (!client) return { ok: false, error: MESSAGES.NOT_CONFIGURED }
       if (!USERNAME_RE.test(username)) {
         return { ok: false, error: MESSAGES.USERNAME_INVALID }
       }
@@ -165,6 +167,7 @@ export function createAuthService(options: AuthServiceOptions = {}): AuthService
     },
 
     async signOut(): Promise<AuthResult<null>> {
+      if (!client) return { ok: false, error: MESSAGES.NOT_CONFIGURED }
       try {
         const { error } = await client.auth.signOut()
         if (error) return { ok: false, error: friendlyError(error.message) }
@@ -175,6 +178,7 @@ export function createAuthService(options: AuthServiceOptions = {}): AuthService
     },
 
     async getSession(): Promise<AuthResult<AuthSession>> {
+      if (!client) return { ok: false, error: MESSAGES.NOT_CONFIGURED }
       try {
         const { data, error } = await client.auth.getSession()
         if (error) return { ok: false, error: friendlyError(error.message) }

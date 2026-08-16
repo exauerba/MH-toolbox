@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert } from '../../design';
+import { useAuthMode } from '../../data/RepositoryProvider';
 
 const DISMISS_KEY = 'steady:guest-banner-dismissed';
 
@@ -8,9 +9,12 @@ const DISMISS_KEY = 'steady:guest-banner-dismissed';
  * Dismissal is per session — the reminder returns on the next visit.
  */
 export function GuestBanner() {
+  const { mode } = useAuthMode();
   const [dismissed, setDismissed] = useState(
     () => sessionStorage.getItem(DISMISS_KEY) === '1',
   );
+
+  if (mode === 'signed-in') return null;
 
   if (dismissed) return null;
 
