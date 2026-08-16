@@ -100,10 +100,21 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: v2.114.0
-      # GHCR lags on service images (gotrue et al. — supabase/cli#4696); ECR is
-      # the reliable registry for `supabase start` pulls in CI.
+      # ECR has all service image tags (GHCR lags — supabase/cli#4696) but
+      # anonymous pulls are rate-limited per runner IP ("toomanyrequests").
+      # Mitigations: pull only the services RLS tests need (--exclude the rest)
+      # and retry, since the limit window is transient.
       - run: echo "SUPABASE_INTERNAL_IMAGE_REGISTRY=public.ecr.aws" >> $GITHUB_ENV
-      - run: supabase start
+      - name: Start Supabase (retry on transient pull rate limits)
+        run: |
+          for attempt in 1 2 3; do
+            echo "supabase start attempt $attempt"
+            if supabase start \
+              --exclude studio,logflare,vector,mailpit,realtime,supavisor,postgres-meta,edge-runtime,imgproxy; then
+              break
+            fi
+            [ "$attempt" -lt 3 ] && sleep 30
+          done
       - run: supabase db reset
       - run: npm ci
       # Standard local-stack keys (well-known demo JWTs from `supabase start`).
