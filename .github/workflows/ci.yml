@@ -47,6 +47,10 @@ jobs:
     name: Unit tests
     runs-on: ubuntu-latest
     needs: install
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -89,41 +93,18 @@ jobs:
     name: RLS security tests
     runs-on: ubuntu-latest
     needs: install
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-      # Pinned: `latest` has shipped broken beta releases (e.g. v2.115.0-beta.*
-      # on 2026-08-15/16 broke `supabase start`). Bump deliberately.
-      - uses: supabase/setup-cli@v1
-        with:
-          version: v2.114.0
-      # ECR has all service image tags (GHCR lags — supabase/cli#4696) but
-      # anonymous pulls are rate-limited per runner IP ("toomanyrequests").
-      # Mitigations: pull only the services RLS tests need (--exclude the rest)
-      # and retry, since the limit window is transient.
-      - run: echo "SUPABASE_INTERNAL_IMAGE_REGISTRY=public.ecr.aws" >> $GITHUB_ENV
-      - name: Start Supabase (retry on transient pull rate limits)
-        run: |
-          for attempt in 1 2 3; do
-            echo "supabase start attempt $attempt"
-            if supabase start \
-              --exclude studio,logflare,vector,mailpit,realtime,supavisor,postgres-meta,edge-runtime,imgproxy; then
-              break
-            fi
-            [ "$attempt" -lt 3 ] && sleep 30
-          done
-      - run: supabase db reset
       - run: npm ci
-      # Extract the real local-stack keys at runtime. CLI v2.114.0+ generates
-      # fresh keys per `supabase start` (and prints sb_publishable_/sb_secret_
-      # instead of the old demo JWTs), so hardcoded keys no longer validate.
-      # `supabase status -o env` still emits the working legacy anon/service
-      # role keys, which the RLS tests consume.
-      - name: Export Supabase keys
-        run: |
-          supabase status -o env > /tmp/supabase.env
-          grep -E '^(SUPABASE_URL|SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)=' /tmp/supabase.env >> $GITHUB_ENV
+      # Tests run against the shared hosted project (xxtavjeetzvtlhwoenho) —
+      # the same backend bloom uses. Keys come from repo secrets; the service
+      # role key is used only to create/delete throwaway test users.
       - run: npm run test:rls
