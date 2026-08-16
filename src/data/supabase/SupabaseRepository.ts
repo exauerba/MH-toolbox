@@ -68,18 +68,23 @@ interface TimelineImageRow {
   created_at: string
 }
 
+/** Canonicalize Postgres timestamptz output (`...+00:00`) to ISO `.000Z`. */
+function iso(v: string | null): string | null {
+  return v ? new Date(v).toISOString() : null
+}
+
 function profileFromRow(r: ProfileRow): Profile {
   return {
     theme: r.theme as Profile['theme'],
     jarDefaultSpoons: Number(r.jar_default_spoons),
     jarResetHour: r.jar_reset_hour,
     onboardingDone: r.onboarding_done,
-    localDataImportedAt: r.local_data_imported_at,
+    localDataImportedAt: iso(r.local_data_imported_at),
   }
 }
 
 function jarLogFromRow(r: JarLogRow): JarLog {
-  return { id: r.id, date: r.date, spent: Number(r.spent), label: r.label, createdAt: r.created_at }
+  return { id: r.id, date: r.date, spent: Number(r.spent), label: r.label, createdAt: iso(r.created_at) ?? '' }
 }
 
 function timelineEntryFromRow(r: TimelineEntryRow): TimelineEntry {
@@ -90,7 +95,7 @@ function timelineEntryFromRow(r: TimelineEntryRow): TimelineEntry {
     endDate: r.end_date,
     description: r.description,
     color: r.color,
-    createdAt: r.created_at,
+    createdAt: iso(r.created_at) ?? '',
   }
 }
 
@@ -101,7 +106,7 @@ function timelineZoneFromRow(r: TimelineZoneRow): TimelineZone {
     color: r.color,
     startDate: r.start_date,
     endDate: r.end_date,
-    createdAt: r.created_at,
+    createdAt: iso(r.created_at) ?? '',
   }
 }
 
@@ -355,7 +360,7 @@ export class SupabaseRepository implements ToolboxRepository {
           entryId: row.entry_id,
           url: signed.signedUrl,
           storagePath: row.storage_path,
-          createdAt: row.created_at,
+          createdAt: iso(row.created_at) ?? '',
         })
       }
     }
@@ -434,7 +439,7 @@ export class SupabaseRepository implements ToolboxRepository {
         id: r.id,
         entryId: r.entry_id,
         storagePath: r.storage_path,
-        createdAt: r.created_at,
+        createdAt: iso(r.created_at) ?? '',
       })),
     }
   }

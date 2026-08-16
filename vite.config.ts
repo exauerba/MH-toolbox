@@ -12,5 +12,8 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     globals: true,
     exclude: ['e2e/**', 'node_modules/**'],
+    // Hosted-Supabase suites (parity + RLS) do many sequential network round
+    // trips; the 5s default times out under parallel file execution.
+    testTimeout: 20000,
   },
 })
