@@ -100,6 +100,9 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: v2.114.0
+      # GHCR lags on service images (gotrue et al. — supabase/cli#4696); ECR is
+      # the reliable registry for `supabase start` pulls in CI.
+      - run: echo "SUPABASE_INTERNAL_IMAGE_REGISTRY=public.ecr.aws" >> $GITHUB_ENV
       - run: supabase start
       - run: supabase db reset
       - run: npm ci
