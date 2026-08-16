@@ -333,8 +333,10 @@ export function JarScreen() {
           </p>
         </div>
 
-        {/* The jar */}
-        <div className="mt-8 rounded-sm border-2 border-line-strong bg-surface px-4 py-8 shadow-pixel-sm">
+        {/* Jar + quick-add — two columns on desktop */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* The jar */}
+          <div className="mt-6 rounded-sm border-2 border-line-strong bg-surface px-4 py-8 shadow-pixel-sm">
           <JarVessel
             total={total}
             remaining={remaining}
@@ -370,10 +372,12 @@ export function JarScreen() {
               {borrowed} borrowed from tomorrow — every jar starts fresh.
             </p>
           )}
-        </div>
+          </div>
 
-        {/* Quick add */}
-        <div className="mt-8">
+        {/* Quick add + today's log */}
+        <div className="flex flex-col gap-6">
+          {/* Quick add */}
+          <div className="mt-0">
           <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">
             Log a spoonful
           </h3>
@@ -405,7 +409,7 @@ export function JarScreen() {
         </div>
 
         {/* Today's log */}
-        <div className="mt-6 rounded-sm border-2 border-line p-4">
+        <div className="mt-0 rounded-sm border-2 border-line p-4">
           <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
             Today's log
           </h3>
@@ -445,6 +449,8 @@ export function JarScreen() {
               Nothing logged yet today. The jar stays full until you spend.
             </p>
           )}
+          </div>
+        </div>
         </div>
 
         {/* History + patterns */}

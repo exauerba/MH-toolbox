@@ -65,19 +65,19 @@ function ToolCard({
   return (
     <Card as="article" variant="tile" padding="md" className="flex h-full flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
-        <span className={cx('flex size-12 items-center justify-center rounded-xl', tool.tileClass)} aria-hidden="true">
-          <Icon name={tool.icon} size={26} />
+        <span className={cx('pixel-tile flex size-12 items-center justify-center rounded-none', tool.tileClass)} aria-hidden="true">
+          <Icon name={tool.icon} size={26} pixel />
         </span>
         {showGrip && (
           <span className="flex items-center gap-1 text-ink-faint" aria-hidden="true">
-            <Icon name="grip" size={18} />
+            <Icon name="grip" size={18} pixel />
           </span>
         )}
       </div>
       <div className="min-w-0 flex-1">
         <h4 className="flex items-center gap-2 text-base font-extrabold text-ink">
           {tool.name}
-          {tool.badge && <Chip tone="jar">{tool.badge}</Chip>}
+          {tool.badge && <Chip tone="jar" className="pixel-chip">{tool.badge}</Chip>}
         </h4>
         <p className="mt-1 text-sm leading-relaxed text-ink-soft">{tool.tagline}</p>
       </div>
@@ -85,9 +85,9 @@ function ToolCard({
         <Button
           size="md"
           variant="secondary"
-          className="min-w-0 flex-1"
+          className="pixel-btn min-w-0 flex-1"
           leadingIcon={
-            tool.external ? <Icon name="external" size={16} /> : <Icon name="arrowRight" size={16} />
+            tool.external ? <Icon name="external" size={16} pixel /> : <Icon name="arrowRight" size={16} pixel />
           }
         >
           Open
@@ -97,6 +97,7 @@ function ToolCard({
           label={pinned ? `Unpin ${tool.name} from home` : `Pin ${tool.name} to home`}
           variant={pinned ? 'soft' : 'ghost'}
           filled={pinned}
+          pixel
           aria-pressed={pinned}
           onClick={() => onTogglePin(tool.id)}
         />
@@ -124,11 +125,11 @@ export function HubHero() {
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
-      <Card variant="raised" padding="lg" className="flex-1">
+      <Card variant="raised" padding="lg" className="pixel-card flex-1">
         <div className="mb-4">
-          <h3 className="flex items-center gap-2 text-xl font-extrabold text-ink">
-            <span className="flex size-10 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300">
-              <Icon name="home" size={22} />
+          <h3 className="font-display flex items-center gap-2 text-xl font-bold text-ink">
+            <span className="pixel-tile flex size-10 items-center justify-center rounded-none bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300">
+              <Icon name="home" size={22} pixel />
             </span>
             steady
           </h3>
@@ -139,7 +140,7 @@ export function HubHero() {
 
         <section aria-labelledby="pinned-heading">
           <h4 id="pinned-heading" className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
-            <Icon name="star" size={15} filled />
+            <Icon name="star" size={15} filled pixel />
             Pinned
           </h4>
           <div className="grid gap-3 sm:grid-cols-2">

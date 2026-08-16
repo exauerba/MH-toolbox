@@ -76,7 +76,7 @@ function Section({
   return (
     <section id={id} className="scroll-mt-24 border-t border-line pt-10 sm:pt-14">
       <p className="text-sm font-extrabold uppercase tracking-widest text-brand-600 dark:text-brand-300">{kicker}</p>
-      <h2 className="mt-1 text-3xl font-extrabold text-ink sm:text-4xl">{title}</h2>
+      <h2 className="font-display mt-1 text-3xl font-bold text-ink sm:text-4xl">{title}</h2>
       {intro && <p className="mt-3 max-w-2xl text-lg leading-relaxed text-ink-soft">{intro}</p>}
       <div className="mt-8">{children}</div>
     </section>
@@ -151,7 +151,7 @@ export default function Styleguide() {
       {/* Top controls */}
       <div className="sticky top-0 z-40 -mx-4 mb-10 border-b border-line bg-canvas/90 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="flex items-center gap-2 text-sm font-extrabold text-ink">
+          <p className="font-display flex items-center gap-2 text-sm font-extrabold text-ink">
             <Icon name="sparkle" size={16} className="text-brand-600" />
             steady — design styleguide
           </p>
@@ -171,6 +171,7 @@ export default function Styleguide() {
                 { value: 'dark', label: 'Dark', icon: 'moon' },
               ]}
               className="w-44"
+              pixel
             />
           </div>
         </div>
@@ -178,7 +179,7 @@ export default function Styleguide() {
 
       {/* Hero */}
       <header className="pb-4 pt-10">
-        <h1 className="text-5xl font-extrabold tracking-tight text-brand-700 dark:text-brand-300">steady</h1>
+        <h1 className="font-display text-5xl font-extrabold tracking-tight text-brand-700 dark:text-brand-300">steady</h1>
         <p className="mt-3 max-w-2xl text-2xl font-bold leading-snug text-ink">
           A toolbox you can hold onto at your lowest point — warm, quiet, and never clinical.
         </p>

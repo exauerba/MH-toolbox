@@ -92,13 +92,13 @@ export function JarHero() {
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
-      <Card variant="raised" padding="lg" className="flex-1">
+      <Card variant="raised" padding="lg" className="pixel-card flex-1">
         {/* Header */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="flex items-center gap-2 text-xl font-extrabold text-ink">
-              <span className="flex size-10 items-center justify-center rounded-full bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300">
-                <Icon name="spoon" size={22} />
+            <h3 className="font-display flex items-center gap-2 text-xl font-bold text-ink">
+              <span className="pixel-tile flex size-10 items-center justify-center rounded-none bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300">
+                <Icon name="spoon" size={22} pixel />
               </span>
               Today's jar
             </h3>
@@ -114,6 +114,7 @@ export function JarHero() {
               { value: 'overdrawn', label: 'Overdrawn' },
             ]}
             className="max-w-64"
+            pixel
           />
         </div>
 
@@ -126,7 +127,7 @@ export function JarHero() {
             state === 'healthy' && 'border-jar-200 bg-jar-50 text-jar-800',
           )}
         >
-          <Chip tone={state === 'healthy' ? 'jar' : state === 'low' ? 'low' : 'overdrawn'} icon={<Icon name={meta.icon} size={15} />}>
+          <Chip tone={state === 'healthy' ? 'jar' : state === 'low' ? 'low' : 'overdrawn'} icon={<Icon name={meta.icon} size={15} pixel />}>
             {meta.label}
           </Chip>
           <p className="text-base leading-relaxed" role="status">
@@ -150,7 +151,7 @@ export function JarHero() {
                   kind === 'spent' && 'border-line bg-surface text-ink-faint',
                 )}
               >
-                {kind === 'spent' && <Icon name="close" size={14} />}
+                {kind === 'spent' && <Icon name="close" size={14} pixel />}
               </span>
             ))}
           </div>
@@ -166,7 +167,7 @@ export function JarHero() {
                 key={i}
                 className="flex size-9 items-center justify-center rounded-full border-2 border-overdrawn-line bg-overdrawn-soft text-overdrawn-ink animate-chip-pour"
               >
-                <Icon name={i < total ? 'check' : 'plus'} size={14} />
+                <Icon name={i < total ? 'check' : 'plus'} size={14} pixel />
               </span>
             ))}
           </div>
@@ -182,8 +183,8 @@ export function JarHero() {
           <p className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">Log a spoonful</p>
           <p className="mb-2 text-sm text-ink-soft">Takes about ten seconds — that's the point.</p>
           <div className="flex flex-wrap items-end gap-3">
-            <Stepper label="Spoons spent" value={step} onChange={setStep} step={0.5} min={0.5} max={5} />
-            <Button onClick={logSpoon} leadingIcon={<Icon name="plus" size={18} />}>
+            <Stepper label="Spoons spent" value={step} onChange={setStep} step={0.5} min={0.5} max={5} pixel />
+            <Button onClick={logSpoon} className="pixel-btn" leadingIcon={<Icon name="plus" size={18} pixel />}>
               Log {step % 1 === 0 ? step : step.toFixed(1)}
             </Button>
           </div>
@@ -199,13 +200,13 @@ export function JarHero() {
             {logs.map((log) => (
               <li key={log.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-muted px-3 py-2">
                 <span className="flex items-center gap-2 text-ink">
-                  <Icon name="spoon" size={16} className="text-jar-600" />
+                  <Icon name="spoon" size={16} pixel className="text-jar-600" />
                   {log.label ?? 'No label'}
                 </span>
                 <span className="flex items-center gap-1 text-sm font-bold tabular-nums text-ink-soft">
                   {log.amount % 1 === 0 ? log.amount : log.amount.toFixed(1)} spoons
-                  <IconButton icon="trash" label={`Delete “${log.label ?? 'untitled'}”`} variant="ghost" />
-                  <IconButton icon="edit" label={`Edit “${log.label ?? 'untitled'}”`} variant="ghost" />
+                  <IconButton icon="trash" label={`Delete “${log.label ?? 'untitled'}”`} variant="ghost" pixel />
+                  <IconButton icon="edit" label={`Edit “${log.label ?? 'untitled'}”`} variant="ghost" pixel />
                 </span>
               </li>
             ))}
