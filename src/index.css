@@ -343,6 +343,10 @@
     animation: steady-chip-pour var(--dur-jar) var(--ease-spring);
   }
 
+  .animate-chip-leave {
+    animation: steady-chip-leave var(--dur-slower) var(--ease-out) forwards;
+  }
+
   /* ---- Cozy 16-bit skin — opt-in utilities (hub & jar) ------------ */
   /* !important beats the primitives' Tailwind utility classes (utilities
      layer renders after components in Tailwind v4). */
@@ -427,6 +431,17 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes steady-chip-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-36px) scale(0.9);
   }
 }
 

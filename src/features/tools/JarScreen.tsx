@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -78,10 +78,17 @@ function formatAmount(amount: number): string {
   return amount % 1 === 0 ? String(amount) : amount.toFixed(1);
 }
 
+interface LeaveBurst {
+  id: number;
+  count: number;
+}
+
 interface JarVesselProps {
   total: number;
   remaining: number;
   borrowed: number;
+  fill: 'spoons' | 'chips';
+  leaving: LeaveBurst[];
 }
 
 /**
@@ -89,14 +96,14 @@ interface JarVesselProps {
  * labelled ledger below. Liquid animates with transform only; the global
  * reduced-motion kill-switch collapses both to an instant swap.
  */
-function JarVessel({ total, remaining, borrowed }: JarVesselProps) {
+function JarVessel({ total, remaining, borrowed, fill, leaving }: JarVesselProps) {
   const ratio = total > 0 ? remaining / total : 0;
   const spoons = Array.from({ length: remaining }, (_, i) => i);
 
   return (
     <div
       aria-hidden="true"
-      className="mx-auto w-fit pt-2"
+      className="relative mx-auto w-fit pt-2"
       style={{ width: '10.5rem' }}
     >
       {/* Lid — pixel jar, hard stepped walnut */}
@@ -128,7 +135,7 @@ function JarVessel({ total, remaining, borrowed }: JarVesselProps) {
             {spoons.map((i) => (
               <Icon
                 key={i}
-                name="spoon"
+                name={fill === 'chips' ? 'chip' : 'spoon'}
                 size={13}
                 pixel
                 className="animate-chip-pour text-jar-800"
@@ -136,6 +143,23 @@ function JarVessel({ total, remaining, borrowed }: JarVesselProps) {
             ))}
           </div>
         )}
+        {/* Bursts leaving the jar mouth — fly up past the lid, then fade */}
+        {leaving.map((burst) => (
+          <div
+            key={burst.id}
+            className="absolute inset-x-0 top-0 flex flex-wrap items-start justify-center gap-1 pt-1"
+          >
+            {Array.from({ length: burst.count }, (_, i) => (
+              <Icon
+                key={`${burst.id}-${i}`}
+                name={fill === 'chips' ? 'chip' : 'spoon'}
+                size={13}
+                pixel
+                className="animate-chip-leave text-jar-800"
+              />
+            ))}
+          </div>
+        ))}
         {/* Borrowed spills out the top edge */}
         {borrowed > 0 && (
           <div className="absolute inset-x-0 top-0 flex flex-wrap items-start justify-center gap-1 pt-1">
@@ -189,6 +213,9 @@ export function JarScreen() {
   const [total, setTotal] = useState(PRESETS.healthy.total);
   const [spent, setSpent] = useState(PRESETS.healthy.spent);
   const [step, setStep] = useState(0.5);
+  const [fill, setFill] = useState<'spoons' | 'chips'>('spoons');
+  const [leaving, setLeaving] = useState<LeaveBurst[]>([]);
+  const nextLeaveId = useRef(1);
   const [logs, setLogs] = useState<Log[]>([
     { id: 1, amount: 2, label: 'Morning shower' },
     { id: 2, amount: 1, label: 'Work call' },
@@ -212,6 +239,12 @@ export function JarScreen() {
     setSpent((s) => s + step);
     setLogs((current) => [...current, { id: nextId, amount: step }]);
     setNextId((id) => id + 1);
+    const burst = { id: nextLeaveId.current++, count: Math.max(1, Math.ceil(step)) };
+    setLeaving((cur) => [...cur, burst]);
+    setTimeout(
+      () => setLeaving((cur) => cur.filter((b) => b.id !== burst.id)),
+      550,
+    );
   };
 
   const deleteLog = (id: number) =>
@@ -249,18 +282,31 @@ export function JarScreen() {
               Reset at midnight · {total} spoons today
             </p>
           </div>
-          <SegmentedControl
-            label="Demo jar state"
-            value={preset}
-            onChange={(value) => applyPreset(value as JarState)}
-            className="max-w-64"
-            options={[
-              { value: 'healthy', label: 'Healthy' },
-              { value: 'low', label: 'Low' },
-              { value: 'overdrawn', label: 'Overdrawn' },
-            ]}
-            pixel
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <SegmentedControl
+              label="Jar contents"
+              value={fill}
+              onChange={(value) => setFill(value as 'spoons' | 'chips')}
+              className="max-w-56"
+              options={[
+                { value: 'spoons', label: 'Spoons', icon: 'spoon' },
+                { value: 'chips', label: 'Chips', icon: 'chip' },
+              ]}
+              pixel
+            />
+            <SegmentedControl
+              label="Demo jar state"
+              value={preset}
+              onChange={(value) => applyPreset(value as JarState)}
+              className="max-w-64"
+              options={[
+                { value: 'healthy', label: 'Healthy' },
+                { value: 'low', label: 'Low' },
+                { value: 'overdrawn', label: 'Overdrawn' },
+              ]}
+              pixel
+            />
+          </div>
         </div>
 
         {/* State banner — icon + label + copy, never colour alone */}
@@ -289,10 +335,16 @@ export function JarScreen() {
 
         {/* The jar */}
         <div className="mt-8 rounded-sm border-2 border-line-strong bg-surface px-4 py-8 shadow-pixel-sm">
-          <JarVessel total={total} remaining={remaining} borrowed={borrowed} />
+          <JarVessel
+            total={total}
+            remaining={remaining}
+            borrowed={borrowed}
+            fill={fill}
+            leaving={leaving}
+          />
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             <LedgerStat
-              icon="spoon"
+              icon={fill === 'chips' ? 'chip' : 'spoon'}
               value={remaining}
               label="left"
               tone="border-jar-200 bg-jar-50 text-jar-800"
