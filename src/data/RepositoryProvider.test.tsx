@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RepositoryProvider, useAuthMode, useRepository } from './RepositoryProvider'
+import { FakeRepository } from './testing/fakeRepository'
 
 // vi.mock factories are hoisted above top-level consts, so the fake auth must
 // be built with vi.hoisted to be reachable from both the factory and the tests.
@@ -29,6 +30,7 @@ const Probe = () => {
 describe('RepositoryProvider', () => {
   beforeEach(() => {
     authListeners.length = 0
+    fakeSupabase.auth.onAuthStateChange.mockClear()
   })
 
   it('starts in guest mode with the local repository', () => {
@@ -67,5 +69,16 @@ describe('RepositoryProvider', () => {
       authListeners[0]('SIGNED_OUT', null)
       expect(screen.getByTestId('probe')).toHaveTextContent('guest:none:LocalRepository')
     })
+  })
+
+  it('uses an injected repo and skips auth entirely', () => {
+    const fake = new FakeRepository()
+    render(
+      <RepositoryProvider initialRepo={fake}>
+        <Probe />
+      </RepositoryProvider>,
+    )
+    expect(screen.getByTestId('probe')).toHaveTextContent('guest:none:FakeRepository')
+    expect(fakeSupabase.auth.onAuthStateChange).not.toHaveBeenCalled()
   })
 })
