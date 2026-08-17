@@ -1,6 +1,9 @@
-import { Card, Icon, IconButton, SegmentedControl } from '../../design';
+import { Card, Icon, SegmentedControl } from '../../design';
 import { useTheme } from '../../app/shell/theme';
 import { AccountCard } from './AccountCard';
+import { DeleteAccountCard } from './DeleteAccountCard';
+import { DeleteDataCard } from './DeleteDataCard';
+import { ExportCard } from './ExportCard';
 
 /**
  * Settings — a calm surface, not a wall of options. Theme works now;
@@ -54,39 +57,11 @@ export function SettingsScreen() {
         <div className="mt-4 flex flex-col gap-3">
           <AccountCard />
 
-          <div className="flex items-center justify-between gap-4 rounded-lg bg-surface-muted px-3 py-2">
-            <div className="min-w-0">
-              <p className="font-bold text-ink">Export your data</p>
-              <p className="text-sm text-ink-soft">
-                Download everything steady keeps for you, as a file you own.
-              </p>
-            </div>
-            <IconButton
-              icon="download"
-              label="Export data — coming soon"
-              variant="secondary"
-              disabled
-              pixel
-              className="disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
+          <ExportCard />
 
-          <div className="flex items-center justify-between gap-4 rounded-lg bg-surface-muted px-3 py-2">
-            <div className="min-w-0">
-              <p className="font-bold text-ink">Delete your data</p>
-              <p className="text-sm text-ink-soft">
-                Wipe your tools from this device. This can't be undone.
-              </p>
-            </div>
-            <IconButton
-              icon="trash"
-              label="Delete data — coming soon"
-              variant="secondary"
-              disabled
-              pixel
-              className="disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
+          <DeleteDataCard />
+
+          <DeleteAccountCard />
         </div>
       </Card>
     </div>
