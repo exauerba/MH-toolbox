@@ -409,3 +409,9 @@ Give the agent one self-contained brief containing:
 ### Review gate
 
 You review the proposed direction (the styleguide + hero visuals) before approving. Key question for you: *does this feel like a product you'd hand a dysregulated person at their lowest point?* If yes → approve, feature builds begin. If not → iterate on the brief with the agent before WP4 starts.
+
+---
+
+## Deployment note (2026-08-17)
+
+GitHub Pages source switched from 'Deploy from a branch' to **'GitHub Actions'** — the built-in branch deployment was serving the raw source (blank page); the custom `.github/workflows/deploy.yml` (build → upload-pages-artifact → deploy-pages@v4) is the standard Vite-on-GH-Pages pattern and now deploys the built app from `dist/`.
