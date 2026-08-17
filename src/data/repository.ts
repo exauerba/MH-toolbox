@@ -9,7 +9,7 @@
  * - `listImages(entryId)` — blob:/signed URLs are transient, so features
  *   re-fetch image references on mount instead of persisting URLs.
  * - `saveTimelineEntry` / `saveZone` are upserts: an `id` in the input means
- *   update, absence means create (covers the edit flows in §6.4).
+ *   insert-or-update (idempotent re-runs), absence means create (covers the edit flows in §6.4).
  */
 import type {
   ExportBundle,

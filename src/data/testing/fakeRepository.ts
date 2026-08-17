@@ -89,17 +89,29 @@ export class FakeRepository implements ToolboxRepository {
   async saveTimelineEntry(e: TimelineEntryInput): Promise<TimelineEntry> {
     if (e.id) {
       const existing = this.timelineEntries.get(e.id)
-      if (!existing) throw new Error(`TimelineEntry ${e.id} not found`)
-      const updated: TimelineEntry = {
-        ...existing,
+      if (existing) {
+        const updated: TimelineEntry = {
+          ...existing,
+          title: e.title,
+          startDate: e.startDate,
+          endDate: e.endDate ?? null,
+          description: e.description ?? '',
+          color: e.color,
+        }
+        this.timelineEntries.set(e.id, updated)
+        return updated
+      }
+      const entry: TimelineEntry = {
+        id: e.id,
         title: e.title,
         startDate: e.startDate,
         endDate: e.endDate ?? null,
         description: e.description ?? '',
         color: e.color,
+        createdAt: new Date().toISOString(),
       }
-      this.timelineEntries.set(e.id, updated)
-      return updated
+      this.timelineEntries.set(entry.id, entry)
+      return entry
     }
     const entry: TimelineEntry = {
       id: crypto.randomUUID(),
@@ -128,16 +140,27 @@ export class FakeRepository implements ToolboxRepository {
   async saveZone(z: TimelineZoneInput): Promise<TimelineZone> {
     if (z.id) {
       const existing = this.timelineZones.get(z.id)
-      if (!existing) throw new Error(`TimelineZone ${z.id} not found`)
-      const updated: TimelineZone = {
-        ...existing,
+      if (existing) {
+        const updated: TimelineZone = {
+          ...existing,
+          name: z.name,
+          color: z.color,
+          startDate: z.startDate,
+          endDate: z.endDate ?? null,
+        }
+        this.timelineZones.set(z.id, updated)
+        return updated
+      }
+      const zone: TimelineZone = {
+        id: z.id,
         name: z.name,
         color: z.color,
         startDate: z.startDate,
         endDate: z.endDate ?? null,
+        createdAt: new Date().toISOString(),
       }
-      this.timelineZones.set(z.id, updated)
-      return updated
+      this.timelineZones.set(zone.id, zone)
+      return zone
     }
     const zone: TimelineZone = {
       id: crypto.randomUUID(),

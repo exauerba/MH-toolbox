@@ -100,17 +100,29 @@ export class LocalRepository implements ToolboxRepository {
   async saveTimelineEntry(e: TimelineEntryInput): Promise<TimelineEntry> {
     if (e.id) {
       const existing = await this.db.timelineEntries.get(e.id)
-      if (!existing) throw new Error(`TimelineEntry ${e.id} not found`)
-      const updated: TimelineEntry = {
-        ...existing,
+      if (existing) {
+        const updated: TimelineEntry = {
+          ...existing,
+          title: e.title,
+          startDate: e.startDate,
+          endDate: e.endDate ?? null,
+          description: e.description ?? '',
+          color: e.color,
+        }
+        await this.db.timelineEntries.put(updated)
+        return updated
+      }
+      const entry: TimelineEntry = {
+        id: e.id,
         title: e.title,
         startDate: e.startDate,
         endDate: e.endDate ?? null,
         description: e.description ?? '',
         color: e.color,
+        createdAt: new Date().toISOString(),
       }
-      await this.db.timelineEntries.put(updated)
-      return updated
+      await this.db.timelineEntries.put(entry)
+      return entry
     }
     const entry: TimelineEntry = {
       id: crypto.randomUUID(),
@@ -138,16 +150,27 @@ export class LocalRepository implements ToolboxRepository {
   async saveZone(z: TimelineZoneInput): Promise<TimelineZone> {
     if (z.id) {
       const existing = await this.db.timelineZones.get(z.id)
-      if (!existing) throw new Error(`TimelineZone ${z.id} not found`)
-      const updated: TimelineZone = {
-        ...existing,
+      if (existing) {
+        const updated: TimelineZone = {
+          ...existing,
+          name: z.name,
+          color: z.color,
+          startDate: z.startDate,
+          endDate: z.endDate ?? null,
+        }
+        await this.db.timelineZones.put(updated)
+        return updated
+      }
+      const zone: TimelineZone = {
+        id: z.id,
         name: z.name,
         color: z.color,
         startDate: z.startDate,
         endDate: z.endDate ?? null,
+        createdAt: new Date().toISOString(),
       }
-      await this.db.timelineZones.put(updated)
-      return updated
+      await this.db.timelineZones.put(zone)
+      return zone
     }
     const zone: TimelineZone = {
       id: crypto.randomUUID(),
