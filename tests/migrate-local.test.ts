@@ -39,7 +39,7 @@ describe('migrateLocalToSupabase', () => {
     await local.upsertJarDay({ date: '2026-08-16', totalSpoons: 10 })
     await local.addJarLog({ date: '2026-08-16', spent: 2, label: 'work' })
     const entry = await local.saveTimelineEntry({
-      id: 'fixed-entry-id',
+      id: '550e8400-e29b-41d4-a716-446655440000',
       title: 'Trip',
       startDate: '2026-01-01',
       endDate: '2026-01-10',
@@ -47,7 +47,7 @@ describe('migrateLocalToSupabase', () => {
       color: '#ff0000',
     })
     const zone = await local.saveZone({
-      id: 'fixed-zone-id',
+      id: '550e8400-e29b-41d4-a716-446655440001',
       name: 'Semester',
       color: '#123456',
       startDate: '2026-01-01',
@@ -121,7 +121,7 @@ describe('migrateLocalToSupabase', () => {
     const local = new FakeRepository()
     const remote = new FakeRepository()
     const entry = await local.saveTimelineEntry({
-      id: 'fixed-entry-id',
+      id: '550e8400-e29b-41d4-a716-446655440000',
       title: 'Trip',
       startDate: '2026-01-01',
       color: '#ff0000',
@@ -142,7 +142,7 @@ describe('migrateLocalToSupabase', () => {
     const local = new FakeRepository()
     const remote = new FakeRepository()
     const entry = await local.saveTimelineEntry({
-      id: 'fixed-entry-id',
+      id: '550e8400-e29b-41d4-a716-446655440000',
       title: 'Trip',
       startDate: '2026-01-01',
       color: '#ff0000',
@@ -169,7 +169,7 @@ describe('migrateLocalToSupabase', () => {
       localDataImportedAt: null,
     })
     const entry = await local.saveTimelineEntry({
-      id: 'fixed-entry-id',
+      id: '550e8400-e29b-41d4-a716-446655440000',
       title: 'Trip',
       startDate: '2026-01-01',
       color: '#ff0000',
