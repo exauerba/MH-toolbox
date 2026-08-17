@@ -17,16 +17,23 @@ export interface RepositoryContextValue {
 
 const RepositoryContext = createContext<RepositoryContextValue | undefined>(undefined)
 
-export function RepositoryProvider({ children }: { children: ReactNode }): ReactNode {
-  const [state, setState] = useState<RepositoryContextValue>(() => ({
-    repo: new LocalRepository(),
-    mode: 'guest',
-    user: null,
-  }))
+export function RepositoryProvider({
+  children,
+  initialRepo,
+}: {
+  children: ReactNode
+  /** Test/demo injection: use this repo and skip auth entirely. */
+  initialRepo?: ToolboxRepository
+}): ReactNode {
+  const [state, setState] = useState<RepositoryContextValue>(() =>
+    initialRepo
+      ? { repo: initialRepo, mode: 'guest', user: null }
+      : { repo: new LocalRepository(), mode: 'guest', user: null },
+  )
 
   useEffect(() => {
-    // No Supabase configured -> stay in guest mode, no subscription to set up.
-    if (!supabase) return
+    // Injected repo (tests/demo) or no Supabase configured -> stay in guest mode.
+    if (initialRepo || !supabase) return
     const client = supabase
 
     client.auth
@@ -57,7 +64,7 @@ export function RepositoryProvider({ children }: { children: ReactNode }): React
     return () => {
       sub.subscription.unsubscribe()
     }
-  }, [])
+  }, [initialRepo])
 
   return <RepositoryContext.Provider value={state}>{children}</RepositoryContext.Provider>
 }
