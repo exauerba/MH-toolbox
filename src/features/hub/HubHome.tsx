@@ -1,4 +1,6 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react'
+import type { DragEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Button,
   Card,
@@ -6,22 +8,32 @@ import {
   Icon,
   IconButton,
   cx,
-} from '../../design';
+} from '../../design'
 import {
   TOOLS,
   toolById,
   accentTileClass,
   type ToolConfig,
   type ToolId,
-} from '../../tools/tools.config';
-import { usePinnedTools } from './pins';
+} from '../../tools/tools.config'
+import { usePinnedTools } from './pins'
 
 interface ToolCardProps {
-  tool: ToolConfig;
-  pinned: boolean;
-  showGrip?: boolean;
-  onTogglePin: (id: ToolId) => void;
-  onOpen: (tool: ToolConfig) => void;
+  tool: ToolConfig
+  pinned: boolean
+  showGrip?: boolean
+  onTogglePin: (id: ToolId) => void
+  onOpen: (tool: ToolConfig) => void
+  onMoveUp?: () => void
+  moveUpDisabled?: boolean
+  onMoveDown?: () => void
+  moveDownDisabled?: boolean
+  draggable?: boolean
+  onDragStart?: (e: DragEvent) => void
+  onDragOver?: (e: DragEvent) => void
+  onDrop?: (e: DragEvent) => void
+  onDragEnd?: () => void
+  isDragging?: boolean
 }
 
 function ToolCard({
@@ -30,6 +42,16 @@ function ToolCard({
   showGrip,
   onTogglePin,
   onOpen,
+  onMoveUp,
+  moveUpDisabled,
+  onMoveDown,
+  moveDownDisabled,
+  draggable,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isDragging,
 }: ToolCardProps) {
   const action = tool.comingSoon ? null : (
     <Button
@@ -47,7 +69,7 @@ function ToolCard({
     >
       Open
     </Button>
-  );
+  )
 
   const pin = tool.comingSoon ? null : (
     <IconButton
@@ -59,54 +81,83 @@ function ToolCard({
       aria-pressed={pinned}
       onClick={() => onTogglePin(tool.id)}
     />
-  );
+  )
+
+  const reorderControls = showGrip ? (
+    <span className="flex items-center gap-0.5">
+      <span aria-hidden="true" className="text-ink-faint">
+        <Icon name="grip" size={18} pixel />
+      </span>
+      <IconButton
+        icon="arrowUp"
+        label={`Move ${tool.name} up`}
+        variant="ghost"
+        pixel
+        disabled={moveUpDisabled}
+        onClick={onMoveUp}
+      />
+      <IconButton
+        icon="arrowDown"
+        label={`Move ${tool.name} down`}
+        variant="ghost"
+        pixel
+        disabled={moveDownDisabled}
+        onClick={onMoveDown}
+      />
+    </span>
+  ) : null
 
   return (
-    <Card
-      as="article"
-      variant="tile"
-      padding="md"
-      className="pixel-card flex h-full flex-col gap-3"
+    <div
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={cx('h-full', isDragging && 'opacity-50')}
     >
-      <div className="flex items-start justify-between gap-3">
-        <span
-          aria-hidden="true"
-          className={cx(
-            'pixel-tile flex size-12 shrink-0 items-center justify-center',
-            accentTileClass[tool.accent],
-          )}
-        >
-          <Icon name={tool.icon} size={26} pixel />
-        </span>
-        {showGrip && (
-          <span aria-hidden="true" className="text-ink-faint">
-            <Icon name="grip" size={18} pixel />
+      <Card
+        as="article"
+        variant="tile"
+        padding="md"
+        className="pixel-card flex h-full flex-col gap-3"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <span
+            aria-hidden="true"
+            className={cx(
+              'pixel-tile flex size-12 shrink-0 items-center justify-center',
+              accentTileClass[tool.accent],
+            )}
+          >
+            <Icon name={tool.icon} size={26} pixel />
           </span>
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <h3 className="flex flex-wrap items-center gap-2 text-base font-extrabold text-ink">
-          {tool.name}
-          {tool.comingSoon && (
-            <Chip tone="neutral" className="pixel-chip">
-              Soon
-            </Chip>
-          )}
-        </h3>
-        <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-          {tool.tagline}
-        </p>
-      </div>
-
-      {(action || pin) && (
-        <div className="mt-1 flex items-center gap-2">
-          {action}
-          {pin}
+          {reorderControls}
         </div>
-      )}
-    </Card>
-  );
+
+        <div className="min-w-0 flex-1">
+          <h3 className="flex flex-wrap items-center gap-2 text-base font-extrabold text-ink">
+            {tool.name}
+            {tool.comingSoon && (
+              <Chip tone="neutral" className="pixel-chip">
+                Soon
+              </Chip>
+            )}
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+            {tool.tagline}
+          </p>
+        </div>
+
+        {(action || pin) && (
+          <div className="mt-1 flex items-center gap-2">
+            {action}
+            {pin}
+          </div>
+        )}
+      </Card>
+    </div>
+  )
 }
 
 /**
@@ -114,24 +165,25 @@ function ToolCard({
  * at the top ("Your tools"), everything else lives in the directory below.
  */
 export function HubHome() {
-  const { pinned, togglePin } = usePinnedTools();
-  const navigate = useNavigate();
+  const { pinned, togglePin, movePin, reorder } = usePinnedTools()
+  const navigate = useNavigate()
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
 
   const pinnedTools = pinned
     .map(toolById)
-    .filter((tool) => !tool.comingSoon);
+    .filter((tool) => !tool.comingSoon)
   const directoryTools = TOOLS.filter(
     (tool) => !pinned.includes(tool.id) || tool.comingSoon,
-  );
+  )
 
   const openTool = (tool: ToolConfig) => {
     if (tool.externalUrl) {
       // Same-tab hand-off so bloom never feels like leaving steady.
-      window.location.href = tool.externalUrl;
+      window.location.href = tool.externalUrl
     } else if (tool.route) {
-      navigate(tool.route);
+      navigate(tool.route)
     }
-  };
+  }
 
   return (
     <div className="flex flex-col gap-10">
@@ -155,7 +207,7 @@ export function HubHome() {
         </h2>
         {pinnedTools.length > 0 ? (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {pinnedTools.map((tool) => (
+            {pinnedTools.map((tool, i) => (
               <ToolCard
                 key={tool.id}
                 tool={tool}
@@ -163,6 +215,24 @@ export function HubHome() {
                 showGrip
                 onTogglePin={togglePin}
                 onOpen={openTool}
+                onMoveUp={() => movePin(tool.id, -1)}
+                moveUpDisabled={i === 0}
+                onMoveDown={() => movePin(tool.id, 1)}
+                moveDownDisabled={i === pinnedTools.length - 1}
+                draggable
+                onDragStart={(e) => {
+                  setDraggingIndex(i)
+                  e.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => {
+                  if (draggingIndex !== null && draggingIndex !== i) {
+                    reorder(draggingIndex, i)
+                  }
+                  setDraggingIndex(null)
+                }}
+                onDragEnd={() => setDraggingIndex(null)}
+                isDragging={draggingIndex === i}
               />
             ))}
           </div>
@@ -194,5 +264,5 @@ export function HubHome() {
         </div>
       </section>
     </div>
-  );
+  )
 }
