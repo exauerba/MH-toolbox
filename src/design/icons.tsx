@@ -25,6 +25,8 @@ type IconProps = SVGProps<SVGSVGElement> & {
 export type IconName =
   | 'arrowLeft'
   | 'arrowRight'
+  | 'arrowUp'
+  | 'arrowDown'
   | 'alert'
   | 'calendar'
   | 'chip'
@@ -83,6 +85,18 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
     <g {...strokeProps()}>
       <path d="M5 12h14" />
       <path d="M12 5l7 7-7 7" />
+    </g>
+  ),
+  arrowUp: () => (
+    <g {...strokeProps()}>
+      <path d="M12 19V5" />
+      <path d="M5 12l7-7 7 7" />
+    </g>
+  ),
+  arrowDown: () => (
+    <g {...strokeProps()}>
+      <path d="M12 5v14" />
+      <path d="M19 12l-7 7-7-7" />
     </g>
   ),
   alert: () => (
