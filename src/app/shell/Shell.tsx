@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { GuestBanner } from './GuestBanner';
+import { MigrationPrompt } from './MigrationPrompt';
 import { RouteTransition } from './RouteTransition';
 
 /**
@@ -24,6 +25,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <GuestBanner />
             </div>
           )}
+          <MigrationPrompt />
           <RouteTransition>{children}</RouteTransition>
         </div>
       </main>

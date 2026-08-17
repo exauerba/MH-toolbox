@@ -126,6 +126,28 @@ export function runRepositorySuite(
       expect(await repo.listTimelineEntries()).toHaveLength(1)
     })
 
+    it('upserts a timeline entry with a fixed id', async () => {
+      const created = await repo.saveTimelineEntry({
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        title: 'Seeded',
+        startDate: '2026-01-01',
+        color: '#000',
+      })
+      expect(created.id).toBe('550e8400-e29b-41d4-a716-446655440000')
+      expect(await repo.listTimelineEntries()).toHaveLength(1)
+
+      const updated = await repo.saveTimelineEntry({
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        title: 'Seeded (edited)',
+        startDate: '2026-01-01',
+        color: '#fff',
+      })
+      expect(updated.id).toBe('550e8400-e29b-41d4-a716-446655440000')
+      expect(updated.title).toBe('Seeded (edited)')
+      expect(updated.createdAt).toBe(created.createdAt)
+      expect(await repo.listTimelineEntries()).toHaveLength(1)
+    })
+
     it('orders timeline entries by startDate', async () => {
       const a = await repo.saveTimelineEntry({ title: 'A', startDate: '2026-03-01', color: '#000' })
       const b = await repo.saveTimelineEntry({ title: 'B', startDate: '2026-01-01', color: '#000' })
@@ -160,6 +182,28 @@ export function runRepositorySuite(
       expect(await repo.listZones()).toHaveLength(1)
       await repo.deleteZone(z.id)
       expect(await repo.listZones()).toEqual([])
+    })
+
+    it('upserts a zone with a fixed id', async () => {
+      const created = await repo.saveZone({
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        name: 'Seeded zone',
+        color: '#000',
+        startDate: '2026-01-01',
+      })
+      expect(created.id).toBe('550e8400-e29b-41d4-a716-446655440001')
+      expect(await repo.listZones()).toHaveLength(1)
+
+      const updated = await repo.saveZone({
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        name: 'Seeded zone (edited)',
+        color: '#fff',
+        startDate: '2026-01-01',
+      })
+      expect(updated.id).toBe('550e8400-e29b-41d4-a716-446655440001')
+      expect(updated.name).toBe('Seeded zone (edited)')
+      expect(updated.createdAt).toBe(created.createdAt)
+      expect(await repo.listZones()).toHaveLength(1)
     })
 
     it('uploads, lists, and deletes images', async () => {

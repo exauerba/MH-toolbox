@@ -266,11 +266,26 @@ export class SupabaseRepository implements ToolboxRepository {
       color: e.color,
     }
     if (e.id) {
-      const { data, error } = await this.client
+      const { data: existing } = await this.client
         .from('steady_timeline_entries')
-        .update({ ...row, updated_at: new Date().toISOString() })
+        .select('id')
         .eq('id', e.id)
         .eq('user_id', uid)
+        .maybeSingle()
+      if (existing) {
+        const { data, error } = await this.client
+          .from('steady_timeline_entries')
+          .update({ ...row, updated_at: new Date().toISOString() })
+          .eq('id', e.id)
+          .eq('user_id', uid)
+          .select()
+          .single()
+        if (error) throw error
+        return timelineEntryFromRow(data)
+      }
+      const { data, error } = await this.client
+        .from('steady_timeline_entries')
+        .insert({ id: e.id, user_id: uid, ...row })
         .select()
         .single()
       if (error) throw error
@@ -315,11 +330,26 @@ export class SupabaseRepository implements ToolboxRepository {
       end_date: z.endDate ?? null,
     }
     if (z.id) {
-      const { data, error } = await this.client
+      const { data: existing } = await this.client
         .from('steady_timeline_zones')
-        .update({ ...row, updated_at: new Date().toISOString() })
+        .select('id')
         .eq('id', z.id)
         .eq('user_id', uid)
+        .maybeSingle()
+      if (existing) {
+        const { data, error } = await this.client
+          .from('steady_timeline_zones')
+          .update({ ...row, updated_at: new Date().toISOString() })
+          .eq('id', z.id)
+          .eq('user_id', uid)
+          .select()
+          .single()
+        if (error) throw error
+        return timelineZoneFromRow(data)
+      }
+      const { data, error } = await this.client
+        .from('steady_timeline_zones')
+        .insert({ id: z.id, user_id: uid, ...row })
         .select()
         .single()
       if (error) throw error
