@@ -1,5 +1,7 @@
+vi.mock('../src/config/supabase', () => ({ supabase: null }))
+
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 describe('App', () => {

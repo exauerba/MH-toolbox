@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { User } from '@supabase/supabase-js'
 
-// authCore imports the app client factory, which throws when env vars are
-// missing. Mock it so the pure helpers below are testable without Supabase.
+// The shared client is nullable (null when env vars are absent). Mock it so
+// the pure helpers below are testable without Supabase.
 vi.mock('../src/config/supabase', () => ({
   supabase: {},
 }))
@@ -16,6 +16,7 @@ import {
   usernameIsValid,
   emailFor,
   userFromSupabase,
+  createAuthService,
 } from '../src/auth/authCore'
 
 const fakeUser = (id: string, email: string) => ({ id, email }) as unknown as User
@@ -73,5 +74,21 @@ describe('auth messages', () => {
 
   it('lockedMessage reports the remaining seconds', () => {
     expect(lockedMessage(47)).toBe('Too many attempts. Try again in 47s.')
+  })
+})
+
+describe('createAuthService', () => {
+  it('returns NOT_CONFIGURED for every method when the client is null', async () => {
+    const service = createAuthService({ client: null })
+    expect(await service.signUp('ada', 'password123')).toEqual({
+      ok: false,
+      error: MESSAGES.NOT_CONFIGURED,
+    })
+    expect(await service.signIn('ada', 'password123')).toEqual({
+      ok: false,
+      error: MESSAGES.NOT_CONFIGURED,
+    })
+    expect(await service.signOut()).toEqual({ ok: false, error: MESSAGES.NOT_CONFIGURED })
+    expect(await service.getSession()).toEqual({ ok: false, error: MESSAGES.NOT_CONFIGURED })
   })
 })
