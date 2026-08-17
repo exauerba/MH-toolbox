@@ -15,5 +15,8 @@ export default defineConfig({
     // Hosted-Supabase suites (parity + RLS) do many sequential network round
     // trips; the 5s default times out under parallel file execution.
     testTimeout: 20000,
+    // The hosted parity suite creates a user + signs in per test in beforeEach;
+    // accumulated network latency can exceed the 10s default hook timeout.
+    hookTimeout: 30000,
   },
 })
