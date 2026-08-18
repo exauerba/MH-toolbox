@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Icon, IconButton, cx } from '../../design';
 import { useTheme } from './theme';
@@ -10,9 +11,30 @@ const NAV_ITEMS = [
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastY;
+      // Collapse when scrolling down past the header; reveal when scrolling up.
+      if (y > 96 && delta > 4) setHidden(true);
+      else if (delta < -4 || y <= 96) setHidden(false);
+      lastY = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur-sm">
+    <header
+      className={cx(
+        'sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur-sm',
+        'transition-transform duration-[var(--dur-normal)] ease-[var(--ease-out)]',
+        hidden && '-translate-y-full',
+      )}
+    >
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between gap-3">
           <p className="flex items-center gap-2.5">

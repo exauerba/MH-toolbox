@@ -75,17 +75,13 @@ function JarVessel({ total, remaining, borrowed, fill, leaving }: JarVesselProps
   const spoons = Array.from({ length: remaining }, (_, i) => i)
 
   return (
-    <div
-      aria-hidden="true"
-      className="relative mx-auto w-fit pt-2"
-      style={{ width: '10.5rem' }}
-    >
+    <div aria-hidden="true" className="relative mx-auto w-36 pt-2 sm:w-[10.5rem]">
       {/* Lid — pixel jar, hard stepped walnut */}
-      <div className="mx-auto h-3 w-24 rounded-t-sm border-[3px] border-b-0 border-walnut-600 bg-walnut-500" />
+      <div className="mx-auto h-3 w-20 rounded-t-sm border-[3px] border-b-0 border-walnut-600 bg-walnut-500 sm:w-24" />
       {/* Neck */}
-      <div className="mx-auto h-4 w-28 rounded-none border-[3px] border-b-0 border-walnut-600 bg-parchment" />
+      <div className="mx-auto h-4 w-24 rounded-none border-[3px] border-b-0 border-walnut-600 bg-parchment sm:w-28" />
       {/* Body */}
-      <div className="relative mx-auto h-56 w-36 overflow-hidden rounded-t-sm rounded-b-[6px] border-[3px] border-walnut-600 bg-parchment shadow-pixel">
+      <div className="relative mx-auto h-44 w-32 overflow-hidden rounded-t-sm rounded-b-[6px] border-[3px] border-walnut-600 bg-parchment shadow-pixel sm:h-56 sm:w-36">
         {/* Liquid — fills from the bottom, animates on spend */}
         <div
           className="absolute inset-x-0 bottom-0 h-full origin-bottom rounded-none bg-jar-300 transition-transform duration-[var(--dur-jar)] ease-[var(--ease-out)]"
@@ -200,6 +196,7 @@ export function JarScreen() {
   const [labelText, setLabelText] = useState('')
   const [fill, setFill] = useState<'spoons' | 'chips'>('spoons')
   const [leaving, setLeaving] = useState<LeaveBurst[]>([])
+  const [buttonBurst, setButtonBurst] = useState<LeaveBurst | null>(null)
   const nextLeaveId = useRef(1)
   const [editing, setEditing] = useState<EditState | null>(null)
 
@@ -271,7 +268,9 @@ export function JarScreen() {
     setLabelText('')
     const burst = { id: nextLeaveId.current++, count: Math.max(1, Math.ceil(step)) }
     setLeaving((cur) => [...cur, burst])
+    setButtonBurst(burst)
     setTimeout(() => setLeaving((cur) => cur.filter((b) => b.id !== burst.id)), 550)
+    setTimeout(() => setButtonBurst((cur) => (cur?.id === burst.id ? null : cur)), 550)
     await refreshLogs()
   }
 
@@ -372,10 +371,13 @@ export function JarScreen() {
           </p>
         </div>
 
-        {/* Jar + quick-add — two columns on desktop */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* The jar */}
-          <div className="mt-6 rounded-sm border-2 border-line-strong bg-surface px-4 py-8 shadow-pixel-sm">
+        {/* Jar + quick-add — two columns on desktop; on mobile the jar and
+            the logging form sit together so you can log while watching the jar.
+            Today's log spans full width below so neither column gaps. */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          {/* The jar — self-start keeps it compact instead of stretching to
+              the right column's height */}
+          <div className="min-w-0 self-start rounded-sm border-2 border-line-strong bg-surface px-4 py-4 shadow-pixel-sm sm:py-8">
             <JarVessel
               total={dayTotal}
               remaining={remaining}
@@ -383,7 +385,7 @@ export function JarScreen() {
               fill={fill}
               leaving={leaving}
             />
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-5">
               <LedgerStat
                 icon={fill === 'chips' ? 'chip' : 'spoon'}
                 value={remaining}
@@ -413,34 +415,26 @@ export function JarScreen() {
             )}
           </div>
 
-          {/* Quick add + today's log */}
-          <div className="flex flex-col gap-6">
-            {/* Quick add */}
-            <div className="mt-0">
-              <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">
-                Log a spoonful
-              </h3>
-              <p className="mb-3 mt-1 text-sm text-ink-soft">
-                Takes about ten seconds — that's the point.
-              </p>
-              <div className="flex flex-wrap items-end gap-3">
-                <Stepper
-                  label="Spoons spent"
-                  value={step}
-                  onChange={setStep}
-                  step={0.5}
-                  min={0.5}
-                  max={5}
-                  pixel
-                />
-                <TextInput
-                  label="Label (optional)"
-                  value={labelText}
-                  onChange={(e) => setLabelText(e.target.value)}
-                  placeholder="e.g. shower, work call"
-                  maxLength={40}
-                  className="min-w-52 flex-1"
-                />
+          {/* Quick add — a card that matches the jar's height on desktop so the
+              row stays balanced; on mobile it flows right under the jar */}
+          <div className="flex min-w-0 flex-col rounded-sm border-2 border-line p-4">
+            <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+              Log a spoonful
+            </h3>
+            <p className="mb-3 mt-1 text-sm text-ink-soft">
+              Takes about ten seconds — that's the point.
+            </p>
+            <div className="grid grid-cols-[1fr_auto] items-end gap-3 lg:flex lg:flex-wrap">
+              <Stepper
+                label="Spoons spent"
+                value={step}
+                onChange={setStep}
+                step={0.5}
+                min={0.5}
+                max={5}
+                pixel
+              />
+              <div className="relative justify-self-end">
                 <Button
                   onClick={addSpoon}
                   className="pixel-btn"
@@ -448,95 +442,124 @@ export function JarScreen() {
                 >
                   Log {formatAmount(step)}
                 </Button>
+                {buttonBurst && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -top-1 left-1/2 flex -translate-x-1/2 -translate-y-full items-start gap-1"
+                  >
+                    {Array.from({ length: buttonBurst.count }, (_, i) => (
+                      <Icon
+                        key={i}
+                        name={fill === 'chips' ? 'chip' : 'spoon'}
+                        size={13}
+                        pixel
+                        className="animate-chip-leave text-jar-800"
+                      />
+                    ))}
+                  </span>
+                )}
               </div>
-              <p className="mt-2 text-sm text-ink-soft">
-                Optional label — e.g. "shower", "work call", "social event" (≤40 chars, used
-                for your pattern view).
-              </p>
+              <TextInput
+                label="Label (optional)"
+                value={labelText}
+                onChange={(e) => setLabelText(e.target.value)}
+                placeholder="e.g. shower, work call"
+                maxLength={40}
+                className="col-span-2 min-w-52 flex-1 lg:col-span-1"
+              />
             </div>
+            <p className="mt-auto pt-2 text-sm text-ink-soft">
+              Optional label — e.g. "shower", "work call", "social event" (≤40 chars, used
+              for your pattern view).
+            </p>
+          </div>
 
-            {/* Today's log */}
-            <div className="mt-0 rounded-sm border-2 border-line p-4">
-              <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
-                Today's log
-              </h3>
-              {todayLogs.length > 0 ? (
-                <ul className="flex flex-col gap-2">
-                  {todayLogs.map((log) =>
-                    editing?.id === log.id ? (
-                      <li
-                        key={log.id}
-                        className="flex flex-col gap-3 rounded-sm border border-line bg-surface-muted px-3 py-2"
-                      >
-                        <Stepper
-                          label="Spoons spent"
-                          value={editing.spent}
-                          onChange={(value) => setEditing({ ...editing, spent: value })}
-                          step={0.5}
-                          min={0.5}
-                          max={5}
+          {/* Today's log — full width below so the left column doesn't gap */}
+          <div className="min-w-0 rounded-sm border-2 border-line p-4 lg:col-span-2">
+            <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+              Today's log
+            </h3>
+            {todayLogs.length > 0 ? (
+              <ul className="flex flex-col gap-2">
+                {todayLogs.map((log) =>
+                  editing?.id === log.id ? (
+                    <li
+                      key={log.id}
+                      className="flex flex-col gap-3 rounded-sm border border-line bg-surface-muted px-3 py-2"
+                    >
+                      <Stepper
+                        label="Spoons spent"
+                        value={editing.spent}
+                        onChange={(value) => setEditing({ ...editing, spent: value })}
+                        step={0.5}
+                        min={0.5}
+                        max={5}
+                        pixel
+                      />
+                      <TextInput
+                        label="Label"
+                        value={editing.label}
+                        onChange={(e) => setEditing({ ...editing, label: e.target.value })}
+                        maxLength={40}
+                        placeholder="No label"
+                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          onClick={saveEdit}
+                          className="min-h-9 px-4 text-sm"
+                          leadingIcon={<Icon name="check" size={16} pixel />}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setEditing(null)}
+                          className="min-h-9 px-4 text-sm"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </li>
+                  ) : (
+                    <li
+                      key={log.id}
+                      className="flex items-center justify-between gap-3 rounded-sm border border-line bg-surface-muted px-3 py-2"
+                    >
+                      <span className="flex min-w-0 items-center gap-2 text-ink">
+                        <Icon
+                          name="spoon"
+                          size={16}
                           pixel
+                          className="shrink-0 text-jar-600"
                         />
-                        <TextInput
-                          label="Label"
-                          value={editing.label}
-                          onChange={(e) => setEditing({ ...editing, label: e.target.value })}
-                          maxLength={40}
-                          placeholder="No label"
+                        <span className="truncate">{log.label ?? 'No label'}</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1 text-sm font-bold tabular-nums text-ink-soft">
+                        {formatAmount(log.spent)} spoons
+                        <IconButton
+                          icon="edit"
+                          label={`Edit "${log.label ?? 'untitled'}"`}
+                          variant="ghost"
+                          pixel
+                          onClick={() => startEdit(log)}
                         />
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            onClick={saveEdit}
-                            className="min-h-9 px-4 text-sm"
-                            leadingIcon={<Icon name="check" size={16} pixel />}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            onClick={() => setEditing(null)}
-                            className="min-h-9 px-4 text-sm"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </li>
-                    ) : (
-                      <li
-                        key={log.id}
-                        className="flex items-center justify-between gap-3 rounded-sm border border-line bg-surface-muted px-3 py-2"
-                      >
-                        <span className="flex items-center gap-2 text-ink">
-                          <Icon name="spoon" size={16} pixel className="text-jar-600" />
-                          {log.label ?? 'No label'}
-                        </span>
-                        <span className="flex items-center gap-1 text-sm font-bold tabular-nums text-ink-soft">
-                          {formatAmount(log.spent)} spoons
-                          <IconButton
-                            icon="edit"
-                            label={`Edit "${log.label ?? 'untitled'}"`}
-                            variant="ghost"
-                            pixel
-                            onClick={() => startEdit(log)}
-                          />
-                          <IconButton
-                            icon="trash"
-                            label={`Delete "${log.label ?? 'untitled'}"`}
-                            variant="ghost"
-                            pixel
-                            onClick={() => deleteLog(log.id)}
-                          />
-                        </span>
-                      </li>
-                    ),
-                  )}
-                </ul>
-              ) : (
-                <p className="text-sm text-ink-soft">
-                  Nothing logged yet today. The jar stays full until you spend.
-                </p>
-              )}
-            </div>
+                        <IconButton
+                          icon="trash"
+                          label={`Delete "${log.label ?? 'untitled'}"`}
+                          variant="ghost"
+                          pixel
+                          onClick={() => deleteLog(log.id)}
+                        />
+                      </span>
+                    </li>
+                  ),
+                )}
+              </ul>
+            ) : (
+              <p className="text-sm text-ink-soft">
+                Nothing logged yet today. The jar stays full until you spend.
+              </p>
+            )}
           </div>
         </div>
 
