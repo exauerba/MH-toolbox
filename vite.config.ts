@@ -1,12 +1,54 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
-
-// TODO(WP1/WP2): add vite-plugin-pwa with base '/MH-toolbox/', network-only for Supabase API, network-first for storage images
 
 export default defineConfig({
   base: '/MH-toolbox/',
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg'],
+      manifest: {
+        name: 'steady',
+        short_name: 'steady',
+        description: 'A toolbox you can hold onto.',
+        theme_color: '#a24d35',
+        background_color: '#faf6f1',
+        display: 'standalone',
+        start_url: './',
+        icons: [
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        navigateFallback: '/MH-toolbox/',
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        runtimeCaching: [
+          // Storage images (signed URLs are transient) — network-first so the
+          // freshest URL wins online, cached copy only as an offline fallback.
+          {
+            urlPattern: /\/storage\/v1\/object\/.*/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'steady-media',
+              networkTimeoutSeconds: 10,
+              expiration: { maxEntries: 100, maxAgeSeconds: 86400 },
+            },
+          },
+          // The Supabase API itself is never cached — auth + data must be live.
+          {
+            urlPattern: /^https:\/\/xxtavjeetzvtlhwoenho\.supabase\.co\/.*/,
+            handler: 'NetworkOnly',
+          },
+        ],
+      },
+    }),
+  ],
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
