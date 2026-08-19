@@ -20,7 +20,8 @@ module.exports = {
         'categories:accessibility': ['error', { minScore: 0.95 }],
         'categories:best-practices': ['error', { minScore: 0.9 }],
         'categories:seo': ['error', { minScore: 0.9 }],
-        'categories:pwa': ['error', { minScore: 0.9 }],
+        // PWA installability is covered by e2e/offline.spec.ts + the manifest/SW
+        // in the build; Lighthouse 12 removed the standalone PWA category.
       },
     },
     upload: {
