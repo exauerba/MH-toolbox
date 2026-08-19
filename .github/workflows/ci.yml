@@ -87,9 +87,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # GH runners are ubuntu, so --with-deps is correct here. On a local Windows
-      # runner use `npx playwright install chromium` without --with-deps.
-      - run: npx playwright install --with-deps chromium
+      # ubuntu-latest already ships Chromium's OS dependencies, so --with-deps
+      # (which runs apt-get) is unnecessary and can hang the job. Install the
+      # browser only.
+      - run: npx playwright install chromium
       - run: npm run e2e
 
   rls:
