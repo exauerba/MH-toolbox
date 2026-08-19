@@ -93,6 +93,25 @@ jobs:
       - run: npx playwright install chromium
       - run: npm run e2e
 
+  lighthouse:
+    name: Lighthouse budgets
+    runs-on: ubuntu-latest
+    needs: install
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Runs Lighthouse against the built app (vite preview) and asserts the
+      # Wave-4 budgets: Perf >= 90, A11y >= 95, Best Practices >= 90, SEO >= 90,
+      # PWA >= 90 (see lighthouserc.js).
+      - run: npx lhci autorun
+
   rls:
     name: RLS security tests
     runs-on: ubuntu-latest
