@@ -527,6 +527,10 @@ export function TimelineScreen() {
       ? 'horizontal'
       : 'vertical',
   )
+  // When the user has explicitly chosen an orientation, that choice wins and
+  // persists — rotation no longer overrides it. Until then we follow the device
+  // (landscape → horizontal, portrait → vertical).
+  const hasExplicitOrientation = useRef(false)
   const [entryModal, setEntryModal] = useState<{
     open: boolean
     entry: TimelineEntry | null
@@ -553,7 +557,10 @@ export function TimelineScreen() {
       if (cancelled) return
       setEntries(nextEntries)
       setZones(nextZones)
-      if (profile?.timelineOrientation) setOrientation(profile.timelineOrientation)
+      if (profile?.timelineOrientation) {
+        hasExplicitOrientation.current = true
+        setOrientation(profile.timelineOrientation)
+      }
       const images: Record<string, ImageRef[]> = {}
       await Promise.all(nextEntries.map(async (entry) => (images[entry.id] = await repo.listImages(entry.id))))
       if (cancelled) return
@@ -565,6 +572,22 @@ export function TimelineScreen() {
       cancelled = true
     }
   }, [repo])
+
+  // Follow the device orientation (landscape → horizontal, portrait → vertical)
+  // until the user makes an explicit choice. This makes the timeline switch
+  // when the phone is rotated, without fighting a saved preference.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(min-width: 768px)')
+    const apply = () => {
+      if (!hasExplicitOrientation.current) {
+        setOrientation(mq.matches ? 'horizontal' : 'vertical')
+      }
+    }
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
 
   const reload = useCallback(async () => {
     const [nextEntries, nextZones] = await Promise.all([repo.listTimelineEntries(), repo.listZones()])
@@ -581,6 +604,7 @@ export function TimelineScreen() {
   }, [repo])
 
   const changeOrientation = (next: TimelineOrientation) => {
+    hasExplicitOrientation.current = true
     setOrientation(next)
     // Persist like pins: fire-and-forget, optimistic local state. Spread the
     // fetched profile so future fields are never dropped.

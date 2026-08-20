@@ -7,9 +7,9 @@ import { formatDate, MONTHS } from './date'
 const CARD_W = 256
 // Worst-case card height: 44px IconButton header + dates + zone chip +
 // 3-line description + 3×56px thumbnails + card padding.
-const CARD_H = 300
+const CARD_H = 292
 const CARD_GAP = 16
-const TRACK_BASE_HEIGHT = 400
+const TRACK_BASE_HEIGHT = 340
 const TOP_OFFSET = TRACK_BASE_HEIGHT / 2 + 28
 
 function parseDate(iso: string): number {
@@ -226,9 +226,9 @@ export function TimelineHorizontal({
               type="button"
               aria-label={`Jump to ${zone.name}`}
               onClick={() => scrollTrackTo(xFor(zone.startDate))}
-              className="pressable inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3.5 text-sm font-bold text-ink shadow-soft hover:bg-surface-muted"
+              className="pressable inline-flex min-h-11 items-center gap-1.5 rounded-none border-2 border-line-strong bg-surface px-3.5 text-sm font-bold text-ink shadow-pixel-sm hover:bg-surface-muted"
             >
-              <span className="size-2.5 rounded-full" style={{ backgroundColor: zone.color }} />
+              <span className="size-2.5 rounded-[3px]" style={{ backgroundColor: zone.color }} />
               {zone.name}
             </button>
           ))}
@@ -266,16 +266,19 @@ export function TimelineHorizontal({
                     borderLeft: `3px solid ${zone.color}`,
                   }}
                 >
-                  <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-bold text-ink shadow-soft">
-                    <span className="size-2 rounded-full" style={{ backgroundColor: zone.color }} />
+                  <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-none border-2 border-line-strong bg-surface/90 px-2.5 py-1 text-xs font-bold text-ink shadow-pixel-sm">
+                    <span className="size-2 rounded-[3px]" style={{ backgroundColor: zone.color }} />
                     {zone.name}
                   </span>
                 </div>
               )
             })}
 
-            {/* Centre line */}
-            <div className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 bg-line-strong" aria-hidden="true" />
+            {/* Centre line — dashed for a retro, hand-drawn feel */}
+            <div
+              className="absolute left-0 right-0 top-1/2 h-0 border-t-2 border-dashed border-line-strong"
+              aria-hidden="true"
+            />
 
             {/* Compact markers — real buttons with accessible names */}
             {entries
@@ -285,24 +288,29 @@ export function TimelineHorizontal({
                 const left = xFor(entry.startDate)
                 return (
                   <div key={entry.id} className="absolute" style={{ left, top: '50%' }}>
-                    <Tooltip label={`${entry.title}, ${formatDate(entry.startDate)}`}>
-                      <button
-                        type="button"
-                        aria-label={`${entry.title}, ${formatDate(entry.startDate)}`}
-                        onClick={() => {
-                          if (dragState.current.moved) return
-                          onOpenEntry(entry)
-                        }}
-                        className="group relative block size-11 -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform duration-[var(--dur-fast)] hover:scale-110 focus-visible:scale-110"
-                      >
-                        {/* 16px visual dot inside a 44px touch target */}
-                        <span
-                          aria-hidden="true"
-                          className="absolute inset-0 m-auto size-4 rounded-full border-2 bg-surface transition-transform duration-[var(--dur-fast)] group-hover:scale-125"
-                          style={{ borderColor: zone?.color ?? entry.color }}
-                        />
-                      </button>
-                    </Tooltip>
+                    <div className="flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
+                      <span className="mb-1 whitespace-nowrap text-2xs font-semibold text-ink-faint">
+                        {formatDate(entry.startDate)}
+                      </span>
+                      <Tooltip label={`${entry.title}, ${formatDate(entry.startDate)}`}>
+                        <button
+                          type="button"
+                          aria-label={`${entry.title}, ${formatDate(entry.startDate)}`}
+                          onClick={() => {
+                            if (dragState.current.moved) return
+                            onOpenEntry(entry)
+                          }}
+                          className="group relative block size-11 rounded-none transition-transform duration-[var(--dur-fast)] hover:scale-110 focus-visible:scale-110"
+                        >
+                          {/* 16px pixel dot inside a 44px touch target */}
+                          <span
+                            aria-hidden="true"
+                            className="absolute inset-0 m-auto size-4 rounded-[3px] border-2 bg-surface shadow-pixel-sm transition-transform duration-[var(--dur-fast)] group-hover:scale-125"
+                            style={{ borderColor: zone?.color ?? entry.color }}
+                          />
+                        </button>
+                      </Tooltip>
+                    </div>
                   </div>
                 )
               })}
