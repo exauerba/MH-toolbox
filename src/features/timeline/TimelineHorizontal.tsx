@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent, PointerEvent } from 'react'
 import { Card, Chip, Icon, IconButton, Tooltip, usePrefersReducedMotion } from '../../design'
 import type { ImageRef, TimelineEntry, TimelineZone } from '../../data/types'
-import { formatDate } from './date'
+import { formatDate, MONTHS } from './date'
 
 const CARD_W = 256
 // Worst-case card height: 44px IconButton header + dates + zone chip +
@@ -102,6 +102,32 @@ export function TimelineHorizontal({
     const maxBottom = cardLayout.reduce((max, c) => Math.max(max, c.top + CARD_H), 0)
     return Math.max(TRACK_BASE_HEIGHT, maxBottom + 16)
   }, [cardLayout])
+
+  // Month ruler — one tick per month start, aligned to the date-proportional
+  // scale so it scrolls with the track. The year is shown on January and on
+  // the first label, so the strip reads like a calendar.
+  const rulerMonths = useMemo(() => {
+    if (!scale.minDate) return []
+    const months: { x: number; label: string }[] = []
+    const start = new Date(`${scale.minDate}T00:00:00`)
+    const end = new Date(`${scale.maxDate}T00:00:00`)
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1)
+    let first = true
+    while (cursor <= end) {
+      const iso = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-01`
+      const x = Math.max(0, diffDays(scale.minDate, iso) * scale.pxPerDay)
+      if (x <= scale.trackWidth) {
+        const isJanuary = cursor.getMonth() === 0
+        months.push({
+          x,
+          label: `${MONTHS[cursor.getMonth()]}${isJanuary || first ? ` ${cursor.getFullYear()}` : ''}`,
+        })
+        first = false
+      }
+      cursor.setMonth(cursor.getMonth() + 1)
+    }
+    return months
+  }, [scale])
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current
@@ -348,6 +374,25 @@ export function TimelineHorizontal({
                 </div>
               )
             })}
+          </div>
+          {/* Month ruler — subtle calendar strip anchoring the date scale */}
+          <div
+            aria-hidden="true"
+            className="relative h-7 border-t border-line"
+            style={{ width: scale.trackWidth }}
+          >
+            {rulerMonths.map((m) => (
+              <div key={`${m.label}-${m.x}`} className="absolute top-0" style={{ left: m.x }}>
+                <span className="absolute top-0 h-1.5 w-px bg-line-strong" />
+                <span
+                  className={`absolute top-2 whitespace-nowrap text-xs font-semibold text-ink-soft ${
+                    m.x > 0 ? '-translate-x-1/2' : ''
+                  }`}
+                >
+                  {m.label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
         {/* eslint-enable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}

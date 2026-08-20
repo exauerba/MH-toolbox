@@ -71,5 +71,8 @@ test.describe('timeline', () => {
     await expect(page.getByRole('region', { name: 'Timeline' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Jump to Summer' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Beach trip, 10 Jul 2025' })).toBeVisible()
+    // The month ruler anchors the date scale (Jul–Sep 2025 span).
+    await expect(page.getByText('Jul 2025')).toBeVisible()
+    await expect(page.getByText('Sep')).toBeVisible()
   })
 })

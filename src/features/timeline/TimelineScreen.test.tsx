@@ -257,6 +257,21 @@ describe('TimelineScreen', () => {
     expect(screen.getAllByText('Summer').length).toBeGreaterThan(0)
   })
 
+  it('shows a month ruler along the bottom of the horizontal track', async () => {
+    const repo = new FakeRepository()
+    await repo.setProfile({ ...baseProfile, timelineOrientation: 'horizontal' })
+    await repo.saveTimelineEntry({ title: 'Beach trip', startDate: '2025-07-10', color: zonePalette.sage })
+    await repo.saveTimelineEntry({ title: 'Quiet moment', startDate: '2025-09-15', color: zonePalette.sage })
+    renderScreen(repo)
+
+    expect(await screen.findByRole('region', { name: 'Timeline' })).toBeInTheDocument()
+    // The scale spans Jul–Sep 2025: the first label carries the year, later
+    // months are bare, and the year repeats on January.
+    expect(screen.getByText('Jul 2025')).toBeInTheDocument()
+    expect(screen.getByText('Aug')).toBeInTheDocument()
+    expect(screen.getByText('Sep')).toBeInTheDocument()
+  })
+
   it('scrolls the horizontal track with the arrow buttons and arrow keys', async () => {
     const repo = new FakeRepository()
     await repo.setProfile({ ...baseProfile, timelineOrientation: 'horizontal' })
