@@ -8,13 +8,14 @@ import type { Breakpoint } from './useBreakpoint'
 
 const CARD_GAP = 16
 
-// Proportional sizes per breakpoint (see docs/HANDOFF_AUTOSCALE.md). The
-// worst-case card height accounts for the 44px IconButton header + dates +
-// zone chip + 3-line description + 3×56px thumbnails + card padding.
+// Proportional sizes per breakpoint (see docs/HANDOFF_AUTOSCALE.md). Cards
+// show title + dates + zone chip + thumbnails (no description), so the
+// worst-case height is the 44px IconButton header + dates + zone chip +
+// 3×56px thumbnails + card padding.
 const SIZES: Record<Breakpoint, { CARD_W: number; CARD_H: number; TRACK_BASE_HEIGHT: number; DOT: number }> = {
-  small: { CARD_W: 200, CARD_H: 260, TRACK_BASE_HEIGHT: 300, DOT: 16 },
-  desktop: { CARD_W: 256, CARD_H: 292, TRACK_BASE_HEIGHT: 340, DOT: 16 },
-  large: { CARD_W: 300, CARD_H: 320, TRACK_BASE_HEIGHT: 380, DOT: 18 },
+  small: { CARD_W: 180, CARD_H: 200, TRACK_BASE_HEIGHT: 260, DOT: 16 },
+  desktop: { CARD_W: 220, CARD_H: 220, TRACK_BASE_HEIGHT: 300, DOT: 16 },
+  large: { CARD_W: 260, CARD_H: 240, TRACK_BASE_HEIGHT: 340, DOT: 18 },
 }
 
 function parseDate(iso: string): number {
@@ -284,7 +285,7 @@ export function TimelineHorizontal({
 
             {/* Centre line — dashed for a retro, hand-drawn feel */}
             <div
-              className="absolute left-0 right-0 top-1/2 h-0 border-t-2 border-dashed border-line-strong"
+              className="absolute left-0 right-0 top-1/2 h-0 border-t-2 border-dashed border-ink-soft"
               aria-hidden="true"
             />
 
@@ -372,9 +373,6 @@ export function TimelineHorizontal({
                           {zone.name}
                         </Chip>
                       </p>
-                    )}
-                    {entry.description && (
-                      <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ink">{entry.description}</p>
                     )}
                     {images.length > 0 && (
                       <div className="mt-3 flex items-center gap-2">
