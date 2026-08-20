@@ -32,6 +32,7 @@ interface ProfileRow {
   jar_reset_hour: number
   onboarding_done: boolean
   local_data_imported_at: string | null
+  timeline_orientation: string | null
 }
 
 interface JarLogRow {
@@ -81,6 +82,10 @@ function profileFromRow(r: ProfileRow): Profile {
     jarResetHour: r.jar_reset_hour,
     onboardingDone: r.onboarding_done,
     localDataImportedAt: iso(r.local_data_imported_at),
+    timelineOrientation:
+      r.timeline_orientation === 'horizontal' || r.timeline_orientation === 'vertical'
+        ? r.timeline_orientation
+        : undefined,
   }
 }
 
@@ -159,6 +164,7 @@ export class SupabaseRepository implements ToolboxRepository {
         jar_reset_hour: p.jarResetHour,
         onboarding_done: p.onboardingDone,
         local_data_imported_at: p.localDataImportedAt,
+        timeline_orientation: p.timelineOrientation ?? null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' },

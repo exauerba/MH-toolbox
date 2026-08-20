@@ -5,7 +5,9 @@ import type { ImageRef, TimelineEntry, TimelineZone } from '../../data/types'
 import { formatDate } from './date'
 
 const CARD_W = 256
-const CARD_H = 220
+// Worst-case card height: 44px IconButton header + dates + zone chip +
+// 3-line description + 3×56px thumbnails + card padding.
+const CARD_H = 300
 const CARD_GAP = 16
 const TRACK_BASE_HEIGHT = 400
 const TOP_OFFSET = TRACK_BASE_HEIGHT / 2 + 28
@@ -119,6 +121,12 @@ export function TimelineHorizontal({
       window.removeEventListener('resize', updateScrollState)
     }
   }, [updateScrollState])
+
+  // Re-evaluate arrow-button state when the track grows (e.g. an entry is
+  // added) — no scroll event fires for a content-size change.
+  useEffect(() => {
+    updateScrollState()
+  }, [updateScrollState, scale.trackWidth, trackHeight])
 
   const scrollTrackTo = useCallback(
     (left: number) => {
@@ -259,9 +267,15 @@ export function TimelineHorizontal({
                           if (dragState.current.moved) return
                           onOpenEntry(entry)
                         }}
-                        className="block size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-surface transition-transform duration-[var(--dur-fast)] hover:scale-125 focus-visible:scale-125"
-                        style={{ borderColor: zone?.color ?? entry.color }}
-                      />
+                        className="group relative block size-11 -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform duration-[var(--dur-fast)] hover:scale-110 focus-visible:scale-110"
+                      >
+                        {/* 16px visual dot inside a 44px touch target */}
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-0 m-auto size-4 rounded-full border-2 bg-surface transition-transform duration-[var(--dur-fast)] group-hover:scale-125"
+                          style={{ borderColor: zone?.color ?? entry.color }}
+                        />
+                      </button>
                     </Tooltip>
                   </div>
                 )

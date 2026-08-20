@@ -26,6 +26,15 @@ import { assertImageAllowed, MAX_IMAGES_PER_ENTRY } from '../../data/imageRules'
 import { formatDate } from './date'
 import { TimelineHorizontal } from './TimelineHorizontal'
 
+/** Fallback profile used when persisting the orientation for a fresh guest. */
+const DEFAULT_PROFILE = {
+  theme: 'system' as const,
+  jarDefaultSpoons: 12,
+  jarResetHour: 0,
+  onboardingDone: false,
+  localDataImportedAt: null,
+}
+
 /**
  * Zone colour picker — one swatch per curated zonePalette entry. The
  * selected swatch gets a ring + check, and every swatch carries its name
@@ -573,16 +582,13 @@ export function TimelineScreen() {
 
   const changeOrientation = (next: TimelineOrientation) => {
     setOrientation(next)
-    // Persist like pins: fire-and-forget, optimistic local state.
+    // Persist like pins: fire-and-forget, optimistic local state. Spread the
+    // fetched profile so future fields are never dropped.
     void (async () => {
       try {
         const profile = await repo.getProfile()
         await repo.setProfile({
-          theme: profile?.theme ?? 'system',
-          jarDefaultSpoons: profile?.jarDefaultSpoons ?? 12,
-          jarResetHour: profile?.jarResetHour ?? 0,
-          onboardingDone: profile?.onboardingDone ?? false,
-          localDataImportedAt: profile?.localDataImportedAt ?? null,
+          ...(profile ?? DEFAULT_PROFILE),
           timelineOrientation: next,
         })
       } catch {

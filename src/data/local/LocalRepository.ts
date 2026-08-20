@@ -92,9 +92,12 @@ export class LocalRepository implements ToolboxRepository {
 
   async listTimelineEntries(): Promise<TimelineEntry[]> {
     const entries = await this.db.timelineEntries.toArray()
-    return entries.sort(
-      (a, b) => a.startDate.localeCompare(b.startDate) || a.createdAt.localeCompare(b.createdAt),
-    )
+    // Backfill displayMode for rows written before the field existed.
+    return entries
+      .map((e) => ({ ...e, displayMode: e.displayMode ?? 'card' }))
+      .sort(
+        (a, b) => a.startDate.localeCompare(b.startDate) || a.createdAt.localeCompare(b.createdAt),
+      )
   }
 
   async saveTimelineEntry(e: TimelineEntryInput): Promise<TimelineEntry> {

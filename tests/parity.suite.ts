@@ -47,6 +47,7 @@ export function runRepositorySuite(
         jarResetHour: 4,
         onboardingDone: true,
         localDataImportedAt: null,
+        timelineOrientation: 'horizontal',
       }
       await repo.setProfile(p)
       expect(await repo.getProfile()).toEqual(p)
@@ -58,6 +59,7 @@ export function runRepositorySuite(
         jarResetHour: 4,
         onboardingDone: true,
         localDataImportedAt: '2026-08-16T10:00:00.000Z',
+        timelineOrientation: 'horizontal',
       })
     })
 

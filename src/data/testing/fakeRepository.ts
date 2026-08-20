@@ -81,9 +81,12 @@ export class FakeRepository implements ToolboxRepository {
   }
 
   async listTimelineEntries(): Promise<TimelineEntry[]> {
-    return [...this.timelineEntries.values()].sort(
-      (a, b) => a.startDate.localeCompare(b.startDate) || a.createdAt.localeCompare(b.createdAt),
-    )
+    // Backfill displayMode for entries created before the field existed.
+    return [...this.timelineEntries.values()]
+      .map((e) => ({ ...e, displayMode: e.displayMode ?? 'card' }))
+      .sort(
+        (a, b) => a.startDate.localeCompare(b.startDate) || a.createdAt.localeCompare(b.createdAt),
+      )
   }
 
   async saveTimelineEntry(e: TimelineEntryInput): Promise<TimelineEntry> {
