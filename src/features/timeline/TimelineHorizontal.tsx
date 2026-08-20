@@ -11,11 +11,13 @@ const CARD_GAP = 16
 // Proportional sizes per breakpoint (see docs/HANDOFF_AUTOSCALE.md). Cards
 // show title + dates + zone chip + thumbnails (no description), so the
 // worst-case height is the 44px IconButton header + dates + zone chip +
-// 3×56px thumbnails + card padding.
+// 3×56px thumbnails + card padding. CARD_H is the collision-reserve height
+// (matches the rendered content so the track hugs the cards instead of
+// leaving dead space below them).
 const SIZES: Record<Breakpoint, { CARD_W: number; CARD_H: number; TRACK_BASE_HEIGHT: number; DOT: number }> = {
-  small: { CARD_W: 180, CARD_H: 200, TRACK_BASE_HEIGHT: 260, DOT: 16 },
-  desktop: { CARD_W: 220, CARD_H: 220, TRACK_BASE_HEIGHT: 300, DOT: 16 },
-  large: { CARD_W: 260, CARD_H: 240, TRACK_BASE_HEIGHT: 340, DOT: 18 },
+  small: { CARD_W: 180, CARD_H: 200, TRACK_BASE_HEIGHT: 240, DOT: 16 },
+  desktop: { CARD_W: 220, CARD_H: 210, TRACK_BASE_HEIGHT: 280, DOT: 16 },
+  large: { CARD_W: 260, CARD_H: 220, TRACK_BASE_HEIGHT: 320, DOT: 18 },
 }
 
 function parseDate(iso: string): number {
@@ -324,73 +326,99 @@ export function TimelineHorizontal({
                 )
               })}
 
-            {/* Card entries — stacked below the line, pushed down on collision */}
+            {/* Card entries — stacked below the line, pushed down on collision.
+                The whole card opens the read-only details view (a safe,
+                non-destructive action); Edit/Delete stay explicit buttons. */}
             {cardLayout.map(({ entry, left, top }) => {
               const zone = zoneForEntry(entry)
               const images = imagesByEntry[entry.id] ?? []
               return (
                 <div key={entry.id} className="absolute" style={{ left, top, width: CARD_W }}>
-                  <Card variant="soft" padding="md" className="w-full">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h4 className="text-base font-extrabold text-ink">{entry.title}</h4>
-                      <div className="flex items-center gap-1">
-                        <IconButton
-                          icon="info"
-                          label={`View details for "${entry.title}"`}
-                          variant="ghost"
-                          pixel
-                          onClick={() => onOpenEntry(entry)}
-                        />
-                        <IconButton
-                          icon="edit"
-                          label={`Edit "${entry.title}"`}
-                          variant="ghost"
-                          pixel
-                          onClick={() => onEditEntry(entry)}
-                        />
-                        <IconButton
-                          icon="trash"
-                          label={`Delete "${entry.title}"`}
-                          variant="ghost"
-                          pixel
-                          onClick={() => onDeleteEntry(entry)}
-                        />
+                  <Card
+                    variant="soft"
+                    padding="md"
+                    className="group w-full cursor-pointer transition-shadow duration-[var(--dur-quick)] hover:shadow-lift focus-within:shadow-lift"
+                  >
+                    {/* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex -- Whole-card click opens the read-only details view; Edit/Delete are explicit buttons that stopPropagation. */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`View details for "${entry.title}"`}
+                      onClick={() => onOpenEntry(entry)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onOpenEntry(entry)
+                        }
+                      }}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-base font-extrabold text-ink">{entry.title}</h4>
+                        <span
+                          aria-hidden="true"
+                          className="text-ink-faint opacity-0 transition-opacity duration-[var(--dur-quick)] group-hover:opacity-100 group-focus-within:opacity-100"
+                        >
+                          <Icon name="chevronRight" size={16} pixel />
+                        </span>
                       </div>
-                    </div>
-                    <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-ink-soft">
-                      <Icon name="calendar" size={14} pixel />
-                      <time dateTime={entry.startDate}>{formatDate(entry.startDate)}</time>
-                      {entry.endDate && (
-                        <>
-                          <span aria-hidden="true">→</span>
-                          <time dateTime={entry.endDate}>{formatDate(entry.endDate)}</time>
-                        </>
-                      )}
-                    </p>
-                    {zone && (
-                      <p className="mt-2">
-                        <Chip tone="timeline" icon={<Icon name="flag" size={13} pixel />}>
-                          {zone.name}
-                        </Chip>
-                      </p>
-                    )}
-                    {images.length > 0 && (
-                      <div className="mt-3 flex items-center gap-2">
-                        {images.slice(0, 3).map((ref) => (
-                          <img
-                            key={ref.id}
-                            src={ref.url}
-                            alt={entry.title}
-                            className="h-14 w-14 rounded-md border border-line object-cover"
-                          />
-                        ))}
-                        {images.length > 3 && (
-                          <span className="flex h-14 w-14 items-center justify-center rounded-md border border-line bg-surface-muted text-xs font-bold text-ink-soft">
-                            +{images.length - 3}
-                          </span>
+                      <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-ink-soft">
+                        <Icon name="calendar" size={14} pixel />
+                        <time dateTime={entry.startDate}>{formatDate(entry.startDate)}</time>
+                        {entry.endDate && (
+                          <>
+                            <span aria-hidden="true">→</span>
+                            <time dateTime={entry.endDate}>{formatDate(entry.endDate)}</time>
+                          </>
                         )}
-                      </div>
-                    )}
+                      </p>
+                      {zone && (
+                        <p className="mt-2">
+                          <Chip tone="timeline" icon={<Icon name="flag" size={13} pixel />}>
+                            {zone.name}
+                          </Chip>
+                        </p>
+                      )}
+                      {images.length > 0 && (
+                        <div className="mt-3 flex items-center gap-2">
+                          {images.slice(0, 3).map((ref) => (
+                            <img
+                              key={ref.id}
+                              src={ref.url}
+                              alt={entry.title}
+                              className="h-14 w-14 rounded-md border border-line object-cover"
+                            />
+                          ))}
+                          {images.length > 3 && (
+                            <span className="flex h-14 w-14 items-center justify-center rounded-md border border-line bg-surface-muted text-xs font-bold text-ink-soft">
+                              +{images.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {/* eslint-enable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
+                    <div className="absolute right-2 top-2 flex items-center gap-1">
+                      <IconButton
+                        icon="edit"
+                        label={`Edit "${entry.title}"`}
+                        variant="ghost"
+                        pixel
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditEntry(entry)
+                        }}
+                      />
+                      <IconButton
+                        icon="trash"
+                        label={`Delete "${entry.title}"`}
+                        variant="ghost"
+                        pixel
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteEntry(entry)
+                        }}
+                      />
+                    </div>
                   </Card>
                 </div>
               )
