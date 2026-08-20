@@ -67,12 +67,26 @@ test.describe('timeline', () => {
     // The radio input is visually hidden inside its label; click the label text.
     await page.getByText('Compact', { exact: true }).click()
     await page.getByRole('button', { name: 'Save entry' }).click()
+    // Wait for the modal to close before opening the next one.
+    await expect(page.getByRole('heading', { name: 'Add entry' })).toBeHidden()
+
+    // A card entry (default display mode) so we can open its details.
+    await page.getByRole('button', { name: 'Add entry' }).click()
+    await page.getByLabel('Title').fill('First day')
+    await page.getByLabel('Start date').fill('2025-08-01')
+    await page.getByRole('button', { name: 'Save entry' }).click()
+    await expect(page.getByRole('heading', { name: 'Add entry' })).toBeHidden()
 
     await expect(page.getByRole('region', { name: 'Timeline' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Jump to Summer' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Beach trip, 10 Jul 2025' })).toBeVisible()
     // The month ruler anchors the date scale (Jul–Sep 2025 span).
-    await expect(page.getByText('Jul 2025')).toBeVisible()
-    await expect(page.getByText('Sep')).toBeVisible()
+    await expect(page.getByText('Jul 2025', { exact: true })).toBeVisible()
+    await expect(page.getByText('Sep', { exact: true })).toBeVisible()
+
+    // Clicking a card's "View details" opens the read-only entry view.
+    await page.getByRole('button', { name: 'View details for "First day"' }).click()
+    await expect(page.getByRole('heading', { name: 'Entry details' })).toBeVisible()
+    await expect(page.getByRole('dialog').getByRole('heading', { name: 'First day' })).toBeVisible()
   })
 })

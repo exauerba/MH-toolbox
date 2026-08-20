@@ -292,4 +292,48 @@ describe('TimelineScreen', () => {
     fireEvent.keyDown(region, { key: 'ArrowRight' })
     expect(region.scrollLeft).toBeGreaterThan(0)
   })
+
+  it('opens a read-only view when a horizontal card is clicked for details', async () => {
+    const repo = new FakeRepository()
+    await repo.setProfile({ ...baseProfile, timelineOrientation: 'horizontal' })
+    await repo.saveTimelineEntry({
+      title: 'Beach trip',
+      startDate: '2025-07-10',
+      description: 'A week by the sea.',
+      color: zonePalette.sage,
+    })
+    renderScreen(repo)
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'View details for "Beach trip"' }))
+
+    // Read-only view: title (modal h3) + description shown, no editable inputs.
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: 'Beach trip', level: 3 })).toBeInTheDocument()
+    expect(within(dialog).getByText('A week by the sea.')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Title/)).not.toBeInTheDocument()
+
+    // Edit switches to the form.
+    await user.click(within(dialog).getByRole('button', { name: 'Edit' }))
+    expect(await screen.findByLabelText(/Title/)).toHaveValue('Beach trip')
+  })
+
+  it('opens a read-only view when a vertical card is clicked for details', async () => {
+    const repo = new FakeRepository()
+    await repo.saveTimelineEntry({
+      title: 'First day',
+      startDate: '2026-01-05',
+      description: 'The start of something.',
+      color: zonePalette.sage,
+    })
+    renderScreen(repo)
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'View details for "First day"' }))
+
+    expect(await screen.findByRole('heading', { name: 'First day', level: 3 })).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('The start of something.')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Title/)).not.toBeInTheDocument()
+  })
 })

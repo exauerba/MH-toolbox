@@ -3,14 +3,19 @@ import type { KeyboardEvent, PointerEvent } from 'react'
 import { Card, Chip, Icon, IconButton, Tooltip, usePrefersReducedMotion } from '../../design'
 import type { ImageRef, TimelineEntry, TimelineZone } from '../../data/types'
 import { formatDate, MONTHS } from './date'
+import { useBreakpoint } from './useBreakpoint'
+import type { Breakpoint } from './useBreakpoint'
 
-const CARD_W = 256
-// Worst-case card height: 44px IconButton header + dates + zone chip +
-// 3-line description + 3×56px thumbnails + card padding.
-const CARD_H = 292
 const CARD_GAP = 16
-const TRACK_BASE_HEIGHT = 340
-const TOP_OFFSET = TRACK_BASE_HEIGHT / 2 + 28
+
+// Proportional sizes per breakpoint (see docs/HANDOFF_AUTOSCALE.md). The
+// worst-case card height accounts for the 44px IconButton header + dates +
+// zone chip + 3-line description + 3×56px thumbnails + card padding.
+const SIZES: Record<Breakpoint, { CARD_W: number; CARD_H: number; TRACK_BASE_HEIGHT: number; DOT: number }> = {
+  small: { CARD_W: 200, CARD_H: 260, TRACK_BASE_HEIGHT: 300, DOT: 16 },
+  desktop: { CARD_W: 256, CARD_H: 292, TRACK_BASE_HEIGHT: 340, DOT: 16 },
+  large: { CARD_W: 300, CARD_H: 320, TRACK_BASE_HEIGHT: 380, DOT: 18 },
+}
 
 function parseDate(iso: string): number {
   return Date.parse(`${iso}T00:00:00`)
@@ -49,6 +54,9 @@ export function TimelineHorizontal({
   onDeleteEntry,
 }: TimelineHorizontalProps) {
   const reduced = usePrefersReducedMotion()
+  const bp = useBreakpoint()
+  const { CARD_W, CARD_H, TRACK_BASE_HEIGHT, DOT } = SIZES[bp]
+  const TOP_OFFSET = TRACK_BASE_HEIGHT / 2 + 28
   const scrollRef = useRef<HTMLDivElement>(null)
   const dragState = useRef({ startX: 0, startScroll: 0, active: false, moved: false })
   const [canScrollBack, setCanScrollBack] = useState(false)
@@ -96,12 +104,12 @@ export function TimelineHorizontal({
       placed.push({ left, right, top, bottom: top + CARD_H })
       return { entry, left, top }
     })
-  }, [entries, xFor])
+  }, [entries, xFor, CARD_W, CARD_H, TOP_OFFSET])
 
   const trackHeight = useMemo(() => {
     const maxBottom = cardLayout.reduce((max, c) => Math.max(max, c.top + CARD_H), 0)
     return Math.max(TRACK_BASE_HEIGHT, maxBottom + 16)
-  }, [cardLayout])
+  }, [cardLayout, CARD_H, TRACK_BASE_HEIGHT])
 
   // Month ruler — one tick per month start, aligned to the date-proportional
   // scale so it scrolls with the track. The year is shown on January and on
@@ -216,7 +224,7 @@ export function TimelineHorizontal({
   if (scale.trackWidth === 0) return null
 
   return (
-    <div className="flex flex-col gap-3 p-5">
+    <div className="flex flex-col gap-2 p-4 md:gap-3 md:p-5">
       {zones.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">Jump to</span>
@@ -302,11 +310,11 @@ export function TimelineHorizontal({
                           }}
                           className="group relative block size-11 rounded-none transition-transform duration-[var(--dur-fast)] hover:scale-110 focus-visible:scale-110"
                         >
-                          {/* 16px pixel dot inside a 44px touch target */}
+                          {/* Pixel dot inside a 44px touch target */}
                           <span
                             aria-hidden="true"
-                            className="absolute inset-0 m-auto size-4 rounded-[3px] border-2 bg-surface shadow-pixel-sm transition-transform duration-[var(--dur-fast)] group-hover:scale-125"
-                            style={{ borderColor: zone?.color ?? entry.color }}
+                            className="absolute inset-0 m-auto rounded-[3px] border-2 bg-surface shadow-pixel-sm transition-transform duration-[var(--dur-fast)] group-hover:scale-125"
+                            style={{ borderColor: zone?.color ?? entry.color, width: DOT, height: DOT }}
                           />
                         </button>
                       </Tooltip>
@@ -325,6 +333,13 @@ export function TimelineHorizontal({
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h4 className="text-base font-extrabold text-ink">{entry.title}</h4>
                       <div className="flex items-center gap-1">
+                        <IconButton
+                          icon="info"
+                          label={`View details for "${entry.title}"`}
+                          variant="ghost"
+                          pixel
+                          onClick={() => onOpenEntry(entry)}
+                        />
                         <IconButton
                           icon="edit"
                           label={`Edit "${entry.title}"`}

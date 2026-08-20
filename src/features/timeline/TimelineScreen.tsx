@@ -790,6 +790,13 @@ export function TimelineScreen() {
                             <h4 className="text-base font-extrabold text-ink">{entry.title}</h4>
                             <div className="flex items-center gap-1">
                               <IconButton
+                                icon="info"
+                                label={`View details for "${entry.title}"`}
+                                variant="ghost"
+                                pixel
+                                onClick={() => openEntry(entry, true)}
+                              />
+                              <IconButton
                                 icon="edit"
                                 label={`Edit "${entry.title}"`}
                                 variant="ghost"
