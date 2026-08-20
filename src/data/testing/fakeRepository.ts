@@ -97,6 +97,7 @@ export class FakeRepository implements ToolboxRepository {
           endDate: e.endDate ?? null,
           description: e.description ?? '',
           color: e.color,
+          displayMode: e.displayMode ?? 'card',
         }
         this.timelineEntries.set(e.id, updated)
         return updated
@@ -108,6 +109,7 @@ export class FakeRepository implements ToolboxRepository {
         endDate: e.endDate ?? null,
         description: e.description ?? '',
         color: e.color,
+        displayMode: e.displayMode ?? 'card',
         createdAt: new Date().toISOString(),
       }
       this.timelineEntries.set(entry.id, entry)
@@ -120,6 +122,7 @@ export class FakeRepository implements ToolboxRepository {
       endDate: e.endDate ?? null,
       description: e.description ?? '',
       color: e.color,
+      displayMode: e.displayMode ?? 'card',
       createdAt: new Date().toISOString(),
     }
     this.timelineEntries.set(entry.id, entry)

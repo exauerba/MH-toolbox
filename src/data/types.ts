@@ -10,6 +10,9 @@
 /** Theme preference, mirroring the design system's three modes. */
 export type ThemePreference = 'light' | 'dark' | 'system'
 
+/** Preferred timeline layout. Persisted per-user; defaults to device-based. */
+export type TimelineOrientation = 'vertical' | 'horizontal'
+
 export interface Profile {
   theme: ThemePreference
   /** Default daily jar capacity (spoons). */
@@ -19,6 +22,8 @@ export interface Profile {
   onboardingDone: boolean
   /** When local (guest) data was imported into this account; null before. */
   localDataImportedAt: string | null
+  /** Preferred timeline orientation; absent = follow device (vertical on mobile). */
+  timelineOrientation?: TimelineOrientation
 }
 
 /** A day's jar capacity. Keyed by local calendar date (YYYY-MM-DD). */
@@ -44,6 +49,9 @@ export interface JarLogInput {
   label?: string | null
 }
 
+/** How an entry renders on the horizontal timeline. */
+export type TimelineDisplayMode = 'card' | 'compact'
+
 export interface TimelineEntry {
   id: string
   title: string
@@ -51,6 +59,8 @@ export interface TimelineEntry {
   endDate: string | null
   description: string
   color: string
+  /** 'card' = full card on the track; 'compact' = marker that opens details. */
+  displayMode: TimelineDisplayMode
   createdAt: string
 }
 
@@ -62,6 +72,8 @@ export interface TimelineEntryInput {
   endDate?: string | null
   description?: string
   color: string
+  /** Defaults to 'card' when omitted. */
+  displayMode?: TimelineDisplayMode
 }
 
 export interface TimelineZone {

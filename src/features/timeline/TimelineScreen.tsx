@@ -8,21 +8,23 @@ import {
   Icon,
   IconButton,
   Modal,
+  SegmentedControl,
   TextArea,
   TextInput,
   cx,
   zonePalette,
 } from '../../design'
-import type { ImageRef, TimelineEntry, TimelineZone } from '../../data/types'
+import type {
+  ImageRef,
+  TimelineDisplayMode,
+  TimelineEntry,
+  TimelineOrientation,
+  TimelineZone,
+} from '../../data/types'
 import { useRepository } from '../../data/RepositoryProvider'
 import { assertImageAllowed, MAX_IMAGES_PER_ENTRY } from '../../data/imageRules'
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-function formatDate(iso: string): string {
-  const [year, month, day] = iso.split('-')
-  return `${Number(day)} ${MONTHS[Number(month) - 1]} ${year}`
-}
+import { formatDate } from './date'
+import { TimelineHorizontal } from './TimelineHorizontal'
 
 /**
  * Zone colour picker — one swatch per curated zonePalette entry. The
@@ -62,18 +64,25 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (color: str
 }
 
 /**
- * Entry create/edit modal. Images are validated app-side and uploaded after
- * the entry exists (create flow saves the entry first, then uploads).
+ * Entry create/edit/view modal. Images are validated app-side and uploaded
+ * after the entry exists (create flow saves the entry first, then uploads).
+ * In `viewing` mode the entry is shown read-only with an Edit action.
  */
 function EntryModal({
   open,
   entry,
+  zone,
+  viewing,
   onClose,
+  onEdit,
   onSaved,
 }: {
   open: boolean
   entry: TimelineEntry | null
+  zone: TimelineZone | null
+  viewing: boolean
   onClose: () => void
+  onEdit: () => void
   onSaved: () => Promise<void>
 }) {
   const repo = useRepository()
@@ -82,6 +91,7 @@ function EntryModal({
   const [endDate, setEndDate] = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor] = useState<string>(zonePalette.sage)
+  const [displayMode, setDisplayMode] = useState<TimelineDisplayMode>('card')
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [existingImages, setExistingImages] = useState<ImageRef[]>([])
   const [imageError, setImageError] = useState<string | null>(null)
@@ -96,6 +106,7 @@ function EntryModal({
     setEndDate(entry?.endDate ?? '')
     setDescription(entry?.description ?? '')
     setColor(entry?.color ?? zonePalette.sage)
+    setDisplayMode(entry?.displayMode ?? 'card')
     setPendingFiles([])
     setExistingImages([])
     setImageError(null)
@@ -152,6 +163,7 @@ function EntryModal({
         endDate: endDate || null,
         description: description.trim(),
         color,
+        displayMode,
       })
       for (const file of pendingFiles) {
         await repo.uploadImage(file, saved.id)
@@ -169,132 +181,188 @@ function EntryModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={entry ? 'Edit entry' : 'Add entry'}
+      title={viewing ? 'Entry details' : entry ? 'Edit entry' : 'Add entry'}
       footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => void handleSave()}
-            loading={saving}
-            leadingIcon={<Icon name="plus" size={18} pixel />}
-          >
-            Save entry
-          </Button>
-        </>
+        viewing ? (
+          <>
+            <Button variant="secondary" onClick={onEdit}>
+              Edit
+            </Button>
+            <Button variant="ghost" onClick={onClose}>
+              Close
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void handleSave()}
+              loading={saving}
+              leadingIcon={<Icon name="plus" size={18} pixel />}
+            >
+              Save entry
+            </Button>
+          </>
+        )
       }
     >
-      <div className="flex flex-col gap-4">
-        <TextInput
-          label="Title"
-          required
-          maxLength={80}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="A moment, a place, a person…"
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextInput
-            label="Start date"
-            type="date"
-            required
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <TextInput
-            label="End date"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-        <TextArea
-          label="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="What made it matter? (optional)"
-        />
-        <ColorPicker value={color} onChange={setColor} />
-
-        <div>
-          <p className="text-sm font-bold text-ink">Photos</p>
-          <p className="mt-1 text-sm text-ink-soft">
-            {existingImages.length + pendingFiles.length}/{MAX_IMAGES_PER_ENTRY} — jpeg, png or webp,
-            up to 5MB each.
+      {viewing && entry ? (
+        <div className="flex flex-col gap-4">
+          <h3 className="font-display text-xl font-extrabold text-ink">{entry.title}</h3>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-ink-soft">
+            <Icon name="calendar" size={14} pixel />
+            <time dateTime={entry.startDate}>{formatDate(entry.startDate)}</time>
+            {entry.endDate && (
+              <>
+                <span aria-hidden="true">→</span>
+                <time dateTime={entry.endDate}>{formatDate(entry.endDate)}</time>
+              </>
+            )}
           </p>
-          {(existingImages.length > 0 || pendingFiles.length > 0) && (
-            <div className="mt-2 flex flex-wrap gap-3">
+          {zone && (
+            <p>
+              <Chip tone="timeline" icon={<Icon name="flag" size={13} pixel />}>
+                {zone.name}
+              </Chip>
+            </p>
+          )}
+          {entry.description && <p className="text-base leading-relaxed text-ink">{entry.description}</p>}
+          {existingImages.length > 0 && (
+            <div className="flex flex-wrap gap-3">
               {existingImages.map((ref) => (
-                <div key={ref.id} className="relative">
-                  <img
-                    src={ref.url}
-                    alt={`${entry?.title ?? 'photo'} preview`}
-                    className="h-24 w-24 rounded-lg border border-line object-cover"
-                  />
-                  <IconButton
-                    icon="trash"
-                    label="Remove this photo"
-                    variant="ghost"
-                    pixel
-                    className="absolute -right-2 -top-2 bg-surface shadow-soft"
-                    onClick={() => void removeExisting(ref)}
-                  />
-                </div>
-              ))}
-              {pendingFiles.map((file, index) => (
-                <div
-                  key={`${file.name}-${index}`}
-                  className="relative flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted"
-                >
-                  <span className="px-2 text-center text-xs font-semibold text-ink-soft">{file.name}</span>
-                  <IconButton
-                    icon="trash"
-                    label="Remove this photo"
-                    variant="ghost"
-                    pixel
-                    className="absolute -right-2 -top-2 bg-surface shadow-soft"
-                    onClick={() => removePending(index)}
-                  />
-                </div>
+                <img
+                  key={ref.id}
+                  src={ref.url}
+                  alt={entry.title}
+                  className="h-24 w-24 rounded-lg border border-line object-cover"
+                />
               ))}
             </div>
           )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            className="hidden"
-            aria-label="Add photo"
-            onChange={(e) => {
-              handleFiles(e.target.files)
-              e.target.value = ''
-            }}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <TextInput
+            label="Title"
+            required
+            maxLength={80}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="A moment, a place, a person…"
           />
-          <Button
-            variant="secondary"
-            className="mt-3"
-            leadingIcon={<Icon name="image" size={18} pixel />}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Add photo
-          </Button>
-          {imageError && (
-            <p role="alert" className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-error-ink">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextInput
+              label="Start date"
+              type="date"
+              required
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <TextInput
+              label="End date"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+          <TextArea
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What made it matter? (optional)"
+          />
+          <ColorPicker value={color} onChange={setColor} />
+          <SegmentedControl
+            label="Display on the timeline"
+            options={[
+              { value: 'card', label: 'Card' },
+              { value: 'compact', label: 'Compact' },
+            ]}
+            value={displayMode}
+            onChange={(v) => setDisplayMode(v as TimelineDisplayMode)}
+          />
+
+          <div>
+            <p className="text-sm font-bold text-ink">Photos</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              {existingImages.length + pendingFiles.length}/{MAX_IMAGES_PER_ENTRY} — jpeg, png or webp,
+              up to 5MB each.
+            </p>
+            {(existingImages.length > 0 || pendingFiles.length > 0) && (
+              <div className="mt-2 flex flex-wrap gap-3">
+                {existingImages.map((ref) => (
+                  <div key={ref.id} className="relative">
+                    <img
+                      src={ref.url}
+                      alt={`${entry?.title ?? 'photo'} preview`}
+                      className="h-24 w-24 rounded-lg border border-line object-cover"
+                    />
+                    <IconButton
+                      icon="trash"
+                      label="Remove this photo"
+                      variant="ghost"
+                      pixel
+                      className="absolute -right-2 -top-2 bg-surface shadow-soft"
+                      onClick={() => void removeExisting(ref)}
+                    />
+                  </div>
+                ))}
+                {pendingFiles.map((file, index) => (
+                  <div
+                    key={`${file.name}-${index}`}
+                    className="relative flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted"
+                  >
+                    <span className="px-2 text-center text-xs font-semibold text-ink-soft">{file.name}</span>
+                    <IconButton
+                      icon="trash"
+                      label="Remove this photo"
+                      variant="ghost"
+                      pixel
+                      className="absolute -right-2 -top-2 bg-surface shadow-soft"
+                      onClick={() => removePending(index)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              aria-label="Add photo"
+              onChange={(e) => {
+                handleFiles(e.target.files)
+                e.target.value = ''
+              }}
+            />
+            <Button
+              variant="secondary"
+              className="mt-3"
+              leadingIcon={<Icon name="image" size={18} pixel />}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Add photo
+            </Button>
+            {imageError && (
+              <p role="alert" className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-error-ink">
+                <Icon name="alert" size={16} />
+                {imageError}
+              </p>
+            )}
+          </div>
+
+          {formError && (
+            <p role="alert" className="flex items-center gap-1.5 text-sm font-semibold text-error-ink">
               <Icon name="alert" size={16} />
-              {imageError}
+              {formError}
             </p>
           )}
         </div>
-
-        {formError && (
-          <p role="alert" className="flex items-center gap-1.5 text-sm font-semibold text-error-ink">
-            <Icon name="alert" size={16} />
-            {formError}
-          </p>
-        )}
-      </div>
+      )}
     </Modal>
   )
 }
@@ -445,9 +513,19 @@ export function TimelineScreen() {
   const [entries, setEntries] = useState<TimelineEntry[]>([])
   const [zones, setZones] = useState<TimelineZone[]>([])
   const [imagesByEntry, setImagesByEntry] = useState<Record<string, ImageRef[]>>({})
-  const [entryModal, setEntryModal] = useState<{ open: boolean; entry: TimelineEntry | null }>({
+  const [orientation, setOrientation] = useState<TimelineOrientation>(() =>
+    typeof window !== 'undefined' && window.matchMedia?.('(min-width: 768px)').matches
+      ? 'horizontal'
+      : 'vertical',
+  )
+  const [entryModal, setEntryModal] = useState<{
+    open: boolean
+    entry: TimelineEntry | null
+    viewing: boolean
+  }>({
     open: false,
     entry: null,
+    viewing: false,
   })
   const [zoneModal, setZoneModal] = useState<{ open: boolean; zone: TimelineZone | null }>({
     open: false,
@@ -458,10 +536,15 @@ export function TimelineScreen() {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      const [nextEntries, nextZones] = await Promise.all([repo.listTimelineEntries(), repo.listZones()])
+      const [nextEntries, nextZones, profile] = await Promise.all([
+        repo.listTimelineEntries(),
+        repo.listZones(),
+        repo.getProfile(),
+      ])
       if (cancelled) return
       setEntries(nextEntries)
       setZones(nextZones)
+      if (profile?.timelineOrientation) setOrientation(profile.timelineOrientation)
       const images: Record<string, ImageRef[]> = {}
       await Promise.all(nextEntries.map(async (entry) => (images[entry.id] = await repo.listImages(entry.id))))
       if (cancelled) return
@@ -488,8 +571,29 @@ export function TimelineScreen() {
     setImagesByEntry((prev) => ({ ...prev, [entryId]: images }))
   }, [repo])
 
-  const openEntry = (entry: TimelineEntry | null) => setEntryModal({ open: true, entry })
-  const closeEntry = () => setEntryModal({ open: false, entry: null })
+  const changeOrientation = (next: TimelineOrientation) => {
+    setOrientation(next)
+    // Persist like pins: fire-and-forget, optimistic local state.
+    void (async () => {
+      try {
+        const profile = await repo.getProfile()
+        await repo.setProfile({
+          theme: profile?.theme ?? 'system',
+          jarDefaultSpoons: profile?.jarDefaultSpoons ?? 12,
+          jarResetHour: profile?.jarResetHour ?? 0,
+          onboardingDone: profile?.onboardingDone ?? false,
+          localDataImportedAt: profile?.localDataImportedAt ?? null,
+          timelineOrientation: next,
+        })
+      } catch {
+        // Orientation still applies for this session.
+      }
+    })()
+  }
+
+  const openEntry = (entry: TimelineEntry | null, viewing = false) =>
+    setEntryModal({ open: true, entry, viewing })
+  const closeEntry = () => setEntryModal({ open: false, entry: null, viewing: false })
   const openZone = (zone: TimelineZone | null) => setZoneModal({ open: true, zone })
   const closeZone = () => setZoneModal({ open: false, zone: null })
 
@@ -548,13 +652,25 @@ export function TimelineScreen() {
                 </h3>
                 <p className="mt-1 text-sm text-ink-soft">Zones you define — your words, your colours.</p>
               </div>
-              <Button
-                variant="secondary"
-                leadingIcon={<Icon name="plus" size={18} pixel />}
-                onClick={() => openEntry(null)}
-              >
-                Add entry
-              </Button>
+              <div className="flex flex-wrap items-center gap-3">
+                <SegmentedControl
+                  label="Timeline orientation"
+                  options={[
+                    { value: 'vertical', label: 'Vertical' },
+                    { value: 'horizontal', label: 'Horizontal' },
+                  ]}
+                  value={orientation}
+                  onChange={(value) => changeOrientation(value as TimelineOrientation)}
+                  className="max-w-56"
+                />
+                <Button
+                  variant="secondary"
+                  leadingIcon={<Icon name="plus" size={18} pixel />}
+                  onClick={() => openEntry(null)}
+                >
+                  Add entry
+                </Button>
+              </div>
             </div>
 
             {/* Zone legend */}
@@ -601,6 +717,15 @@ export function TimelineScreen() {
                     Add your first entry
                   </Button>
                 }
+              />
+            ) : orientation === 'horizontal' ? (
+              <TimelineHorizontal
+                entries={entries}
+                zones={zones}
+                imagesByEntry={imagesByEntry}
+                onOpenEntry={(entry) => openEntry(entry, true)}
+                onEditEntry={(entry) => openEntry(entry, false)}
+                onDeleteEntry={setDeleteTarget}
               />
             ) : (
               <ol className="flex flex-col gap-0 p-5">
@@ -702,7 +827,15 @@ export function TimelineScreen() {
         )}
       </Card>
 
-      <EntryModal open={entryModal.open} entry={entryModal.entry} onClose={closeEntry} onSaved={reload} />
+      <EntryModal
+        open={entryModal.open}
+        entry={entryModal.entry}
+        zone={entryModal.entry ? (zoneForEntry(entryModal.entry) ?? null) : null}
+        viewing={entryModal.viewing}
+        onClose={closeEntry}
+        onEdit={() => setEntryModal((prev) => ({ ...prev, viewing: false }))}
+        onSaved={reload}
+      />
       <ZoneModal open={zoneModal.open} zone={zoneModal.zone} onClose={closeZone} onSaved={reload} />
       <Modal
         open={deleteTarget !== null}

@@ -49,6 +49,7 @@ interface TimelineEntryRow {
   end_date: string | null
   description: string
   color: string
+  display_mode: string
   created_at: string
 }
 
@@ -95,6 +96,7 @@ function timelineEntryFromRow(r: TimelineEntryRow): TimelineEntry {
     endDate: r.end_date,
     description: r.description,
     color: r.color,
+    displayMode: r.display_mode === 'compact' ? 'compact' : 'card',
     createdAt: iso(r.created_at) ?? '',
   }
 }
@@ -264,6 +266,7 @@ export class SupabaseRepository implements ToolboxRepository {
       end_date: e.endDate ?? null,
       description: e.description ?? '',
       color: e.color,
+      display_mode: e.displayMode ?? 'card',
     }
     if (e.id) {
       const { data: existing } = await this.client

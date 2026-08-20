@@ -17,6 +17,14 @@ function renderScreen(repo: FakeRepository) {
   )
 }
 
+const baseProfile = {
+  theme: 'system' as const,
+  jarDefaultSpoons: 12,
+  jarResetHour: 0,
+  onboardingDone: true,
+  localDataImportedAt: null,
+}
+
 afterEach(() => {
   vi.restoreAllMocks()
 })
@@ -163,5 +171,110 @@ describe('TimelineScreen', () => {
       expect(screen.queryByRole('img', { name: 'Moved home' })).not.toBeInTheDocument(),
     )
     expect(await repo.listImages(entry.id)).toHaveLength(0)
+  })
+
+  it('persists the orientation choice to the profile', async () => {
+    const repo = new FakeRepository()
+    renderScreen(repo)
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('radio', { name: 'Horizontal' }))
+
+    await waitFor(async () => {
+      const profile = await repo.getProfile()
+      expect(profile?.timelineOrientation).toBe('horizontal')
+    })
+  })
+
+  it('renders the horizontal timeline when the profile prefers it', async () => {
+    const repo = new FakeRepository()
+    await repo.setProfile({ ...baseProfile, timelineOrientation: 'horizontal' })
+    await repo.saveTimelineEntry({ title: 'First day', startDate: '2026-01-05', color: zonePalette.sage })
+    renderScreen(repo)
+
+    expect(await screen.findByRole('region', { name: 'Timeline' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Horizontal/ })).toBeChecked()
+  })
+
+  it('defaults new entries to card display mode', async () => {
+    const repo = new FakeRepository()
+    renderScreen(repo)
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Add your first entry' }))
+    await user.type(await screen.findByLabelText(/Title/), 'Card entry')
+    fireEvent.change(screen.getByLabelText(/^Start date/), { target: { value: '2026-03-01' } })
+    await user.click(screen.getByRole('button', { name: 'Save entry' }))
+
+    const list = await repo.listTimelineEntries()
+    expect(list[0].displayMode).toBe('card')
+  })
+
+  it('renders compact entries as markers that open a read-only view with edit', async () => {
+    const repo = new FakeRepository()
+    await repo.setProfile({ ...baseProfile, timelineOrientation: 'horizontal' })
+    renderScreen(repo)
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Add entry' }))
+    await user.type(await screen.findByLabelText(/Title/), 'Quiet moment')
+    fireEvent.change(screen.getByLabelText(/^Start date/), { target: { value: '2026-04-10' } })
+    await user.click(screen.getByRole('radio', { name: 'Compact' }))
+    await user.click(screen.getByRole('button', { name: 'Save entry' }))
+
+    const list = await repo.listTimelineEntries()
+    expect(list[0].displayMode).toBe('compact')
+
+    // Compact entries render as a marker button, not a card.
+    const marker = await screen.findByRole('button', { name: 'Quiet moment, 10 Apr 2026' })
+    await user.click(marker)
+
+    // Read-only view: title shown, no editable inputs.
+    expect(await screen.findByRole('heading', { name: 'Quiet moment' })).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Title/)).not.toBeInTheDocument()
+
+    // Edit switches to the form, where display mode can be changed back.
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(await screen.findByLabelText(/Title/)).toHaveValue('Quiet moment')
+    await user.click(screen.getByRole('radio', { name: 'Card' }))
+    await user.click(screen.getByRole('button', { name: 'Save entry' }))
+
+    await waitFor(async () => {
+      const updated = await repo.listTimelineEntries()
+      expect(updated[0].displayMode).toBe('card')
+    })
+  })
+
+  it('shows zone bands and jump chips in horizontal mode', async () => {
+    const repo = new FakeRepository()
+    await repo.setProfile({ ...baseProfile, timelineOrientation: 'horizontal' })
+    await repo.saveTimelineEntry({ title: 'Beach trip', startDate: '2025-07-10', color: zonePalette.sage })
+    await repo.saveZone({ name: 'Summer', color: zonePalette.sky, startDate: '2025-07-01', endDate: '2025-12-31' })
+    renderScreen(repo)
+
+    expect(await screen.findByRole('region', { name: 'Timeline' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Jump to Summer' })).toBeInTheDocument()
+    expect(screen.getAllByText('Summer').length).toBeGreaterThan(0)
+  })
+
+  it('scrolls the horizontal track with the arrow buttons and arrow keys', async () => {
+    const repo = new FakeRepository()
+    await repo.setProfile({ ...baseProfile, timelineOrientation: 'horizontal' })
+    await repo.saveTimelineEntry({ title: 'First day', startDate: '2026-01-05', color: zonePalette.sage })
+    renderScreen(repo)
+    const user = userEvent.setup()
+
+    const region = await screen.findByRole('region', { name: 'Timeline' })
+    Object.defineProperty(region, 'scrollWidth', { configurable: true, value: 2000 })
+    Object.defineProperty(region, 'clientWidth', { configurable: true, value: 500 })
+    fireEvent.scroll(region)
+
+    const forward = screen.getByRole('button', { name: 'Scroll timeline forward' })
+    await waitFor(() => expect(forward).toBeEnabled())
+    await user.click(forward)
+    expect(region.scrollLeft).toBeGreaterThan(0)
+
+    fireEvent.keyDown(region, { key: 'ArrowRight' })
+    expect(region.scrollLeft).toBeGreaterThan(0)
   })
 })

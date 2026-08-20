@@ -97,6 +97,7 @@ export async function migrateLocalToSupabase(
       endDate: entry.endDate,
       description: entry.description,
       color: entry.color,
+      displayMode: entry.displayMode,
     })
     counts.timelineEntries++
   }

@@ -108,6 +108,7 @@ export class LocalRepository implements ToolboxRepository {
           endDate: e.endDate ?? null,
           description: e.description ?? '',
           color: e.color,
+          displayMode: e.displayMode ?? 'card',
         }
         await this.db.timelineEntries.put(updated)
         return updated
@@ -119,6 +120,7 @@ export class LocalRepository implements ToolboxRepository {
         endDate: e.endDate ?? null,
         description: e.description ?? '',
         color: e.color,
+        displayMode: e.displayMode ?? 'card',
         createdAt: new Date().toISOString(),
       }
       await this.db.timelineEntries.put(entry)
@@ -131,6 +133,7 @@ export class LocalRepository implements ToolboxRepository {
       endDate: e.endDate ?? null,
       description: e.description ?? '',
       color: e.color,
+      displayMode: e.displayMode ?? 'card',
       createdAt: new Date().toISOString(),
     }
     await this.db.timelineEntries.put(entry)

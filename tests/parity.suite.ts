@@ -108,6 +108,7 @@ export function runRepositorySuite(
       expect(e.id).toBeTruthy()
       expect(e.endDate).toBeNull()
       expect(e.description).toBe('')
+      expect(e.displayMode).toBe('card') // defaults to card
 
       const updated = await repo.saveTimelineEntry({
         id: e.id,
@@ -116,11 +117,13 @@ export function runRepositorySuite(
         endDate: '2026-02-01',
         description: 'details',
         color: '#00ff00',
+        displayMode: 'compact',
       })
       expect(updated.id).toBe(e.id)
       expect(updated.title).toBe('First (edited)')
       expect(updated.endDate).toBe('2026-02-01')
       expect(updated.description).toBe('details')
+      expect(updated.displayMode).toBe('compact')
       expect(updated.createdAt).toBe(e.createdAt) // createdAt preserved on update
 
       expect(await repo.listTimelineEntries()).toHaveLength(1)
@@ -132,8 +135,10 @@ export function runRepositorySuite(
         title: 'Seeded',
         startDate: '2026-01-01',
         color: '#000',
+        displayMode: 'compact',
       })
       expect(created.id).toBe('550e8400-e29b-41d4-a716-446655440000')
+      expect(created.displayMode).toBe('compact')
       expect(await repo.listTimelineEntries()).toHaveLength(1)
 
       const updated = await repo.saveTimelineEntry({
@@ -141,9 +146,11 @@ export function runRepositorySuite(
         title: 'Seeded (edited)',
         startDate: '2026-01-01',
         color: '#fff',
+        displayMode: 'compact',
       })
       expect(updated.id).toBe('550e8400-e29b-41d4-a716-446655440000')
       expect(updated.title).toBe('Seeded (edited)')
+      expect(updated.displayMode).toBe('compact')
       expect(updated.createdAt).toBe(created.createdAt)
       expect(await repo.listTimelineEntries()).toHaveLength(1)
     })

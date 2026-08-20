@@ -38,8 +38,8 @@ test.describe('timeline', () => {
     await page.getByLabel('Title').fill('Temp')
     await page.getByLabel('Start date').fill('2026-02-01')
     await page.getByRole('button', { name: 'Save entry' }).click()
-    page.on('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Delete "Temp"' }).click()
+    await page.getByRole('button', { name: 'Delete entry' }).click()
     await expect(page.getByRole('heading', { name: 'Temp', exact: true })).toHaveCount(0)
   })
 
@@ -48,6 +48,28 @@ test.describe('timeline', () => {
     await page.getByLabel('Name').fill('Semester 1')
     await page.getByLabel('Start date').fill('2026-01-01')
     await page.getByRole('button', { name: 'Save zone' }).click()
-    await expect(page.getByText('Semester 1')).toBeVisible()
+    await expect(page.getByText('Semester 1').first()).toBeVisible()
+  })
+
+  test('horizontal timeline shows zone bands, jump chips and compact markers', async ({ page }) => {
+    // Desktop defaults to horizontal; be explicit so the test is robust.
+    await page.getByRole('radio', { name: 'Horizontal' }).check()
+
+    await page.getByRole('button', { name: 'Add zone' }).click()
+    await page.getByLabel('Name').fill('Summer')
+    await page.getByLabel('Start date').fill('2025-07-01')
+    await page.getByLabel('End date').fill('2025-12-31')
+    await page.getByRole('button', { name: 'Save zone' }).click()
+
+    await page.getByRole('button', { name: 'Add entry' }).click()
+    await page.getByLabel('Title').fill('Beach trip')
+    await page.getByLabel('Start date').fill('2025-07-10')
+    // The radio input is visually hidden inside its label; click the label text.
+    await page.getByText('Compact', { exact: true }).click()
+    await page.getByRole('button', { name: 'Save entry' }).click()
+
+    await expect(page.getByRole('region', { name: 'Timeline' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Jump to Summer' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Beach trip, 10 Jul 2025' })).toBeVisible()
   })
 })
