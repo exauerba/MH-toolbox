@@ -61,7 +61,7 @@ export function TextInput({
           aria-describedby={describedBy}
           aria-required={required || undefined}
           className={cx(
-            'min-h-11 w-full rounded-xl border bg-surface px-4 text-base text-ink shadow-soft transition-colors duration-150',
+            'min-h-11 w-full rounded-xl border bg-surface px-4 text-base text-ink shadow-soft transition-colors duration-[var(--dur-quick)]',
             'placeholder:text-ink-faint hover:border-line-strong focus:border-focus focus:outline-none',
             leadingIcon ? 'pl-11' : '',
             trailingSlot ? 'pr-11' : '',

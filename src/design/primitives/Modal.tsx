@@ -100,7 +100,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
         tabIndex={-1}
         aria-label={`Close ${title}`}
         onClick={onClose}
-        className="absolute inset-0 cursor-default bg-[rgb(40_18_12/0.45)] backdrop-blur-[2px]"
+        className="absolute inset-0 cursor-default bg-overlay backdrop-blur-[2px]"
       />
       <div
         ref={dialogRef}

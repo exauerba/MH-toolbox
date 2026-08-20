@@ -62,7 +62,7 @@ export function Alert({ variant = 'info', title, children, dismissible, onDismis
       role={config.role}
       className={cx(
         'flex items-start gap-3 p-4 animate-fade-in',
-        pixel ? 'rounded-sm border-2 shadow-pixel-sm' : 'rounded-xl border shadow-soft',
+        pixel ? 'rounded-none border-2 shadow-pixel-sm' : 'rounded-xl border shadow-soft',
         containerClass,
         className,
       )}

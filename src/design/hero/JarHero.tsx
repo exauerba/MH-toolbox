@@ -1,29 +1,10 @@
 import { useRef, useState } from 'react'
 import { Button, Card, Chip, IconButton, SegmentedControl, Stepper } from '../primitives'
 import { Icon } from '../icons'
-import type { IconName } from '../icons'
 import { SpecPanel } from './SpecPanel'
 import { cx } from '../cx'
-
-type JarState = 'healthy' | 'low' | 'overdrawn'
-
-const STATE_META: Record<JarState, { label: string; icon: IconName; copy: string }> = {
-  healthy: {
-    label: 'Plenty left',
-    icon: 'check',
-    copy: 'Plenty left today. Rest when you need it — your spoons are yours.',
-  },
-  low: {
-    label: 'Running low',
-    icon: 'gauge',
-    copy: 'Running low is okay. Maybe pick the one thing that matters most, and let the rest wait.',
-  },
-  overdrawn: {
-    label: 'Borrowed from tomorrow',
-    icon: 'heart',
-    copy: "You've used more than today's jar. That's information, not failure — tomorrow starts fresh.",
-  },
-}
+import { STATE_META } from '../../features/jar/jarStates'
+import type { JarState } from '../../features/jar/jarStates'
 
 const PRESETS: Record<JarState, { total: number; spent: number }> = {
   healthy: { total: 12, spent: 3 },

@@ -90,16 +90,15 @@ describe('TimelineScreen', () => {
   })
 
   it('deletes an entry after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const repo = new FakeRepository()
     await repo.saveTimelineEntry({ title: 'Doomed entry', startDate: '2025-05-05', color: zonePalette.sky })
     renderScreen(repo)
     const user = userEvent.setup()
 
     await user.click(await screen.findByRole('button', { name: 'Delete "Doomed entry"' }))
+    await user.click(await screen.findByRole('button', { name: 'Delete entry' }))
 
     await waitFor(() => expect(screen.queryByText('Doomed entry')).not.toBeInTheDocument())
-    expect(window.confirm).toHaveBeenCalledWith('Delete "Doomed entry"?')
     expect(await repo.listTimelineEntries()).toHaveLength(0)
   })
 

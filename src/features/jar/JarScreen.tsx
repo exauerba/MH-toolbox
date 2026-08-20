@@ -15,38 +15,14 @@ import type { IconName } from '../../design'
 import { useRepository } from '../../data/RepositoryProvider'
 import { fromISODate, todayForResetHour, toISODate } from '../../shared/day'
 import type { JarLog } from '../../data/types'
+import { STATE_META } from './jarStates'
+import type { JarState } from './jarStates'
 
 /**
  * The Energy Jar. The jar is a literal vessel: liquid rises and falls with
  * your remaining spoons, and each spoon sits in the jar. The three states
  * are always conveyed by icon + label + copy, never colour alone.
  */
-
-type JarState = 'healthy' | 'low' | 'overdrawn'
-
-interface StateMeta {
-  label: string
-  icon: IconName
-  copy: string
-}
-
-const STATE_META: Record<JarState, StateMeta> = {
-  healthy: {
-    label: 'Plenty left',
-    icon: 'check',
-    copy: 'Plenty left today. Rest when you need it — your spoons are yours.',
-  },
-  low: {
-    label: 'Running low',
-    icon: 'gauge',
-    copy: 'Running low is okay. Maybe pick the one thing that matters most, and let the rest wait.',
-  },
-  overdrawn: {
-    label: 'Borrowed from tomorrow',
-    icon: 'heart',
-    copy: "You've used more than today's jar. That's information, not failure — tomorrow starts fresh.",
-  },
-}
 
 function formatAmount(amount: number): string {
   return amount % 1 === 0 ? String(amount) : amount.toFixed(1)
@@ -354,7 +330,7 @@ export function JarScreen() {
         {/* State banner — icon + label + copy, never colour alone */}
         <div
           className={cx(
-            'mt-5 flex items-start gap-3 rounded-sm border-2 p-4',
+            'mt-5 flex items-start gap-3 rounded-none border-2 p-4',
             state === 'overdrawn' && 'border-overdrawn-line bg-overdrawn-soft text-overdrawn-ink',
             state === 'low' && 'border-low-line bg-low-soft text-low-ink',
             state === 'healthy' && 'border-jar-200 bg-jar-50 text-jar-800',
@@ -377,7 +353,7 @@ export function JarScreen() {
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           {/* The jar — self-start keeps it compact instead of stretching to
               the right column's height */}
-          <div className="min-w-0 self-start rounded-sm border-2 border-line-strong bg-surface px-4 py-4 shadow-pixel-sm sm:py-8">
+          <div className="min-w-0 self-start rounded-none border-2 border-line-strong bg-surface px-4 py-4 shadow-pixel-sm sm:py-8">
             <JarVessel
               total={dayTotal}
               remaining={remaining}
@@ -417,7 +393,7 @@ export function JarScreen() {
 
           {/* Quick add — a card that matches the jar's height on desktop so the
               row stays balanced; on mobile it flows right under the jar */}
-          <div className="flex min-w-0 flex-col rounded-sm border-2 border-line p-4">
+          <div className="flex min-w-0 flex-col rounded-none border-2 border-line p-4">
             <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">
               Log a spoonful
             </h3>
@@ -475,7 +451,7 @@ export function JarScreen() {
           </div>
 
           {/* Today's log — full width below so the left column doesn't gap */}
-          <div className="min-w-0 rounded-sm border-2 border-line p-4 lg:col-span-2">
+          <div className="min-w-0 rounded-none border-2 border-line p-4 lg:col-span-2">
             <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
               Today's log
             </h3>
@@ -485,7 +461,7 @@ export function JarScreen() {
                   editing?.id === log.id ? (
                     <li
                       key={log.id}
-                      className="flex flex-col gap-3 rounded-sm border border-line bg-surface-muted px-3 py-2"
+                      className="flex flex-col gap-3 rounded-lg border border-line bg-surface-muted px-3 py-2"
                     >
                       <Stepper
                         label="Spoons spent"
@@ -523,7 +499,7 @@ export function JarScreen() {
                   ) : (
                     <li
                       key={log.id}
-                      className="flex items-center justify-between gap-3 rounded-sm border border-line bg-surface-muted px-3 py-2"
+                      className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface-muted px-3 py-2"
                     >
                       <span className="flex min-w-0 items-center gap-2 text-ink">
                         <Icon
@@ -576,7 +552,7 @@ export function JarScreen() {
                     {day.value}
                   </span>
                   <span
-                    className="w-full rounded-t-sm border-2 border-b-0 border-jar-200 bg-jar-300"
+                    className="w-full rounded-t-none border-2 border-b-0 border-jar-200 bg-jar-300"
                     style={{ height: `${(day.value / maxHistory) * 56}px` }}
                   />
                   <span className="text-xs font-bold text-ink-soft">{day.day}</span>

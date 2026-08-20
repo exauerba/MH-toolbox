@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTheme } from '../../app/shell/theme'
 import {
   Alert,
   Button,
@@ -126,7 +127,7 @@ function RampNote({ children }: { children: ReactNode }) {
 /* ---- the page ---------------------------------------------------------- */
 
 export default function Styleguide() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const { theme, setTheme } = useTheme()
   const [simulateReduced, setSimulateReduced] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [stepperValue, setStepperValue] = useState(2.5)
@@ -135,11 +136,6 @@ export default function Styleguide() {
   const [region, setRegion] = useState('us')
   const [email, setEmail] = useState('')
   const [entrance, setEntrance] = useState(0)
-
-  const setThemeMode = (next: 'light' | 'dark') => {
-    setTheme(next)
-    document.documentElement.classList.toggle('dark', next === 'dark')
-  }
 
   const toggleReduced = (on: boolean) => {
     setSimulateReduced(on)
@@ -165,7 +161,7 @@ export default function Styleguide() {
             <SegmentedControl
               label="Styleguide theme"
               value={theme}
-              onChange={(v) => setThemeMode(v as 'light' | 'dark')}
+              onChange={(v) => setTheme(v as 'light' | 'dark')}
               options={[
                 { value: 'light', label: 'Light', icon: 'sun' },
                 { value: 'dark', label: 'Dark', icon: 'moon' },

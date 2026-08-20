@@ -50,7 +50,7 @@ export function TextArea({
         aria-describedby={describedBy}
         aria-required={required || undefined}
         className={cx(
-          'w-full rounded-xl border bg-surface px-4 py-3 text-base leading-relaxed text-ink shadow-soft transition-colors duration-150',
+          'w-full rounded-xl border bg-surface px-4 py-3 text-base leading-relaxed text-ink shadow-soft transition-colors duration-[var(--dur-quick)]',
           'placeholder:text-ink-faint hover:border-line-strong focus:border-focus focus:outline-none',
           'resize-y',
           error ? 'border-error-line bg-error-soft focus:border-error-strong' : 'border-line',

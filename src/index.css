@@ -57,6 +57,7 @@
   --color-line: #e7dbd2; /* hairlines, borders */
   --color-line-strong: #d8c6ba; /* emphasized borders */
   --color-focus: #b04a33; /* visible focus ring (3:1+ on all surfaces) */
+  --color-overlay: rgb(40 18 12 / 0.45); /* modal / dialog backdrop */
 
   /* Cozy 16-bit skin — earthy accents (hub & jar) */
   --color-parchment: #f1e8d5;
@@ -180,6 +181,7 @@
   --dur-slow: 320ms; /* modals, drawers */
   --dur-slower: 400ms; /* toasts, celebratory */
   --dur-jar: 600ms; /* decorative chip pour — only when motion allowed */
+  --dur-spin: 900ms; /* loading spinner — a calm, unhurried rotation */
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1); /* entries & feedback */
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1); /* on-screen movement */
@@ -209,6 +211,7 @@
   --color-line: #362c25;
   --color-line-strong: #463a31;
   --color-focus: #f0a48f;
+  --color-overlay: rgb(0 0 0 / 0.6);
 
   /* Cozy 16-bit skin — earthy accents (dark) */
   --color-parchment: #2b241b;

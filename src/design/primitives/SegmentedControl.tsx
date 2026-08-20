@@ -57,7 +57,7 @@ export function SegmentedControl({
           <label
             key={option.value}
             className={cx(
-              'relative flex min-h-11 flex-1 cursor-pointer select-none items-center justify-center gap-2 px-3 text-sm font-bold transition-colors',
+              'relative flex min-h-11 flex-1 cursor-pointer select-none items-center justify-center gap-2 px-3 text-sm font-bold transition-colors duration-[var(--dur-quick)]',
               pixel ? 'rounded-none' : 'rounded-full',
               selected
                 ? pixel

@@ -22,6 +22,7 @@ export const colors = {
   line: '#e7dbd2',
   lineStrong: '#d8c6ba',
   focus: '#b04a33',
+  overlay: 'rgb(40 18 12 / 0.45)',
 
   /* Cozy 16-bit skin — earthy accents (hub & jar) */
   parchment: '#f1e8d5',
@@ -112,6 +113,7 @@ export const colorsDark = {
   line: '#362c25',
   lineStrong: '#463a31',
   focus: '#f0a48f',
+  overlay: 'rgb(0 0 0 / 0.6)',
   /* Cozy 16-bit skin — earthy accents (dark) */
   parchment: '#2b241b',
   moss: { 200: '#8f9664', 300: '#a9b078' },
@@ -212,6 +214,7 @@ export const motion = {
     slow: '320ms', // modals, drawers
     slower: '400ms', // toasts
     jar: '600ms', // decorative chip pour (motion-allowed only)
+    spin: '900ms', // loading spinner — a calm, unhurried rotation
   },
   easings: {
     out: 'cubic-bezier(0.23, 1, 0.32, 1)', // entries & feedback

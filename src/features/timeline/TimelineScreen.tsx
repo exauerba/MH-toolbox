@@ -45,7 +45,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (color: str
               title={name}
               onClick={() => onChange(hex)}
               className={cx(
-                'flex size-11 items-center justify-center rounded-full border-2 transition-transform duration-150',
+                'flex size-11 items-center justify-center rounded-full border-2 transition-transform duration-[var(--dur-fast)]',
                 selected
                   ? 'scale-110 border-ink ring-2 ring-focus/60 ring-offset-2 ring-offset-canvas'
                   : 'border-transparent hover:scale-105',
@@ -453,6 +453,7 @@ export function TimelineScreen() {
     open: false,
     zone: null,
   })
+  const [deleteTarget, setDeleteTarget] = useState<TimelineEntry | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -493,8 +494,8 @@ export function TimelineScreen() {
   const closeZone = () => setZoneModal({ open: false, zone: null })
 
   const deleteEntry = async (entry: TimelineEntry) => {
-    if (!window.confirm(`Delete "${entry.title}"?`)) return
     await repo.deleteTimelineEntry(entry.id)
+    setDeleteTarget(null)
     await reload()
   }
 
@@ -645,7 +646,7 @@ export function TimelineScreen() {
                                 label={`Delete "${entry.title}"`}
                                 variant="ghost"
                                 pixel
-                                onClick={() => void deleteEntry(entry)}
+                                onClick={() => setDeleteTarget(entry)}
                               />
                             </div>
                           </div>
@@ -703,6 +704,26 @@ export function TimelineScreen() {
 
       <EntryModal open={entryModal.open} entry={entryModal.entry} onClose={closeEntry} onSaved={reload} />
       <ZoneModal open={zoneModal.open} zone={zoneModal.zone} onClose={closeZone} onSaved={reload} />
+      <Modal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete this entry?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={() => deleteTarget && void deleteEntry(deleteTarget)}>
+              Delete entry
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm leading-relaxed text-ink-soft">
+          This permanently deletes “{deleteTarget?.title}” and its photos from your timeline. It
+          cannot be undone.
+        </p>
+      </Modal>
     </div>
   )
 }

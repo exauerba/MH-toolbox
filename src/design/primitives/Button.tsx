@@ -66,7 +66,7 @@ export function Button({
       {loading ? (
         <span
           aria-hidden="true"
-          className="block size-5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+          className="block size-5 animate-spin rounded-full border-2 border-white/40 border-t-white [animation-duration:var(--dur-spin)]"
         />
       ) : (
         leadingIcon

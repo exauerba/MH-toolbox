@@ -62,7 +62,7 @@ export function Select({
           value={value}
           defaultValue={defaultValue}
           className={cx(
-            'min-h-11 w-full appearance-none rounded-xl border bg-surface px-4 pr-11 text-base text-ink shadow-soft transition-colors duration-150',
+            'min-h-11 w-full appearance-none rounded-xl border bg-surface px-4 pr-11 text-base text-ink shadow-soft transition-colors duration-[var(--dur-quick)]',
             'hover:border-line-strong focus:border-focus focus:outline-none',
             error ? 'border-error-line bg-error-soft focus:border-error-strong' : 'border-line',
             className,
