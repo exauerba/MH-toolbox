@@ -654,12 +654,6 @@ export function TimelineScreen() {
           onClick={() => navigate('/')}
         />
         <div className="flex items-center gap-2.5">
-          <span
-            aria-hidden="true"
-            className="pixel-tile flex size-10 items-center justify-center rounded-none bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300"
-          >
-            <Icon name="timeline" size={22} pixel />
-          </span>
           <h1 className="font-display text-xl font-bold text-ink">Personal Timeline</h1>
         </div>
       </div>
@@ -700,37 +694,39 @@ export function TimelineScreen() {
                 >
                   Add entry
                 </Button>
+                <Button
+                  variant="secondary"
+                  leadingIcon={<Icon name="flag" size={18} pixel />}
+                  onClick={() => openZone(null)}
+                >
+                  Add zone
+                </Button>
               </div>
             </div>
 
-            {/* Zone legend */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
-              <span className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">Zones</span>
-              {zones.map((zone) => (
-                <span key={zone.id} className="flex items-center gap-1">
-                  <Chip
-                    className="pixel-chip"
-                    icon={<span className="size-2.5 rounded-full" style={{ backgroundColor: zone.color }} />}
-                  >
-                    {zone.name}
-                  </Chip>
-                  <IconButton
-                    icon="edit"
-                    label={`Edit zone "${zone.name}"`}
-                    variant="ghost"
-                    pixel
-                    onClick={() => openZone(zone)}
-                  />
-                </span>
-              ))}
-              <Button
-                variant="secondary"
-                leadingIcon={<Icon name="flag" size={18} pixel />}
-                onClick={() => openZone(null)}
-              >
-                Add zone
-              </Button>
-            </div>
+            {/* Zone legend — only when zones exist; the header carries Add zone */}
+            {zones.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-2.5">
+                <span className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">Zones</span>
+                {zones.map((zone) => (
+                  <span key={zone.id} className="flex items-center gap-1">
+                    <Chip
+                      className="pixel-chip"
+                      icon={<span className="size-2.5 rounded-full" style={{ backgroundColor: zone.color }} />}
+                    >
+                      {zone.name}
+                    </Chip>
+                    <IconButton
+                      icon="edit"
+                      label={`Edit zone "${zone.name}"`}
+                      variant="ghost"
+                      pixel
+                      onClick={() => openZone(zone)}
+                    />
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* Body */}
             {entries.length === 0 && zones.length === 0 ? (
@@ -768,7 +764,7 @@ export function TimelineScreen() {
                       {/* Spine */}
                       <span className="relative flex w-8 shrink-0 flex-col items-center">
                         <span
-                          className="mt-3 size-4 rounded-full border-2 bg-surface"
+                          className="mt-3 size-4 rounded-[var(--radius-pixel)] border-2 bg-surface"
                           style={{ borderColor: zone?.color }}
                         />
                         {!last && <span className="mt-1 w-px flex-1 bg-line-strong" aria-hidden="true" />}

@@ -203,7 +203,7 @@ export function JarHero() {
                 <div key={day.day} className="flex flex-1 flex-col items-center gap-1">
                   <span className="text-xs font-bold tabular-nums text-ink-soft">{day.value}</span>
                   <span
-                    className="w-full rounded-t-md bg-jar-300"
+                    className="w-full rounded-t-[var(--radius-pixel)] border-2 border-b-0 border-jar-200 bg-jar-300"
                     style={{ height: `${(day.value / maxHistory) * 56}px` }}
                   />
                   <span className="text-xs font-bold text-ink-soft">{day.day}</span>
@@ -217,9 +217,9 @@ export function JarHero() {
               {PATTERNS.map((p) => (
                 <div key={p.label} className="flex items-center gap-2 text-sm">
                   <span className="w-28 shrink-0 truncate font-semibold text-ink-soft">{p.label}</span>
-                  <span className="h-3 flex-1 overflow-hidden rounded-full bg-surface-strong">
+                  <span className="h-3 flex-1 overflow-hidden rounded-none border border-line bg-surface-strong">
                     <span
-                      className="block h-full rounded-full bg-jar-400"
+                      className="block h-full rounded-none bg-jar-400"
                       style={{ width: `${(p.value / maxPattern) * 100}%` }}
                     />
                   </span>

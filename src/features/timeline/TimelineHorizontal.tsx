@@ -227,7 +227,7 @@ export function TimelineHorizontal({
   if (scale.trackWidth === 0) return null
 
   return (
-    <div className="flex flex-col gap-2 p-4 md:gap-3 md:p-5">
+    <div className="flex flex-col gap-2 px-4 pb-4 pt-2.5 md:gap-3 md:px-5 md:pb-5 md:pt-3">
       {zones.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">Jump to</span>
@@ -239,7 +239,7 @@ export function TimelineHorizontal({
               onClick={() => scrollTrackTo(xFor(zone.startDate))}
               className="pressable inline-flex min-h-11 items-center gap-1.5 rounded-none border-2 border-line-strong bg-surface px-3.5 text-sm font-bold text-ink shadow-pixel-sm hover:bg-surface-muted"
             >
-              <span className="size-2.5 rounded-[3px]" style={{ backgroundColor: zone.color }} />
+              <span className="size-2.5 rounded-[var(--radius-pixel)]" style={{ backgroundColor: zone.color }} />
               {zone.name}
             </button>
           ))}
@@ -278,7 +278,7 @@ export function TimelineHorizontal({
                   }}
                 >
                   <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-none border-2 border-line-strong bg-surface/90 px-2.5 py-1 text-xs font-bold text-ink shadow-pixel-sm">
-                    <span className="size-2 rounded-[3px]" style={{ backgroundColor: zone.color }} />
+                    <span className="size-2 rounded-[var(--radius-pixel)]" style={{ backgroundColor: zone.color }} />
                     {zone.name}
                   </span>
                 </div>
@@ -300,7 +300,7 @@ export function TimelineHorizontal({
                 return (
                   <div key={entry.id} className="absolute" style={{ left, top: '50%' }}>
                     <div className="flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-                      <span className="mb-1 whitespace-nowrap text-2xs font-semibold text-ink-faint">
+                      <span className="mb-1 whitespace-nowrap text-2xs font-semibold text-ink-soft">
                         {formatDate(entry.startDate)}
                       </span>
                       <Tooltip label={`${entry.title}, ${formatDate(entry.startDate)}`}>
@@ -316,7 +316,7 @@ export function TimelineHorizontal({
                           {/* Pixel dot inside a 44px touch target */}
                           <span
                             aria-hidden="true"
-                            className="absolute inset-0 m-auto rounded-[3px] border-2 bg-surface shadow-pixel-sm transition-transform duration-[var(--dur-fast)] group-hover:scale-125"
+                            className="absolute inset-0 m-auto rounded-[var(--radius-pixel)] border-2 bg-surface shadow-pixel-sm transition-transform duration-[var(--dur-fast)] group-hover:scale-125"
                             style={{ borderColor: zone?.color ?? entry.color, width: DOT, height: DOT }}
                           />
                         </button>
@@ -385,11 +385,11 @@ export function TimelineHorizontal({
                               key={ref.id}
                               src={ref.url}
                               alt={entry.title}
-                              className="h-14 w-14 rounded-md border border-line object-cover"
+                              className="h-14 w-14 rounded-lg border border-line object-cover"
                             />
                           ))}
                           {images.length > 3 && (
-                            <span className="flex h-14 w-14 items-center justify-center rounded-md border border-line bg-surface-muted text-xs font-bold text-ink-soft">
+                            <span className="flex h-14 w-14 items-center justify-center rounded-lg border border-line bg-surface-muted text-xs font-bold text-ink-soft">
                               +{images.length - 3}
                             </span>
                           )}

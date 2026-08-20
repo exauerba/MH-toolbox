@@ -24,7 +24,7 @@ const variantClasses: Record<IconButtonVariant, string> = {
   secondary:
     'bg-surface text-ink border border-line-strong hover:bg-surface-muted active:bg-surface-strong shadow-soft',
   soft: 'bg-brand-100 text-brand-700 hover:bg-brand-200 active:bg-brand-300 dark:bg-brand-300/20 dark:text-brand-300',
-  filled: 'bg-brand-700 text-white hover:bg-brand-800 active:bg-brand-900 shadow-soft',
+  filled: 'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-soft',
 }
 
 /**
@@ -46,7 +46,8 @@ export function IconButton({
     <button
       type={type}
       className={cx(
-        'pressable inline-flex touch-target items-center justify-center rounded-xl',
+        'pressable inline-flex touch-target items-center justify-center',
+        pixel ? 'rounded-[var(--radius-pixel)]' : 'rounded-xl',
         variantClasses[variant],
         round && 'rounded-full',
         className,

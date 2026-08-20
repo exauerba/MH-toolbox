@@ -12,6 +12,8 @@ export interface ModalProps {
   /** Optional footer (actions row). */
   footer?: ReactNode
   size?: 'sm' | 'md' | 'lg'
+  /** Cozy 16-bit mode — stepped pixel corners + pixel shadow. */
+  pixel?: boolean
 }
 
 const FOCUSABLE =
@@ -49,7 +51,7 @@ const sizeClasses = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-2xl' } as const
  * open. One primary question at a time — a dysregulated user never faces a
  * wall of choices inside a dialog.
  */
-export function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {
+export function Modal({ open, onClose, title, children, footer, size = 'md', pixel }: ModalProps) {
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const restoreRef = useRef<HTMLElement | null>(null)
@@ -109,7 +111,10 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cx(
-          'relative flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-pop animate-pop-in sm:rounded-2xl',
+          'relative flex max-h-[90dvh] w-full flex-col overflow-hidden bg-surface animate-pop-in',
+          pixel
+            ? 'rounded-t-[var(--radius-pixel)] shadow-pixel sm:rounded-[var(--radius-pixel)]'
+            : 'rounded-t-2xl shadow-pop sm:rounded-2xl',
           sizeClasses[size],
         )}
       >

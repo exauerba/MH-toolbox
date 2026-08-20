@@ -29,7 +29,7 @@ const TOOLS: Tool[] = [
     name: 'Mood & Symptom Tracker',
     tagline: 'Your daily check-ins and patterns, in bloom.',
     icon: 'sparkle',
-    tileClass: 'bg-bloom-100 text-bloom-600 dark:bg-bloom-300/20 dark:text-bloom-300',
+    tileClass: 'bg-bloom-100 text-bloom-700 dark:bg-bloom-300/20 dark:text-bloom-300',
     external: true,
   },
   {
@@ -44,7 +44,7 @@ const TOOLS: Tool[] = [
     name: 'More tools soon',
     tagline: 'The toolbox grows as you need it.',
     icon: 'sparkle',
-    tileClass: 'bg-brand-100 text-brand-600 dark:bg-brand-300/20 dark:text-brand-300',
+    tileClass: 'bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300',
   },
 ]
 

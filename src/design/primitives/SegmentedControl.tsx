@@ -58,6 +58,7 @@ export function SegmentedControl({
             key={option.value}
             className={cx(
               'relative flex min-h-11 flex-1 cursor-pointer select-none items-center justify-center gap-2 px-3 text-sm font-bold transition-colors duration-[var(--dur-quick)]',
+              'focus-within:ring-2 focus-within:ring-focus focus-within:ring-inset',
               pixel ? 'rounded-none' : 'rounded-full',
               selected
                 ? pixel

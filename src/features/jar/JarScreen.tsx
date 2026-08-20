@@ -53,11 +53,11 @@ function JarVessel({ total, remaining, borrowed, fill, leaving }: JarVesselProps
   return (
     <div aria-hidden="true" className="relative mx-auto w-36 pt-2 sm:w-[10.5rem]">
       {/* Lid — pixel jar, hard stepped walnut */}
-      <div className="mx-auto h-3 w-20 rounded-t-sm border-[3px] border-b-0 border-walnut-600 bg-walnut-500 sm:w-24" />
+      <div className="mx-auto h-3 w-20 rounded-t-[var(--radius-pixel)] border-[3px] border-b-0 border-walnut-600 bg-walnut-500 sm:w-24" />
       {/* Neck */}
       <div className="mx-auto h-4 w-24 rounded-none border-[3px] border-b-0 border-walnut-600 bg-parchment sm:w-28" />
       {/* Body */}
-      <div className="relative mx-auto h-44 w-32 overflow-hidden rounded-t-sm rounded-b-[6px] border-[3px] border-walnut-600 bg-parchment shadow-pixel sm:h-56 sm:w-36">
+      <div className="relative mx-auto h-44 w-32 overflow-hidden rounded-none rounded-b-[var(--radius-pixel)] border-[3px] border-walnut-600 bg-parchment shadow-pixel sm:h-56 sm:w-36">
         {/* Liquid — fills from the bottom, animates on spend */}
         <div
           className="absolute inset-x-0 bottom-0 h-full origin-bottom rounded-none bg-jar-300 transition-transform duration-[var(--dur-jar)] ease-[var(--ease-out)]"
@@ -141,13 +141,13 @@ function LedgerStat({
   return (
     <span
       className={cx(
-        'pixel-chip flex min-h-11 items-center gap-2 border px-4 py-1.5 text-sm font-bold',
+        'inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-bold',
         tone,
       )}
       role={live ? 'status' : undefined}
       aria-live={live ? 'polite' : undefined}
     >
-      <Icon name={icon} size={16} pixel />
+      <Icon name={icon} size={14} pixel />
       <span className="font-extrabold tabular-nums">{value}</span>
       <span className="font-semibold">{label}</span>
     </span>
@@ -172,7 +172,6 @@ export function JarScreen() {
   const [labelText, setLabelText] = useState('')
   const [fill, setFill] = useState<'spoons' | 'chips'>('spoons')
   const [leaving, setLeaving] = useState<LeaveBurst[]>([])
-  const [buttonBurst, setButtonBurst] = useState<LeaveBurst | null>(null)
   const nextLeaveId = useRef(1)
   const [editing, setEditing] = useState<EditState | null>(null)
 
@@ -244,9 +243,7 @@ export function JarScreen() {
     setLabelText('')
     const burst = { id: nextLeaveId.current++, count: Math.max(1, Math.ceil(step)) }
     setLeaving((cur) => [...cur, burst])
-    setButtonBurst(burst)
     setTimeout(() => setLeaving((cur) => cur.filter((b) => b.id !== burst.id)), 550)
-    setTimeout(() => setButtonBurst((cur) => (cur?.id === burst.id ? null : cur)), 550)
     await refreshLogs()
   }
 
@@ -330,7 +327,7 @@ export function JarScreen() {
         {/* State banner — icon + label + copy, never colour alone */}
         <div
           className={cx(
-            'mt-5 flex items-start gap-3 rounded-none border-2 p-4',
+            'mt-5 flex items-start gap-3 rounded-lg border p-3',
             state === 'overdrawn' && 'border-overdrawn-line bg-overdrawn-soft text-overdrawn-ink',
             state === 'low' && 'border-low-line bg-low-soft text-low-ink',
             state === 'healthy' && 'border-jar-200 bg-jar-50 text-jar-800',
@@ -366,21 +363,21 @@ export function JarScreen() {
                 icon={fill === 'chips' ? 'chip' : 'spoon'}
                 value={remaining}
                 label="left"
-                tone="border-jar-200 bg-jar-50 text-jar-800"
+                tone="bg-jar-100 text-jar-800"
                 live
               />
               <LedgerStat
                 icon="close"
                 value={spent}
                 label="spent"
-                tone="border-line bg-surface text-ink-soft"
+                tone="bg-surface-muted text-ink-soft"
               />
               {borrowed > 0 && (
                 <LedgerStat
                   icon="plus"
                   value={borrowed}
                   label="borrowed"
-                  tone="border-overdrawn-line bg-overdrawn-soft text-overdrawn-ink"
+                  tone="bg-overdrawn-soft text-overdrawn-ink"
                 />
               )}
             </div>
@@ -393,7 +390,7 @@ export function JarScreen() {
 
           {/* Quick add — a card that matches the jar's height on desktop so the
               row stays balanced; on mobile it flows right under the jar */}
-          <div className="flex min-w-0 flex-col rounded-none border-2 border-line p-4">
+          <div className="flex min-w-0 flex-col rounded-none border-2 border-line-strong bg-surface p-4 shadow-pixel-sm">
             <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">
               Log a spoonful
             </h3>
@@ -410,7 +407,7 @@ export function JarScreen() {
                 max={5}
                 pixel
               />
-              <div className="relative justify-self-end">
+              <div className="justify-self-end">
                 <Button
                   onClick={addSpoon}
                   className="pixel-btn"
@@ -418,22 +415,6 @@ export function JarScreen() {
                 >
                   Log {formatAmount(step)}
                 </Button>
-                {buttonBurst && (
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute -top-1 left-1/2 flex -translate-x-1/2 -translate-y-full items-start gap-1"
-                  >
-                    {Array.from({ length: buttonBurst.count }, (_, i) => (
-                      <Icon
-                        key={i}
-                        name={fill === 'chips' ? 'chip' : 'spoon'}
-                        size={13}
-                        pixel
-                        className="animate-chip-leave text-jar-800"
-                      />
-                    ))}
-                  </span>
-                )}
               </div>
               <TextInput
                 label="Label (optional)"
@@ -538,9 +519,12 @@ export function JarScreen() {
             )}
           </div>
         </div>
+      </Card>
 
-        {/* History + patterns */}
-        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+      {/* History + patterns — quieter secondary section (no heavy pixel
+          border) so the primary card stays the visual anchor */}
+      <Card variant="soft" padding="lg" className="flex-1">
+        <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
               Last 7 days
@@ -552,7 +536,7 @@ export function JarScreen() {
                     {day.value}
                   </span>
                   <span
-                    className="w-full rounded-t-none border-2 border-b-0 border-jar-200 bg-jar-300"
+                    className="w-full rounded-t-[var(--radius-pixel)] border-2 border-b-0 border-jar-200 bg-jar-300"
                     style={{ height: `${(day.value / maxHistory) * 56}px` }}
                   />
                   <span className="text-xs font-bold text-ink-soft">{day.day}</span>

@@ -30,8 +30,8 @@ export const BLOOM_URL = 'https://exauerba.github.io/pink-mood-tracker/';
 
 /** Accent → tile classes, mirroring toolAccents in design tokens. */
 export const accentTileClass: Record<ToolAccent, string> = {
-  hub: 'bg-brand-100 text-brand-600 dark:bg-brand-300/20 dark:text-brand-300',
-  bloom: 'bg-bloom-100 text-bloom-600 dark:bg-bloom-300/20 dark:text-bloom-300',
+  hub: 'bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300',
+  bloom: 'bg-bloom-100 text-bloom-700 dark:bg-bloom-300/20 dark:text-bloom-300',
   jar: 'bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300',
   timeline:
     'bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300',

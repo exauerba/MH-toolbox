@@ -21,7 +21,7 @@ export interface ChipProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'onClic
 
 const toneClasses: Record<ChipTone, string> = {
   neutral: 'bg-surface-muted text-ink-soft border border-line',
-  brand: 'bg-brand-700 text-white border border-brand-700',
+  brand: 'bg-brand-600 text-white border border-brand-600',
   jar: 'bg-jar-100 text-jar-700 border border-jar-200 dark:bg-jar-300/20 dark:text-jar-300',
   timeline: 'bg-timeline-100 text-timeline-700 border border-timeline-200 dark:bg-timeline-300/20 dark:text-timeline-300',
   bloom: 'bg-bloom-100 text-bloom-700 border border-bloom-200 dark:bg-bloom-300/20 dark:text-bloom-300',

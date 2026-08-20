@@ -40,7 +40,7 @@ export function Toggle({ checked, onChange, label, ariaLabel, description, disab
           'disabled:cursor-not-allowed',
         )}
       >
-        <span className="flex size-7 items-center justify-center rounded-full bg-white text-brand-700 shadow-press">
+        <span className="flex size-7 items-center justify-center rounded-full bg-surface text-brand-700 shadow-press">
           <Icon name="check" size={15} className={checked ? '' : 'opacity-0'} />
         </span>
       </button>
