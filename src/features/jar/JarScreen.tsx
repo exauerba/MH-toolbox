@@ -280,7 +280,7 @@ export function JarScreen() {
         >
           <Icon name="jar" size={22} pixel />
         </span>
-        <h1 className="font-display text-xl font-bold text-ink">Energy Jar</h1>
+        <h1 className="font-display text-3xl font-bold text-ink">Energy Jar</h1>
       </div>
     </div>
   )
