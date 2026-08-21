@@ -1,16 +1,16 @@
 import { useState } from 'react'
-import { Button, Card, Chip, IconButton } from '../primitives'
+import { Button, Card, Chip, IconButton, Tile } from '../primitives'
 import { Icon } from '../icons'
 import type { IconName } from '../icons'
+import type { TileAccent } from '../primitives'
 import { SpecPanel } from './SpecPanel'
-import { cx } from '../cx'
 
 interface Tool {
   id: string
   name: string
   tagline: string
   icon: IconName
-  tileClass: string
+  accent: TileAccent
   external?: boolean
   badge?: string
 }
@@ -21,7 +21,7 @@ const TOOLS: Tool[] = [
     name: 'Energy Jar',
     tagline: 'Spoon-theory tracker — see your energy at a glance.',
     icon: 'spoon',
-    tileClass: 'bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300',
+    accent: 'jar',
     badge: 'New',
   },
   {
@@ -29,7 +29,7 @@ const TOOLS: Tool[] = [
     name: 'Mood & Symptom Tracker',
     tagline: 'Your daily check-ins and patterns, in bloom.',
     icon: 'sparkle',
-    tileClass: 'bg-bloom-100 text-bloom-700 dark:bg-bloom-300/20 dark:text-bloom-300',
+    accent: 'bloom',
     external: true,
   },
   {
@@ -37,14 +37,14 @@ const TOOLS: Tool[] = [
     name: 'Personal Timeline',
     tagline: 'Build the story of your life, one zone at a time.',
     icon: 'timeline',
-    tileClass: 'bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300',
+    accent: 'timeline',
   },
   {
     id: 'more',
     name: 'More tools soon',
     tagline: 'The toolbox grows as you need it.',
     icon: 'sparkle',
-    tileClass: 'bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300',
+    accent: 'hub',
   },
 ]
 
@@ -65,11 +65,9 @@ function ToolCard({
   return (
     <Card as="article" variant="tile" padding="md" className="flex h-full flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
-        <span className={cx('pixel-tile flex size-12 items-center justify-center rounded-none', tool.tileClass)} aria-hidden="true">
-          <Icon name={tool.icon} size={26} pixel />
-        </span>
+        <Tile icon={tool.icon} accent={tool.accent} size="lg" />
         {showGrip && (
-          <span className="flex items-center gap-1 text-ink-faint" aria-hidden="true">
+          <span className="flex items-center gap-1 text-ink-soft" aria-hidden="true">
             <Icon name="grip" size={18} pixel />
           </span>
         )}

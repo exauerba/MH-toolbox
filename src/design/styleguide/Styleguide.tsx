@@ -354,8 +354,8 @@ export default function Styleguide() {
       <Section
         id="typography"
         kicker="03 · Typography"
-        title="Nunito, at 16px, breathing room for tired eyes"
-        intro="bloom's font, calmer line-heights. Base is never below 16px for anything essential."
+        title="Fredoka, at 16px, breathing room for tired eyes"
+        intro="Rounded and warm, with optical sizing that stays legible at small sizes. Base is never below 16px for anything essential."
       >
         <div className="flex flex-col gap-5">
           {Object.entries(typography.scale).map(([name, t]) => (

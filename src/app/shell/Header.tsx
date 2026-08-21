@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Icon, IconButton, cx } from '../../design';
+import { Icon, IconButton, Tile, cx } from '../../design';
 import { useTheme } from './theme';
 
 const NAV_ITEMS = [
@@ -36,16 +36,33 @@ export function Header() {
       )}
     >
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-        <div className="flex h-16 items-center justify-between gap-3">
+        <div className="flex h-16 items-center justify-between gap-2">
           <p className="flex items-center gap-2.5">
-            <span
-              aria-hidden="true"
-              className="pixel-tile flex size-10 items-center justify-center rounded-none bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300"
-            >
-              <Icon name="leaf" size={20} pixel />
-            </span>
+            <Tile icon="leaf" />
             <span className="font-display text-xl font-bold text-ink">steady</span>
           </p>
+
+          <nav aria-label="Primary" className="flex items-center gap-1">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  cx(
+                    'pressable flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-bold sm:px-4',
+                    isActive
+                      ? 'bg-surface-strong text-ink'
+                      : 'text-ink-soft hover:bg-surface-muted hover:text-ink',
+                  )
+                }
+              >
+                <Icon name={item.icon} size={17} pixel />
+                <span className="sr-only sm:not-sr-only">{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
           <IconButton
             icon={theme === 'dark' ? 'sun' : 'moon'}
             label={
@@ -56,30 +73,6 @@ export function Header() {
             onClick={toggleTheme}
           />
         </div>
-
-        <nav
-          aria-label="Primary"
-          className="flex items-center gap-1 border-t border-line py-2"
-        >
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                cx(
-                  'pressable flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-bold',
-                  isActive
-                    ? 'text-ink'
-                    : 'text-ink-soft hover:text-ink',
-                )
-              }
-            >
-              <Icon name={item.icon} size={17} pixel />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
       </div>
     </header>
   );

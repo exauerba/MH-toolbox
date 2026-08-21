@@ -80,7 +80,7 @@ export function Select({
             </option>
           ))}
         </select>
-        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-ink-faint">
+        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-ink-soft">
           <Icon name="chevronDown" size={18} />
         </span>
       </div>

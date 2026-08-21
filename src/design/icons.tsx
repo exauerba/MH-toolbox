@@ -27,6 +27,8 @@ export type IconName =
   | 'arrowRight'
   | 'arrowUp'
   | 'arrowDown'
+  | 'battery'
+  | 'brain'
   | 'alert'
   | 'calendar'
   | 'chip'
@@ -37,32 +39,51 @@ export type IconName =
   | 'chevronUp'
   | 'close'
   | 'clock'
+  | 'cloud'
+  | 'copy'
   | 'download'
+  | 'droplet'
   | 'edit'
   | 'external'
+  | 'filter'
+  | 'flower'
   | 'flag'
   | 'grip'
   | 'gauge'
   | 'heart'
+  | 'help'
   | 'home'
   | 'image'
   | 'info'
   | 'jar'
   | 'leaf'
   | 'lock'
+  | 'logout'
   | 'menu'
+  | 'message'
+  | 'more-horizontal'
   | 'minus'
   | 'moon'
+  | 'phone'
   | 'plus'
+  | 'refresh'
+  | 'save'
   | 'search'
   | 'settings'
+  | 'share'
+  | 'shield'
+  | 'smile'
   | 'sparkle'
   | 'spoon'
   | 'star'
   | 'sun'
+  | 'thermometer'
   | 'success'
   | 'timeline'
   | 'trash'
+  | 'undo'
+  | 'user'
+  | 'zzz'
 
 function strokeProps() {
   return {
@@ -97,6 +118,21 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
     <g {...strokeProps()}>
       <path d="M12 5v14" />
       <path d="M19 12l-7 7-7-7" />
+    </g>
+  ),
+  battery: () => (
+    <g {...strokeProps()}>
+      <rect x="2" y="7" width="18" height="10" rx="2" />
+      <path d="M22 11v2" />
+      <path d="M6 10v4" />
+      <path d="M10 10v4" />
+      <path d="M14 10v4" />
+    </g>
+  ),
+  brain: () => (
+    <g {...strokeProps()}>
+      <path d="M9 3a3 3 0 0 0-3 3c0 .3 0 .6.1.9A3 3 0 0 0 4 9.5c0 .6.2 1.1.5 1.6A3 3 0 0 0 5 15a3 3 0 0 0 3 2.5c.3.9 1.1 1.6 2 1.9V5.5A2.5 2.5 0 0 0 9 3z" />
+      <path d="M15 3a3 3 0 0 1 3 3c0 .3 0 .6-.1.9A3 3 0 0 1 20 9.5c0 .6-.2 1.1-.5 1.6a3 3 0 0 1 .5 3.9 3 3 0 0 1-3 2.5c-.3.9-1.1 1.6-2 1.9V5.5A2.5 2.5 0 0 1 15 3z" />
     </g>
   ),
   alert: () => (
@@ -157,11 +193,27 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M12 7v5l3 2" />
     </g>
   ),
+  cloud: () => (
+    <g {...strokeProps()}>
+      <path d="M17.5 19H6a4 4 0 0 1-.6-8A5 5 0 0 1 15 7.5 4.5 4.5 0 0 1 17.5 19z" />
+    </g>
+  ),
+  copy: () => (
+    <g {...strokeProps()}>
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </g>
+  ),
   download: () => (
     <g {...strokeProps()}>
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <path d="M7 10l5 5 5-5" />
       <path d="M12 15V3" />
+    </g>
+  ),
+  droplet: () => (
+    <g {...strokeProps()}>
+      <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />
     </g>
   ),
   edit: () => (
@@ -175,6 +227,21 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
       <path d="M15 3h6v6" />
       <path d="M10 14L21 3" />
+    </g>
+  ),
+  filter: () => (
+    <g {...strokeProps()}>
+      <path d="M3 5h18l-7 8v6l-4 2v-8z" />
+    </g>
+  ),
+  flower: () => (
+    <g {...strokeProps()}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3z" />
+      <path d="M12 14a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3z" />
+      <path d="M4 7a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3z" />
+      <path d="M20 7a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3z" />
+      <path d="M12 15v6" />
     </g>
   ),
   flag: () => (
@@ -203,6 +270,13 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
   heart: (filled) => (
     <g {...strokeProps()} fill={filled ? 'currentColor' : 'none'}>
       <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+    </g>
+  ),
+  help: () => (
+    <g {...strokeProps()}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 2" />
+      <path d="M12 17h.01" />
     </g>
   ),
   home: () => (
@@ -245,11 +319,30 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M8 11V7a4 4 0 0 1 8 0v4" />
     </g>
   ),
+  logout: () => (
+    <g {...strokeProps()}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </g>
+  ),
   menu: () => (
     <g {...strokeProps()}>
       <path d="M3 6h18" />
       <path d="M3 12h18" />
       <path d="M3 18h18" />
+    </g>
+  ),
+  message: () => (
+    <g {...strokeProps()}>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </g>
+  ),
+  'more-horizontal': () => (
+    <g {...strokeProps()}>
+      <circle cx="5" cy="12" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="19" cy="12" r="1.5" />
     </g>
   ),
   minus: () => (
@@ -262,10 +355,50 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" />
     </g>
   ),
+  phone: () => (
+    <g {...strokeProps()}>
+      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z" />
+    </g>
+  ),
   plus: () => (
     <g {...strokeProps()}>
       <path d="M12 5v14" />
       <path d="M5 12h14" />
+    </g>
+  ),
+  refresh: () => (
+    <g {...strokeProps()}>
+      <path d="M21 12a9 9 0 1 1-2.6-6.4" />
+      <path d="M21 3v6h-6" />
+    </g>
+  ),
+  save: () => (
+    <g {...strokeProps()}>
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+      <path d="M17 21v-8H7v8" />
+      <path d="M7 3v5h8" />
+    </g>
+  ),
+  share: () => (
+    <g {...strokeProps()}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.6 13.5l6.8 4" />
+      <path d="M15.4 6.5l-6.8 4" />
+    </g>
+  ),
+  shield: () => (
+    <g {...strokeProps()}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </g>
+  ),
+  smile: () => (
+    <g {...strokeProps()}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 14s1.5 2.5 4 2.5 4-2.5 4-2.5" />
+      <path d="M9 9h.01" />
+      <path d="M15 9h.01" />
     </g>
   ),
   search: () => (
@@ -305,6 +438,11 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
     </g>
   ),
+  thermometer: () => (
+    <g {...strokeProps()}>
+      <path d="M14 4a2 2 0 0 0-4 0v9.5a4 4 0 1 0 4 0z" />
+    </g>
+  ),
   success: () => (
     <g {...strokeProps()}>
       <circle cx="12" cy="12" r="9" />
@@ -325,6 +463,24 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
       <path d="M10 11v6" />
       <path d="M14 11v6" />
+    </g>
+  ),
+  undo: () => (
+    <g {...strokeProps()}>
+      <path d="M3 7v6h6" />
+      <path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
+    </g>
+  ),
+  user: () => (
+    <g {...strokeProps()}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21v-1a7 7 0 0 1 14 0v1" />
+    </g>
+  ),
+  zzz: () => (
+    <g {...strokeProps()}>
+      <path d="M4 12h6l-6 8h6" />
+      <path d="M14 4h6l-6 8h6" />
     </g>
   ),
 }

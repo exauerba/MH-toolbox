@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Card, Icon, SegmentedControl } from '../../design';
+import { Alert, Card, Icon, SegmentedControl, Tile } from '../../design';
 import type { IconName } from '../../design';
 import {
   CRISIS_REGIONS,
@@ -8,13 +8,13 @@ import {
 
 const RESOURCE_ICONS: Record<string, IconName> = {
   '988 Suicide & Crisis Lifeline': 'alert',
-  'Crisis Text Line': 'heart',
-  'Emergency services': 'check',
+  'Crisis Text Line': 'message',
+  'Emergency services': 'phone',
   'International Association for Suicide Prevention': 'external',
-  'Talk Suicide Canada': 'heart',
-  Samaritans: 'heart',
-  Lifeline: 'heart',
-  ERAN: 'heart',
+  'Talk Suicide Canada': 'phone',
+  Samaritans: 'phone',
+  Lifeline: 'phone',
+  ERAN: 'phone',
 };
 
 /**
@@ -39,7 +39,7 @@ export function AboutScreen() {
         </p>
       </header>
 
-      <Card padding="lg" className="pixel-card border-warning-line bg-warning-soft">
+      <Card padding="lg" className="pixel-card pixel-card-warning">
         <h2 className="flex items-center gap-2 text-lg font-extrabold text-warning-ink">
           <Icon name="heart" size={18} pixel />
           If you're in crisis right now
@@ -65,14 +65,13 @@ export function AboutScreen() {
             <li key={resource.name}>
               <a
                 href={resource.href}
-                className="pressable flex items-center gap-3 rounded-xl bg-surface px-4 py-3 shadow-soft hover:shadow-lift"
+                className="pressable flex items-center gap-3 rounded-none border-2 border-line bg-surface px-4 py-3 shadow-pixel-sm hover:shadow-pixel"
               >
-                <span
-                  aria-hidden="true"
-                  className="pixel-tile flex size-10 shrink-0 items-center justify-center rounded-none bg-warning-soft text-warning-ink"
-                >
-                  <Icon name={RESOURCE_ICONS[resource.name] ?? 'heart'} size={18} pixel />
-                </span>
+                <Tile
+                  icon={RESOURCE_ICONS[resource.name] ?? 'heart'}
+                  accent="warning"
+                  className="shrink-0"
+                />
                 <span className="min-w-0">
                   <span className="block font-bold text-ink">
                     {resource.name}

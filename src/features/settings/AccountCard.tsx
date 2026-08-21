@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Alert, Button, SegmentedControl, TextInput } from '../../design'
+import { Alert, Button, Icon, SegmentedControl, TextInput } from '../../design'
 import { useAuthMode } from '../../data/RepositoryProvider'
 import { supabase } from '../../config/supabase'
 import {
@@ -72,7 +72,7 @@ export function AccountCard() {
           <p className="font-bold text-ink">Account</p>
           <p className="text-sm text-ink-soft">{MESSAGES.NOT_CONFIGURED}</p>
         </div>
-        <Button variant="secondary" disabled>
+        <Button variant="secondary" disabled leadingIcon={<Icon name="user" size={16} pixel />}>
           Sign in
         </Button>
       </div>
@@ -88,6 +88,7 @@ export function AccountCard() {
         </div>
         <Button
           variant="secondary"
+          leadingIcon={<Icon name="logout" size={16} pixel />}
           onClick={() => {
             void authService.signOut()
           }}
@@ -110,6 +111,7 @@ export function AccountCard() {
         </div>
         <Button
           variant="secondary"
+          leadingIcon={<Icon name="user" size={16} pixel />}
           onClick={() => {
             setShowForm((open) => !open)
             setError(null)

@@ -9,6 +9,7 @@ import {
   SegmentedControl,
   Stepper,
   TextInput,
+  Tile,
   cx,
 } from '../../design'
 import type { IconName } from '../../design'
@@ -17,6 +18,7 @@ import { fromISODate, todayForResetHour, toISODate } from '../../shared/day'
 import type { JarLog } from '../../data/types'
 import { STATE_META } from './jarStates'
 import type { JarState } from './jarStates'
+import { LOW_SPOON_THRESHOLD } from './constants'
 
 /**
  * The Energy Jar. The jar is a literal vessel: liquid rises and falls with
@@ -141,7 +143,7 @@ function LedgerStat({
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-bold',
+        'inline-flex items-center gap-1.5 rounded-none border-2 border-line px-3 py-1 text-sm font-bold',
         tone,
       )}
       role={live ? 'status' : undefined}
@@ -164,7 +166,6 @@ export function JarScreen() {
   const repo = useRepository()
   const navigate = useNavigate()
 
-  const [ready, setReady] = useState(false)
   const [resetHour, setResetHour] = useState(0)
   const [dayTotal, setDayTotal] = useState(12)
   const [logs, setLogs] = useState<JarLog[]>([])
@@ -191,7 +192,6 @@ export function JarScreen() {
       setResetHour(hour)
       setDayTotal(day?.totalSpoons ?? spoons)
       setLogs(allLogs)
-      setReady(true)
     }
     void load().catch(() => undefined)
     return () => {
@@ -206,7 +206,7 @@ export function JarScreen() {
   const spent = todayLogs.reduce((sum, log) => sum + log.spent, 0)
   const remaining = Math.max(0, dayTotal - spent)
   const borrowed = Math.max(0, spent - dayTotal)
-  const state: JarState = borrowed > 0 ? 'overdrawn' : remaining <= 3 ? 'low' : 'healthy'
+  const state: JarState = borrowed > 0 ? 'overdrawn' : remaining <= LOW_SPOON_THRESHOLD ? 'low' : 'healthy'
   const meta = STATE_META[state]
 
   const spentByDate = new Map<string, number>()
@@ -276,27 +276,11 @@ export function JarScreen() {
         onClick={() => navigate('/')}
       />
       <div className="flex items-center gap-2.5">
-        <span
-          aria-hidden="true"
-          className="pixel-tile flex size-10 items-center justify-center rounded-none bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300"
-        >
-          <Icon name="jar" size={22} pixel />
-        </span>
-        <h1 className="font-display text-xl font-bold text-ink">Energy Jar</h1>
+        <Tile icon="jar" accent="jar" />
+        <h1 className="font-display text-3xl font-bold text-ink">Energy Jar</h1>
       </div>
     </div>
   )
-
-  if (!ready) {
-    return (
-      <div className="flex flex-col gap-6">
-        {header}
-        <Card variant="raised" padding="lg" className="pixel-card flex-1">
-          <p className="text-sm text-ink-soft">Loading…</p>
-        </Card>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -336,6 +320,7 @@ export function JarScreen() {
           <Chip
             tone={state === 'healthy' ? 'jar' : state === 'low' ? 'low' : 'overdrawn'}
             icon={<Icon name={meta.icon} size={15} pixel />}
+            dark={false}
           >
             {meta.label}
           </Chip>
@@ -526,7 +511,8 @@ export function JarScreen() {
       <Card variant="soft" padding="lg" className="flex-1">
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+            <h3 className="mb-3 flex items-center gap-1.5 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+              <Icon name="battery" size={14} pixel />
               Last 7 days
             </h3>
             <div className="flex items-end justify-between gap-2" aria-hidden="true">

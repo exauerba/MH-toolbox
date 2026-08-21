@@ -258,7 +258,7 @@ export function TimelineHorizontal({
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
-          className="relative cursor-grab touch-pan-y overflow-x-auto overscroll-x-contain rounded-xl border border-line bg-surface-muted/50 active:cursor-grabbing"
+          className="relative cursor-grab touch-pan-y overflow-x-auto overscroll-x-contain rounded-none border-2 border-line bg-surface-muted/50 active:cursor-grabbing"
         >
           <div className="relative" style={{ width: scale.trackWidth, height: trackHeight }}>
             {/* Zone bands — coloured strips with the zone name always shown */}
@@ -354,10 +354,7 @@ export function TimelineHorizontal({
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <h4 className="text-base font-extrabold text-ink">{entry.title}</h4>
-                        <span
-                          aria-hidden="true"
-                          className="text-ink-faint opacity-0 transition-opacity duration-[var(--dur-quick)] group-hover:opacity-100 group-focus-within:opacity-100"
-                        >
+                        <span aria-hidden="true" className="text-ink-soft">
                           <Icon name="chevronRight" size={16} pixel />
                         </span>
                       </div>
@@ -385,11 +382,11 @@ export function TimelineHorizontal({
                               key={ref.id}
                               src={ref.url}
                               alt={entry.title}
-                              className="h-14 w-14 rounded-lg border border-line object-cover"
+                              className="h-14 w-14 rounded-none border border-line object-cover"
                             />
                           ))}
                           {images.length > 3 && (
-                            <span className="flex h-14 w-14 items-center justify-center rounded-lg border border-line bg-surface-muted text-xs font-bold text-ink-soft">
+                            <span className="flex h-14 w-14 items-center justify-center rounded-none border border-line bg-surface-muted text-xs font-bold text-ink-soft">
                               +{images.length - 3}
                             </span>
                           )}

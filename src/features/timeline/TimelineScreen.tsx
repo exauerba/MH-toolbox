@@ -11,6 +11,7 @@ import {
   SegmentedControl,
   TextArea,
   TextInput,
+  Tile,
   cx,
   zonePalette,
 } from '../../design'
@@ -22,18 +23,10 @@ import type {
   TimelineZone,
 } from '../../data/types'
 import { useRepository } from '../../data/RepositoryProvider'
+import { DEFAULT_PROFILE } from '../../data/migrateLocal'
 import { assertImageAllowed, MAX_IMAGES_PER_ENTRY } from '../../data/imageRules'
 import { formatDate } from './date'
 import { TimelineHorizontal } from './TimelineHorizontal'
-
-/** Fallback profile used when persisting the orientation for a fresh guest. */
-const DEFAULT_PROFILE = {
-  theme: 'system' as const,
-  jarDefaultSpoons: 12,
-  jarResetHour: 0,
-  onboardingDone: false,
-  localDataImportedAt: null,
-}
 
 /**
  * Zone colour picker — one swatch per curated zonePalette entry. The
@@ -245,7 +238,7 @@ function EntryModal({
                   key={ref.id}
                   src={ref.url}
                   alt={entry.title}
-                  className="h-24 w-24 rounded-lg border border-line object-cover"
+                  className="h-24 w-24 rounded-none border border-line object-cover"
                 />
               ))}
             </div>
@@ -306,7 +299,7 @@ function EntryModal({
                     <img
                       src={ref.url}
                       alt={`${entry?.title ?? 'photo'} preview`}
-                      className="h-24 w-24 rounded-lg border border-line object-cover"
+                      className="h-24 w-24 rounded-none border border-line object-cover"
                     />
                     <IconButton
                       icon="trash"
@@ -321,7 +314,7 @@ function EntryModal({
                 {pendingFiles.map((file, index) => (
                   <div
                     key={`${file.name}-${index}`}
-                    className="relative flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted"
+                    className="relative flex h-24 w-24 items-center justify-center rounded-none border border-dashed border-line-strong bg-surface-muted"
                   >
                     <span className="px-2 text-center text-xs font-semibold text-ink-soft">{file.name}</span>
                     <IconButton
@@ -654,37 +647,29 @@ export function TimelineScreen() {
           onClick={() => navigate('/')}
         />
         <div className="flex items-center gap-2.5">
-          <h1 className="font-display text-xl font-bold text-ink">Personal Timeline</h1>
+          <h1 className="font-display text-3xl font-bold text-ink">Personal Timeline</h1>
         </div>
       </div>
 
       <Card variant="raised" padding="none" className="pixel-card overflow-hidden">
-        {!loaded ? (
-          <div role="status" className="p-6 text-sm text-ink-soft">
-            Loading your timeline…
+        {/* Header — always rendered so the card keeps a stable height while data loads */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
+          <div>
+            <h2 className="font-display flex items-center gap-2 text-lg font-bold text-ink">
+              <Tile icon="timeline" accent="timeline" />
+              My timeline
+            </h2>
+            <p className="mt-1 text-sm text-ink-soft">Zones you define — your words, your colours.</p>
           </div>
-        ) : (
-          <>
-            {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
-              <div>
-                <h3 className="font-display flex items-center gap-2 text-xl font-bold text-ink">
-                  <span className="pixel-tile flex size-10 items-center justify-center rounded-none bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300">
-                    <Icon name="timeline" size={22} pixel />
-                  </span>
-                  My timeline
-                </h3>
-                <p className="mt-1 text-sm text-ink-soft">Zones you define — your words, your colours.</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <SegmentedControl
-                  label="Timeline orientation"
-                  options={[
-                    { value: 'vertical', label: 'Vertical' },
-                    { value: 'horizontal', label: 'Horizontal' },
-                  ]}
-                  value={orientation}
-                  onChange={(value) => changeOrientation(value as TimelineOrientation)}
+          <div className="flex flex-wrap items-center gap-3">
+            <SegmentedControl
+              label="Timeline orientation"
+              options={[
+                { value: 'vertical', label: 'Vertical' },
+                { value: 'horizontal', label: 'Horizontal' },
+              ]}
+              value={orientation}
+              onChange={(value) => changeOrientation(value as TimelineOrientation)}
                   className="max-w-56"
                 />
                 <Button
@@ -705,7 +690,16 @@ export function TimelineScreen() {
             </div>
 
             {/* Zone legend — only when zones exist; the header carries Add zone */}
-            {zones.length > 0 && (
+            {!loaded ? (
+              <div
+                role="status"
+                className="flex min-h-64 items-center justify-center p-6 text-sm text-ink-soft"
+              >
+                Loading your timeline…
+              </div>
+            ) : (
+              <>
+                {zones.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-2.5">
                 <span className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">Zones</span>
                 {zones.map((zone) => (
@@ -835,7 +829,7 @@ export function TimelineScreen() {
                                   <img
                                     src={ref.url}
                                     alt={entry.title}
-                                    className="h-24 w-24 rounded-lg border border-line object-cover"
+                                    className="h-24 w-24 rounded-none border border-line object-cover"
                                   />
                                   <IconButton
                                     icon="trash"

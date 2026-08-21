@@ -46,7 +46,7 @@ export function DeleteAccountCard() {
       </div>
       <Button
         variant="danger"
-        leadingIcon={<Icon name="trash" size={18} />}
+        leadingIcon={<Icon name="trash" size={18} pixel />}
         onClick={() => {
           setError(null)
           setOpen(true)
