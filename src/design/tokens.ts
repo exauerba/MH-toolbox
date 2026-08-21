@@ -134,9 +134,9 @@ export const colorsDark = {
 /** Typography. Base is 16px; line-heights are generous (dysregulated readability). */
 export const typography = {
   fontFamily:
-    "'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "'Fredoka', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   display:
-    "'Pixelify Sans', 'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "'Pixelify Sans', 'Fredoka', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   weights: { regular: 400, semibold: 600, bold: 700, extrabold: 800 },
   baseSize: '1rem',
   scale: {

@@ -6,8 +6,9 @@ cross-cutting issues found by a programmatic DOM/computed-style audit (all 6 rou
 desktop/mobile), Lighthouse, and the impeccable detector.
 
 **Design identity (locked, do not regress):** "pixel frame, rounded guts" — pixel containers/accents
-at 4px (`--radius-pixel`), controls stay rounded. Warm pastel palette, Nunito body + Pixelify Sans
-display. Motion tokens only (`--dur-*` / `--ease-*`), reduced-motion kill-switch preserved.
+at 4px (`--radius-pixel`), controls stay rounded. Warm pastel palette, Fredoka body + Pixelify Sans
+display (self-hosted, PWA-precached). Motion tokens only (`--dur-*` / `--ease-*`), reduced-motion
+kill-switch preserved.
 
 **Audit method note:** this session's model cannot view screenshots, so every finding below was
 verified via computed styles, DOM inspection, Lighthouse, and source. No visual guesswork.
