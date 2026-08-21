@@ -35,7 +35,7 @@ export function SpecPanel({ owner, title, sections, className }: SpecPanelProps)
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <h4 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
-          <Icon name="settings" size={16} />
+          <Icon name="settings" size={16} pixel />
           Implementation spec
         </h4>
         <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-extrabold text-brand-700 dark:bg-brand-300/20 dark:text-brand-300">
