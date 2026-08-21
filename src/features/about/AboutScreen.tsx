@@ -65,7 +65,7 @@ export function AboutScreen() {
             <li key={resource.name}>
               <a
                 href={resource.href}
-                className="pressable flex items-center gap-3 rounded-xl bg-surface px-4 py-3 shadow-soft hover:shadow-lift"
+                className="pressable flex items-center gap-3 rounded-none border-2 border-line bg-surface px-4 py-3 shadow-pixel-sm hover:shadow-pixel"
               >
                 <span
                   aria-hidden="true"

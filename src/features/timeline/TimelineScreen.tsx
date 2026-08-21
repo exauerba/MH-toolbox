@@ -245,7 +245,7 @@ function EntryModal({
                   key={ref.id}
                   src={ref.url}
                   alt={entry.title}
-                  className="h-24 w-24 rounded-lg border border-line object-cover"
+                  className="h-24 w-24 rounded-none border border-line object-cover"
                 />
               ))}
             </div>
@@ -306,7 +306,7 @@ function EntryModal({
                     <img
                       src={ref.url}
                       alt={`${entry?.title ?? 'photo'} preview`}
-                      className="h-24 w-24 rounded-lg border border-line object-cover"
+                      className="h-24 w-24 rounded-none border border-line object-cover"
                     />
                     <IconButton
                       icon="trash"
@@ -321,7 +321,7 @@ function EntryModal({
                 {pendingFiles.map((file, index) => (
                   <div
                     key={`${file.name}-${index}`}
-                    className="relative flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted"
+                    className="relative flex h-24 w-24 items-center justify-center rounded-none border border-dashed border-line-strong bg-surface-muted"
                   >
                     <span className="px-2 text-center text-xs font-semibold text-ink-soft">{file.name}</span>
                     <IconButton
@@ -838,7 +838,7 @@ export function TimelineScreen() {
                                   <img
                                     src={ref.url}
                                     alt={entry.title}
-                                    className="h-24 w-24 rounded-lg border border-line object-cover"
+                                    className="h-24 w-24 rounded-none border border-line object-cover"
                                   />
                                   <IconButton
                                     icon="trash"

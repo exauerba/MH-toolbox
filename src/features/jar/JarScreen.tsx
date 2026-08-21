@@ -141,7 +141,7 @@ function LedgerStat({
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-bold',
+        'inline-flex items-center gap-1.5 rounded-none border-2 border-line px-3 py-1 text-sm font-bold',
         tone,
       )}
       role={live ? 'status' : undefined}
