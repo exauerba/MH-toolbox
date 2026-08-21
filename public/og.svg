@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="steady — a gentle toolbox for low-energy days">
+  <!-- Canvas background -->
+  <rect width="1200" height="630" fill="#faf6f1"/>
+
+  <!-- Decorative pixel dots (subtle texture) -->
+  <g fill="#e7dbd2">
+    <rect x="60" y="60" width="8" height="8"/>
+    <rect x="84" y="60" width="8" height="8"/>
+    <rect x="108" y="60" width="8" height="8"/>
+    <rect x="60" y="84" width="8" height="8"/>
+    <rect x="108" y="84" width="8" height="8"/>
+    <rect x="60" y="108" width="8" height="8"/>
+    <rect x="84" y="108" width="8" height="8"/>
+    <rect x="108" y="108" width="8" height="8"/>
+
+    <rect x="1084" y="60" width="8" height="8"/>
+    <rect x="1108" y="60" width="8" height="8"/>
+    <rect x="1132" y="60" width="8" height="8"/>
+    <rect x="1084" y="84" width="8" height="8"/>
+    <rect x="1132" y="84" width="8" height="8"/>
+    <rect x="1084" y="108" width="8" height="8"/>
+    <rect x="1108" y="108" width="8" height="8"/>
+    <rect x="1132" y="108" width="8" height="8"/>
+
+    <rect x="60" y="514" width="8" height="8"/>
+    <rect x="84" y="514" width="8" height="8"/>
+    <rect x="108" y="514" width="8" height="8"/>
+    <rect x="60" y="538" width="8" height="8"/>
+    <rect x="108" y="538" width="8" height="8"/>
+    <rect x="60" y="562" width="8" height="8"/>
+    <rect x="84" y="562" width="8" height="8"/>
+    <rect x="108" y="562" width="8" height="8"/>
+
+    <rect x="1084" y="514" width="8" height="8"/>
+    <rect x="1108" y="514" width="8" height="8"/>
+    <rect x="1132" y="514" width="8" height="8"/>
+    <rect x="1084" y="538" width="8" height="8"/>
+    <rect x="1132" y="538" width="8" height="8"/>
+    <rect x="1084" y="562" width="8" height="8"/>
+    <rect x="1108" y="562" width="8" height="8"/>
+    <rect x="1132" y="562" width="8" height="8"/>
+  </g>
+
+  <!-- Main pixel-frame card -->
+  <g>
+    <!-- Pixel shadow (offset) -->
+    <rect x="212" y="212" width="776" height="296" fill="#e7dbd2"/>
+    <!-- Card body -->
+    <rect x="200" y="200" width="776" height="296" fill="#fffdfa"/>
+    <!-- Pixel border (terracotta) -->
+    <rect x="200" y="200" width="776" height="8" fill="#c56a4f"/>
+    <rect x="200" y="488" width="776" height="8" fill="#c56a4f"/>
+    <rect x="200" y="200" width="8" height="296" fill="#c56a4f"/>
+    <rect x="968" y="200" width="8" height="296" fill="#c56a4f"/>
+  </g>
+
+  <!-- Leaf tile (brand mark) -->
+  <g>
+    <rect x="300" y="252" width="64" height="64" fill="#fae9e2"/>
+    <rect x="300" y="252" width="64" height="4" fill="#c56a4f"/>
+    <rect x="300" y="312" width="64" height="4" fill="#c56a4f"/>
+    <rect x="300" y="252" width="4" height="64" fill="#c56a4f"/>
+    <rect x="360" y="252" width="4" height="64" fill="#c56a4f"/>
+    <!-- Simple leaf glyph -->
+    <path d="M332 284 v28 h8 v-20 h8 v-8 h-16 z" fill="#6f3020"/>
+    <path d="M340 284 v28 h8 v-20 h8 v-8 h-16 z" fill="#6f3020"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="392" y="300" font-family="'Pixelify Sans', 'Courier New', monospace" font-size="64" font-weight="700" fill="#44332c">steady</text>
+
+  <!-- Tagline -->
+  <text x="300" y="380" font-family="'Nunito', 'Segoe UI', sans-serif" font-size="30" fill="#6b5649">A gentle toolbox for low-energy days.</text>
+  <text x="300" y="424" font-family="'Nunito', 'Segoe UI', sans-serif" font-size="30" fill="#6b5649">Track spoons, timelines, and your own story.</text>
+
+  <!-- Small pixel chips row -->
+  <g>
+    <rect x="300" y="452" width="120" height="24" fill="#fae9e2"/>
+    <rect x="300" y="452" width="120" height="24" fill="none" stroke="#c56a4f" stroke-width="2"/>
+    <text x="360" y="469" font-family="'Nunito', 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#6f3020" text-anchor="middle">Energy Jar</text>
+
+    <rect x="436" y="452" width="120" height="24" fill="#e7ebd3"/>
+    <rect x="436" y="452" width="120" height="24" fill="none" stroke="#828a4e" stroke-width="2"/>
+    <text x="496" y="469" font-family="'Nunito', 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#4c5226" text-anchor="middle">Timeline</text>
+
+    <rect x="572" y="452" width="120" height="24" fill="#fae9e2"/>
+    <rect x="572" y="452" width="120" height="24" fill="none" stroke="#c56a4f" stroke-width="2"/>
+    <text x="632" y="469" font-family="'Nunito', 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#6f3020" text-anchor="middle">Bloom</text>
+  </g>
+</svg>
