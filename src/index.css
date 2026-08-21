@@ -360,9 +360,16 @@
     border-radius: var(--radius-pixel) !important;
     border-width: 3px !important;
     border-style: solid !important;
-    border-color: var(--color-line-strong) !important;
-    background-color: var(--color-parchment) !important;
+    border-color: var(--pixel-border, var(--color-line-strong)) !important;
+    background-color: var(--pixel-bg, var(--color-parchment)) !important;
     box-shadow: var(--shadow-pixel) !important;
+  }
+  /* Tinted pixel-card variants — set the fill/border via custom props so
+     the !important skin can be overridden without fighting the cascade.
+     Tokens (warning-soft etc.) re-resolve in dark mode automatically. */
+  .pixel-card-warning {
+    --pixel-bg: var(--color-warning-soft);
+    --pixel-border: var(--color-warning-line);
   }
   .pixel-chip {
     border-radius: var(--radius-pixel) !important;

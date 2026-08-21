@@ -39,7 +39,7 @@ export function AboutScreen() {
         </p>
       </header>
 
-      <Card padding="lg" className="pixel-card border-warning-line bg-warning-soft">
+      <Card padding="lg" className="pixel-card pixel-card-warning">
         <h2 className="flex items-center gap-2 text-lg font-extrabold text-warning-ink">
           <Icon name="heart" size={18} pixel />
           If you're in crisis right now

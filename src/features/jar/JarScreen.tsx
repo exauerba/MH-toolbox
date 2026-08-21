@@ -164,7 +164,6 @@ export function JarScreen() {
   const repo = useRepository()
   const navigate = useNavigate()
 
-  const [ready, setReady] = useState(false)
   const [resetHour, setResetHour] = useState(0)
   const [dayTotal, setDayTotal] = useState(12)
   const [logs, setLogs] = useState<JarLog[]>([])
@@ -191,7 +190,6 @@ export function JarScreen() {
       setResetHour(hour)
       setDayTotal(day?.totalSpoons ?? spoons)
       setLogs(allLogs)
-      setReady(true)
     }
     void load().catch(() => undefined)
     return () => {
@@ -287,17 +285,6 @@ export function JarScreen() {
     </div>
   )
 
-  if (!ready) {
-    return (
-      <div className="flex flex-col gap-6">
-        {header}
-        <Card variant="raised" padding="lg" className="pixel-card flex-1">
-          <p className="text-sm text-ink-soft">Loading…</p>
-        </Card>
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col gap-6">
       {header}
@@ -336,6 +323,7 @@ export function JarScreen() {
           <Chip
             tone={state === 'healthy' ? 'jar' : state === 'low' ? 'low' : 'overdrawn'}
             icon={<Icon name={meta.icon} size={15} pixel />}
+            dark={false}
           >
             {meta.label}
           </Chip>
