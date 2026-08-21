@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Modal } from '../../design'
+import { Alert, Button, Icon, Modal } from '../../design'
 import { useAuthMode, useRepository } from '../../data/RepositoryProvider'
 import { LocalRepository } from '../../data/local/LocalRepository'
 import { migrateLocalToSupabase } from '../../data/migrateLocal'
@@ -76,7 +76,7 @@ export function MigrationPrompt() {
           <Button variant="secondary" disabled={importing} onClick={() => setNeedsMigration(false)}>
             Not now
           </Button>
-          <Button loading={importing} onClick={() => void handleImport()}>
+          <Button loading={importing} leadingIcon={<Icon name="cloud" size={16} pixel />} onClick={() => void handleImport()}>
             Import my data
           </Button>
         </>

@@ -511,7 +511,8 @@ export function JarScreen() {
       <Card variant="soft" padding="lg" className="flex-1">
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+            <h3 className="mb-3 flex items-center gap-1.5 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+              <Icon name="battery" size={14} pixel />
               Last 7 days
             </h3>
             <div className="flex items-end justify-between gap-2" aria-hidden="true">

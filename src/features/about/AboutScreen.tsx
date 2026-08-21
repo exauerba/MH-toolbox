@@ -8,13 +8,13 @@ import {
 
 const RESOURCE_ICONS: Record<string, IconName> = {
   '988 Suicide & Crisis Lifeline': 'alert',
-  'Crisis Text Line': 'heart',
-  'Emergency services': 'check',
+  'Crisis Text Line': 'message',
+  'Emergency services': 'phone',
   'International Association for Suicide Prevention': 'external',
-  'Talk Suicide Canada': 'heart',
-  Samaritans: 'heart',
-  Lifeline: 'heart',
-  ERAN: 'heart',
+  'Talk Suicide Canada': 'phone',
+  Samaritans: 'phone',
+  Lifeline: 'phone',
+  ERAN: 'phone',
 };
 
 /**

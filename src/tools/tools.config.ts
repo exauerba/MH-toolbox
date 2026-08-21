@@ -46,7 +46,7 @@ export const TOOLS: ToolConfig[] = [
     tagline: 'Your daily check-ins and patterns, in bloom.',
     description:
       'A calm daily check-in and the patterns it grows into — in the same warm tones as steady.',
-    icon: 'sparkle',
+    icon: 'flower',
     accent: 'bloom',
     externalUrl: BLOOM_URL,
     pinnedByDefault: true,
