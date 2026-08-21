@@ -36,7 +36,7 @@ export function Header() {
       )}
     >
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-        <div className="flex h-16 items-center justify-between gap-3">
+        <div className="flex h-16 items-center justify-between gap-2">
           <p className="flex items-center gap-2.5">
             <span
               aria-hidden="true"
@@ -46,6 +46,28 @@ export function Header() {
             </span>
             <span className="font-display text-xl font-bold text-ink">steady</span>
           </p>
+
+          <nav aria-label="Primary" className="flex items-center gap-1">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  cx(
+                    'pressable flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-bold sm:px-4',
+                    isActive
+                      ? 'bg-surface-strong text-ink'
+                      : 'text-ink-soft hover:bg-surface-muted hover:text-ink',
+                  )
+                }
+              >
+                <Icon name={item.icon} size={17} pixel />
+                <span className="sr-only sm:not-sr-only">{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
           <IconButton
             icon={theme === 'dark' ? 'sun' : 'moon'}
             label={
@@ -56,30 +78,6 @@ export function Header() {
             onClick={toggleTheme}
           />
         </div>
-
-        <nav
-          aria-label="Primary"
-          className="flex items-center gap-1 border-t border-line py-2"
-        >
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                cx(
-                  'pressable flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-bold',
-                  isActive
-                    ? 'text-ink'
-                    : 'text-ink-soft hover:text-ink',
-                )
-              }
-            >
-              <Icon name={item.icon} size={17} pixel />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
       </div>
     </header>
   );
