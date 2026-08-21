@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Card, Icon, SegmentedControl } from '../../design';
+import { Alert, Card, Icon, SegmentedControl, Tile } from '../../design';
 import type { IconName } from '../../design';
 import {
   CRISIS_REGIONS,
@@ -67,12 +67,11 @@ export function AboutScreen() {
                 href={resource.href}
                 className="pressable flex items-center gap-3 rounded-none border-2 border-line bg-surface px-4 py-3 shadow-pixel-sm hover:shadow-pixel"
               >
-                <span
-                  aria-hidden="true"
-                  className="pixel-tile flex size-10 shrink-0 items-center justify-center rounded-none bg-warning-soft text-warning-ink"
-                >
-                  <Icon name={RESOURCE_ICONS[resource.name] ?? 'heart'} size={18} pixel />
-                </span>
+                <Tile
+                  icon={RESOURCE_ICONS[resource.name] ?? 'heart'}
+                  accent="warning"
+                  className="shrink-0"
+                />
                 <span className="min-w-0">
                   <span className="block font-bold text-ink">
                     {resource.name}

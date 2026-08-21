@@ -11,6 +11,7 @@ import {
   SegmentedControl,
   TextArea,
   TextInput,
+  Tile,
   cx,
   zonePalette,
 } from '../../design'
@@ -22,18 +23,10 @@ import type {
   TimelineZone,
 } from '../../data/types'
 import { useRepository } from '../../data/RepositoryProvider'
+import { DEFAULT_PROFILE } from '../../data/migrateLocal'
 import { assertImageAllowed, MAX_IMAGES_PER_ENTRY } from '../../data/imageRules'
 import { formatDate } from './date'
 import { TimelineHorizontal } from './TimelineHorizontal'
-
-/** Fallback profile used when persisting the orientation for a fresh guest. */
-const DEFAULT_PROFILE = {
-  theme: 'system' as const,
-  jarDefaultSpoons: 12,
-  jarResetHour: 0,
-  onboardingDone: false,
-  localDataImportedAt: null,
-}
 
 /**
  * Zone colour picker — one swatch per curated zonePalette entry. The
@@ -663,9 +656,7 @@ export function TimelineScreen() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
           <div>
             <h2 className="font-display flex items-center gap-2 text-lg font-bold text-ink">
-              <span className="pixel-tile flex size-10 items-center justify-center rounded-none bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300">
-                <Icon name="timeline" size={22} pixel />
-              </span>
+              <Tile icon="timeline" accent="timeline" />
               My timeline
             </h2>
             <p className="mt-1 text-sm text-ink-soft">Zones you define — your words, your colours.</p>

@@ -5,6 +5,7 @@ import { SpecPanel } from './SpecPanel'
 import { cx } from '../cx'
 import { STATE_META } from '../../features/jar/jarStates'
 import type { JarState } from '../../features/jar/jarStates'
+import { LOW_SPOON_THRESHOLD } from '../../features/jar/constants'
 
 const PRESETS: Record<JarState, { total: number; spent: number }> = {
   healthy: { total: 12, spent: 3 },
@@ -47,7 +48,7 @@ export function JarHero() {
 
   const remaining = Math.max(0, total - spent)
   const borrowed = Math.max(0, spent - total)
-  const state: JarState = borrowed > 0 ? 'overdrawn' : remaining <= 3 ? 'low' : 'healthy'
+  const state: JarState = borrowed > 0 ? 'overdrawn' : remaining <= LOW_SPOON_THRESHOLD ? 'low' : 'healthy'
   const meta = STATE_META[state]
 
   const applyPreset = (next: JarState) => {

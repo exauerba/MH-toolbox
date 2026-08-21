@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Icon, IconButton, cx } from '../../design';
+import { Icon, IconButton, Tile, cx } from '../../design';
 import { useTheme } from './theme';
 
 const NAV_ITEMS = [
@@ -38,12 +38,7 @@ export function Header() {
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between gap-2">
           <p className="flex items-center gap-2.5">
-            <span
-              aria-hidden="true"
-              className="pixel-tile flex size-10 items-center justify-center rounded-none bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300"
-            >
-              <Icon name="leaf" size={20} pixel />
-            </span>
+            <Tile icon="leaf" />
             <span className="font-display text-xl font-bold text-ink">steady</span>
           </p>
 

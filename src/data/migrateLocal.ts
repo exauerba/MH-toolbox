@@ -23,7 +23,8 @@ export interface MigrationResult {
   }
 }
 
-const defaultProfile: Profile = {
+/** Default profile for a fresh guest — single source of truth for defaults. */
+export const DEFAULT_PROFILE: Profile = {
   theme: 'system',
   jarDefaultSpoons: 12,
   jarResetHour: 0,
@@ -127,7 +128,7 @@ export async function migrateLocalToSupabase(
     }
   }
 
-  const current = (await remote.getProfile()) ?? defaultProfile
+  const current = (await remote.getProfile()) ?? DEFAULT_PROFILE
   await remote.setProfile({ ...current, localDataImportedAt: new Date().toISOString() })
 
   return { migrated: true, counts }

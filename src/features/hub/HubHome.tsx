@@ -7,12 +7,12 @@ import {
   Chip,
   Icon,
   IconButton,
+  Tile,
   cx,
 } from '../../design'
 import {
   TOOLS,
   toolById,
-  accentTileClass,
   type ToolConfig,
   type ToolId,
 } from '../../tools/tools.config'
@@ -123,15 +123,7 @@ function ToolCard({
         className="pixel-card flex h-full flex-col gap-3"
       >
         <div className="flex items-start justify-between gap-3">
-          <span
-            aria-hidden="true"
-            className={cx(
-              'pixel-tile flex size-12 shrink-0 items-center justify-center',
-              accentTileClass[tool.accent],
-            )}
-          >
-            <Icon name={tool.icon} size={26} pixel />
-          </span>
+          <Tile icon={tool.icon} accent={tool.accent} size="lg" className="shrink-0" />
           {reorderControls}
         </div>
 
@@ -145,7 +137,7 @@ function ToolCard({
             )}
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-            {tool.tagline}
+            {tool.description}
           </p>
         </div>
 

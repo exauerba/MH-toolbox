@@ -9,6 +9,7 @@ import {
   SegmentedControl,
   Stepper,
   TextInput,
+  Tile,
   cx,
 } from '../../design'
 import type { IconName } from '../../design'
@@ -17,6 +18,7 @@ import { fromISODate, todayForResetHour, toISODate } from '../../shared/day'
 import type { JarLog } from '../../data/types'
 import { STATE_META } from './jarStates'
 import type { JarState } from './jarStates'
+import { LOW_SPOON_THRESHOLD } from './constants'
 
 /**
  * The Energy Jar. The jar is a literal vessel: liquid rises and falls with
@@ -204,7 +206,7 @@ export function JarScreen() {
   const spent = todayLogs.reduce((sum, log) => sum + log.spent, 0)
   const remaining = Math.max(0, dayTotal - spent)
   const borrowed = Math.max(0, spent - dayTotal)
-  const state: JarState = borrowed > 0 ? 'overdrawn' : remaining <= 3 ? 'low' : 'healthy'
+  const state: JarState = borrowed > 0 ? 'overdrawn' : remaining <= LOW_SPOON_THRESHOLD ? 'low' : 'healthy'
   const meta = STATE_META[state]
 
   const spentByDate = new Map<string, number>()
@@ -274,12 +276,7 @@ export function JarScreen() {
         onClick={() => navigate('/')}
       />
       <div className="flex items-center gap-2.5">
-        <span
-          aria-hidden="true"
-          className="pixel-tile flex size-10 items-center justify-center rounded-none bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300"
-        >
-          <Icon name="jar" size={22} pixel />
-        </span>
+        <Tile icon="jar" accent="jar" />
         <h1 className="font-display text-3xl font-bold text-ink">Energy Jar</h1>
       </div>
     </div>
