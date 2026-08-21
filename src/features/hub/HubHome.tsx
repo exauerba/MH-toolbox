@@ -85,7 +85,7 @@ function ToolCard({
 
   const reorderControls = showGrip ? (
     <span className="flex items-center gap-0.5">
-      <span aria-hidden="true" className="text-ink-faint">
+      <span aria-hidden="true" className="text-ink-soft">
         <Icon name="grip" size={18} pixel />
       </span>
       <IconButton

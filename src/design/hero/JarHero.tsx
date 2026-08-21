@@ -129,7 +129,7 @@ export function JarHero() {
                 className={cx(
                   'flex size-9 items-center justify-center rounded-full border-2',
                   kind === 'available' && 'border-jar-400 bg-jar-300 text-jar-800',
-                  kind === 'spent' && 'border-line bg-surface text-ink-faint',
+                  kind === 'spent' && 'border-line bg-surface text-ink-soft',
                 )}
               >
                 {kind === 'spent' && <Icon name="close" size={14} pixel />}

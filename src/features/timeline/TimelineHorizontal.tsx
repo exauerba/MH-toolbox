@@ -354,10 +354,7 @@ export function TimelineHorizontal({
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <h4 className="text-base font-extrabold text-ink">{entry.title}</h4>
-                        <span
-                          aria-hidden="true"
-                          className="text-ink-faint opacity-0 transition-opacity duration-[var(--dur-quick)] group-hover:opacity-100 group-focus-within:opacity-100"
-                        >
+                        <span aria-hidden="true" className="text-ink-soft">
                           <Icon name="chevronRight" size={16} pixel />
                         </span>
                       </div>

@@ -31,7 +31,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </main>
       <footer className="mt-auto">
         <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
-          <p className="text-center text-sm text-ink-faint">
+          <p className="text-center text-sm text-ink-soft">
             steady — warm, quiet, and never clinical.
           </p>
         </div>

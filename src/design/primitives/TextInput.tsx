@@ -51,7 +51,7 @@ export function TextInput({
       )}
       <div className="relative">
         {leadingIcon && (
-          <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-ink-faint">
+          <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-ink-soft">
             {leadingIcon}
           </span>
         )}

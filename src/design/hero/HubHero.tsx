@@ -69,7 +69,7 @@ function ToolCard({
           <Icon name={tool.icon} size={26} pixel />
         </span>
         {showGrip && (
-          <span className="flex items-center gap-1 text-ink-faint" aria-hidden="true">
+          <span className="flex items-center gap-1 text-ink-soft" aria-hidden="true">
             <Icon name="grip" size={18} pixel />
           </span>
         )}
