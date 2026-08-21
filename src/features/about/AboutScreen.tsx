@@ -1,37 +1,31 @@
-import { Alert, Card, Icon } from '../../design';
+import { useState } from 'react';
+import { Alert, Card, Icon, SegmentedControl } from '../../design';
+import type { IconName } from '../../design';
+import {
+  CRISIS_REGIONS,
+  DEFAULT_CRISIS_REGION_ID,
+} from '../../shared/crisis';
 
-const RESOURCES = [
-  {
-    name: '988 Suicide & Crisis Lifeline',
-    detail: 'Call or text 988 — free, confidential, 24/7.',
-    href: 'tel:988',
-    icon: 'alert' as const,
-  },
-  {
-    name: 'Crisis Text Line',
-    detail: 'Text HOME to 741741 to reach a live crisis counselor.',
-    href: 'sms:741741',
-    icon: 'heart' as const,
-  },
-  {
-    name: 'Emergency services',
-    detail: 'Call 911 (US) or 112 (EU) if you or someone else is in immediate danger.',
-    href: 'tel:911',
-    icon: 'check' as const,
-  },
-  {
-    name: 'International Association for Suicide Prevention',
-    detail: 'Find helplines in your country at iasp.info.',
-    href: 'https://www.iasp.info/resources/Crisis_Centres/',
-    icon: 'external' as const,
-  },
-];
+const RESOURCE_ICONS: Record<string, IconName> = {
+  '988 Suicide & Crisis Lifeline': 'alert',
+  'Crisis Text Line': 'heart',
+  'Emergency services': 'check',
+  'International Association for Suicide Prevention': 'external',
+  'Talk Suicide Canada': 'heart',
+  Samaritans: 'heart',
+  Lifeline: 'heart',
+  ERAN: 'heart',
+};
 
 /**
  * About & resources — where steady says what it is, where to find real
  * help, and what this app will never be. Honest, warm, and specific.
  */
 export function AboutScreen() {
+  const [regionId, setRegionId] = useState(DEFAULT_CRISIS_REGION_ID);
+  const region =
+    CRISIS_REGIONS.find((r) => r.id === regionId) ?? CRISIS_REGIONS[0];
+
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -54,8 +48,20 @@ export function AboutScreen() {
           You matter, and you don't have to carry this alone. Please reach out
           to one of these — a real person is listening.
         </p>
+        <div className="mt-4">
+          <SegmentedControl
+            label="Region"
+            pixel
+            value={region.id}
+            onChange={setRegionId}
+            options={CRISIS_REGIONS.map((r) => ({
+              value: r.id,
+              label: r.label,
+            }))}
+          />
+        </div>
         <ul className="mt-4 flex flex-col gap-3">
-          {RESOURCES.map((resource) => (
+          {region.resources.map((resource) => (
             <li key={resource.name}>
               <a
                 href={resource.href}
@@ -65,7 +71,7 @@ export function AboutScreen() {
                   aria-hidden="true"
                   className="pixel-tile flex size-10 shrink-0 items-center justify-center rounded-none bg-warning-soft text-warning-ink"
                 >
-                  <Icon name={resource.icon} size={18} pixel />
+                  <Icon name={RESOURCE_ICONS[resource.name] ?? 'heart'} size={18} pixel />
                 </span>
                 <span className="min-w-0">
                   <span className="block font-bold text-ink">
