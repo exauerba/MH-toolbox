@@ -14,6 +14,47 @@ verified via computed styles, DOM inspection, Lighthouse, and source. No visual 
 
 ---
 
+## Status — COMPLETE (2026-08-21, branch `design/polish-pass-2026-08-21`)
+
+| Phase | Status | Commit |
+|---|---|---|
+| 0 — Branch + baseline | ✅ | `172aa4c` |
+| 1 — P0 bugs | ✅ | `79dcbe8` |
+| 2 — Header merge | ✅ | `8a562ac` |
+| 3 — Heading scale | ✅ | `ae4e24e` |
+| 4 — Vocabulary mixing | ✅ | `13d5fa3` |
+| 5 — text-ink-faint | ✅ | `58c7588` |
+| 6 — DRY (subagent) | ✅ | `380a0ae` |
+| 7 — Brand assets | ✅ | `74c28f3` |
+| 8 — Verification | ✅ | — (no code changes) |
+
+**Verification results (Phase 8):** typecheck clean · vitest 135 passed / 24 skipped ·
+Playwright e2e 27 passed · lint 0 errors (4 pre-existing warnings) · Lighthouse hub/jar/about
+A11y 100 / BP 100 / SEO 100, jar CLS **0** (was 0.5) · impeccable detect: 0 new warnings
+(zone edge-band documented as intentional) · live DOM harness confirms all acceptance criteria.
+
+**Implementation notes vs. plan:**
+- P0-1 fixed via `--pixel-bg` / `--pixel-border` CSS custom-property modifiers on `.pixel-card`
+  (`.pixel-card-warning`) rather than removing `!important` — removing it wholesale would break
+  every pixel-card (Card's own `rounded-xl`/`bg-surface` utilities would win). The modifier
+  approach keeps the pixel classes intact and lets tints re-resolve in dark mode automatically.
+- P0-2 fixed by splitting Chip tone classes into `toneLight`/`toneDark` maps + a `dark` prop
+  (default true); the jar state banner chip passes `dark={false}` (its panel stays light-honey
+  in dark by design). Ratio now 6.57:1 in both themes.
+- P0-3: removed the `ready` gate entirely — the full card renders immediately with default
+  values, the Dexie effect fills real data. Same pattern applied to the timeline card
+  (loading placeholder now sits *inside* the always-rendered card, `min-h-64`).
+- Phase 3: timeline card title `h3`→`h2` at `text-lg`; jar/timeline h1s → `text-3xl`.
+- Phase 6: `Tile` primitive gained an `xl` size (64px) to preserve EmptyState's hero tile;
+  hub cards now render `tool.description` (tagline retired from app code); `filled` no-op
+  audit found zero silent usages.
+- Phase 7: `asset_generate_og_image`'s default output was off-brand (slate/cyan/system-ui),
+  so the OG image was hand-authored as `public/og.svg` (warm palette, pixel-frame card, leaf
+  tile, Pixelify wordmark) and rendered to `public/og.png` (1200×630) via resvg-js. Favicon
+  untouched per user preference.
+
+---
+
 ## Findings summary
 
 ### P0 — real bugs
