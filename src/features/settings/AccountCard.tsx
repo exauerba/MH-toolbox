@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Alert, Button, Icon, SegmentedControl, TextInput } from '../../design'
 import { useAuthMode } from '../../data/RepositoryProvider'
 import { supabase } from '../../config/supabase'
@@ -19,6 +20,7 @@ type FormMode = 'sign-in' | 'create'
  */
 export function AccountCard() {
   const { mode, user } = useAuthMode()
+  const location = useLocation()
   const [showForm, setShowForm] = useState(false)
   const [formMode, setFormMode] = useState<FormMode>('sign-in')
   const [username, setUsername] = useState('')
@@ -26,6 +28,12 @@ export function AccountCard() {
   const [error, setError] = useState<string | null>(null)
   const [lockoutMessage, setLockoutMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  // Arriving from the guest banner: land with the sign-in form open.
+  useEffect(() => {
+    const state = location.state as { openSignIn?: boolean } | null
+    if (state?.openSignIn) setShowForm(true)
+  }, [location.state])
 
   const authService = useMemo(() => createAuthService(), [])
 

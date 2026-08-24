@@ -16,6 +16,11 @@ export interface AlertProps {
   /** Cozy 16-bit mode — render the leading icon as a pixel sprite. */
   pixel?: boolean
   className?: string
+  /**
+   * Makes the alert body a button (the whole banner is the action). The
+   * dismiss button stays a sibling so no interactive element is ever nested.
+   */
+  onClick?: () => void
 }
 
 const variantConfig: Record<
@@ -53,20 +58,21 @@ const variantConfig: Record<
  * icon and title text. `role` follows the severity — only `error` is
  * assertive, so a calm app isn't constantly interrupting.
  */
-export function Alert({ variant = 'info', title, children, dismissible, onDismiss, pixel, className }: AlertProps) {
+export function Alert({
+  variant = 'info',
+  title,
+  children,
+  dismissible,
+  onDismiss,
+  pixel,
+  className,
+  onClick,
+}: AlertProps) {
   const config = variantConfig[variant]
   const containerClass = config.containerClass
 
-  return (
-    <div
-      role={config.role}
-      className={cx(
-        'flex items-start gap-3 p-4 animate-fade-in',
-        pixel ? 'rounded-none border-2 shadow-pixel-sm' : 'rounded-xl border shadow-soft',
-        containerClass,
-        className,
-      )}
-    >
+  const body = (
+    <>
       <span
         className={cx(
           'flex size-10 shrink-0 items-center justify-center',
@@ -81,6 +87,30 @@ export function Alert({ variant = 'info', title, children, dismissible, onDismis
         {title && <p className="text-base font-extrabold">{title}</p>}
         <div className="text-sm leading-relaxed">{children}</div>
       </div>
+    </>
+  )
+
+  return (
+    <div
+      role={config.role}
+      className={cx(
+        'flex items-start gap-3 p-4 animate-fade-in',
+        pixel ? 'rounded-none border-2 shadow-pixel-sm' : 'rounded-xl border shadow-soft',
+        containerClass,
+        className,
+      )}
+    >
+      {onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          className="pressable flex min-w-0 flex-1 cursor-pointer items-start gap-3 text-left"
+        >
+          {body}
+        </button>
+      ) : (
+        body
+      )}
       {dismissible && (
         <IconButton icon="close" label="Dismiss this message" variant="ghost" onClick={onDismiss} />
       )}

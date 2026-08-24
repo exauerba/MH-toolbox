@@ -1,5 +1,7 @@
+import type { ComponentProps } from 'react'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AccountCard } from './AccountCard'
 import { useAuthMode } from '../../data/RepositoryProvider'
@@ -43,10 +45,20 @@ async function openForm(user: ReturnType<typeof userEvent.setup>) {
   return screen.getByRole('form', { name: 'Account form' })
 }
 
+function renderAccountCard(
+  initialEntries?: ComponentProps<typeof MemoryRouter>['initialEntries'],
+) {
+  return render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <AccountCard />
+    </MemoryRouter>,
+  )
+}
+
 describe('AccountCard', () => {
   it('renders a Sign in button and reveals the form when clicked', async () => {
     const user = userEvent.setup()
-    render(<AccountCard />)
+    renderAccountCard()
 
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Username')).not.toBeInTheDocument()
@@ -63,7 +75,7 @@ describe('AccountCard', () => {
       ok: true,
       data: { id: 'u1', username: 'ada' },
     })
-    render(<AccountCard />)
+    renderAccountCard()
 
     const form = await openForm(user)
     await user.type(within(form).getByLabelText('Username'), 'ada')
@@ -82,7 +94,7 @@ describe('AccountCard', () => {
       ok: false,
       error: 'Incorrect username or password.',
     })
-    render(<AccountCard />)
+    renderAccountCard()
 
     const form = await openForm(user)
     await user.type(within(form).getByLabelText('Username'), 'ada')
@@ -96,7 +108,7 @@ describe('AccountCard', () => {
 
   it('validates the username client-side and does not call signIn', async () => {
     const user = userEvent.setup()
-    render(<AccountCard />)
+    renderAccountCard()
 
     const form = await openForm(user)
     await user.type(within(form).getByLabelText('Username'), 'bad name!')
@@ -113,7 +125,7 @@ describe('AccountCard', () => {
       mode: 'signed-in',
       user: { id: 'u1', username: 'ada' },
     })
-    render(<AccountCard />)
+    renderAccountCard()
 
     expect(screen.getByText('Signed in as ada')).toBeInTheDocument()
 
@@ -133,7 +145,7 @@ describe('AccountCard', () => {
       remainingMs: 42_000,
       remainingSeconds: 42,
     })
-    render(<AccountCard />)
+    renderAccountCard()
 
     const form = await openForm(user)
     await user.type(within(form).getByLabelText('Username'), 'ada')
@@ -142,5 +154,17 @@ describe('AccountCard', () => {
 
     expect(await screen.findByText(lockedMessage(42))).toBeInTheDocument()
     expect(within(form).getByRole('button', { name: 'Sign in' })).toBeDisabled()
+  })
+
+  it('opens the sign-in form directly when arriving with openSignIn router state', () => {
+    renderAccountCard([{ pathname: '/settings', state: { openSignIn: true } }])
+
+    expect(screen.getByRole('form', { name: 'Account form' })).toBeInTheDocument()
+  })
+
+  it('does not open the sign-in form when arriving without router state', () => {
+    renderAccountCard(['/settings'])
+
+    expect(screen.queryByRole('form', { name: 'Account form' })).not.toBeInTheDocument()
   })
 })
