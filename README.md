@@ -24,6 +24,12 @@ steady is a personal tool, **not a clinician**. It doesn't diagnose, treat, or
 replace professional care. The About screen always points back to real crisis
 resources, switchable by region (default: US 988).
 
+## Support
+
+If steady helps, you can buy me a coffee:
+
+[<img src="assets/buymeacoffee-badge.svg" alt="Buy me a coffee" width="248">](https://www.buymeacoffee.com/exauerba)
+
 ## Storage modes
 
 steady has two modes, and the app tells you which one you're in:

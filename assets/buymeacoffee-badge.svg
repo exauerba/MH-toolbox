@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="248" height="34" viewBox="0 0 248 34" role="img" aria-label="Buy me a coffee — support steady at buymeacoffee.com/exauerba">
+  <title>Buy me a coffee</title>
+  <defs>
+    <linearGradient id="steady-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a24d35"/>
+      <stop offset="1" stop-color="#6f3020"/>
+    </linearGradient>
+    <style>
+      .t {
+        font-family: 'Fredoka','Arial Rounded MT Bold',ui-rounded,'Segoe UI',system-ui,sans-serif;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </defs>
+
+  <!-- pill body: brand-600 → brand-700, warm & rounded -->
+  <rect x="0.75" y="0.75" width="246.5" height="32.5" rx="16.25" fill="url(#steady-bg)"/>
+  <rect x="0.75" y="0.75" width="246.5" height="32.5" rx="16.25" fill="none" stroke="#6f3020" stroke-width="1"/>
+
+  <!-- soft top gloss, echoes the app's gentle lift shadow -->
+  <rect x="2" y="2" width="244" height="14" rx="13" fill="#ffffff" opacity="0.10"/>
+
+  <!-- coffee mug glyph -->
+  <g transform="translate(20 9)" fill="#fdf5f1">
+    <!-- steam -->
+    <path d="M5 2 q1 -1.6 0 -3.2" fill="none" stroke="#fdf5f1" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+    <path d="M9 2 q1 -1.6 0 -3.2" fill="none" stroke="#fdf5f1" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+    <!-- cup body -->
+    <path d="M1 3 h12 v7 c0 3 -2.5 5.5 -6 5.5 s-6 -2.5 -6 -5.5 z"/>
+    <!-- handle -->
+    <path d="M13 6.5 h2.6 a2.3 2.3 0 0 1 0 4.6 h-2.6" fill="none" stroke="#fdf5f1" stroke-width="1.7" stroke-linecap="round"/>
+  </g>
+
+  <!-- primary label -->
+  <text class="t" x="52" y="23" font-size="14" fill="#fdf5f1" textLength="104" lengthAdjust="spacingAndGlyphs">Buy me a coffee</text>
+
+  <!-- divider -->
+  <line x1="166" y1="10" x2="166" y2="24" stroke="#fdf5f1" stroke-width="1" opacity="0.28"/>
+
+  <!-- handle / username -->
+  <text class="t" x="178" y="23" font-size="13" fill="#fae9e2" textLength="58" lengthAdjust="spacingAndGlyphs">@exauerba</text>
+</svg>
