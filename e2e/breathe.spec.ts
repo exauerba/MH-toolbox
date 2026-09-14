@@ -29,9 +29,9 @@ test.describe('breathe', () => {
 
   test('saves a symptom check-in', async ({ page }) => {
     await tab(page, 'Check-in')
-    await page.getByPlaceholder('Optional', { exact: true }).fill('480')
-    await page.getByPlaceholder('Optional note about your check-in').fill('tight chest in the morning')
-    await page.getByRole('button', { name: 'Save Check-in' }).click()
+    await page.getByLabel('Peak Flow').fill('480')
+    await page.getByLabel('Journal Note').fill('tight chest in the morning')
+    await page.getByRole('button', { name: 'Save Ritual' }).click()
 
     await expect(page.getByText('Peak Flow: 480 L/min')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Recent Check-ins' })).toBeVisible()
@@ -74,6 +74,6 @@ test.describe('breathe', () => {
     await expect(page.getByText(/Add a few check-ins to see your symptom trend/i)).toBeVisible()
 
     await tab(page, 'Log Dose')
-    await expect(page.getByText('No medications available')).toBeVisible()
+    await expect(page.getByRole('combobox')).toContainText('No medications available')
   })
 })

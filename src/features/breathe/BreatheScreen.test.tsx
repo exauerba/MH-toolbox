@@ -57,7 +57,7 @@ describe('BreatheScreen', () => {
     await userEvent.click(screen.getByRole('radio', { name: /Check-in/ }))
     expect(screen.getByRole('radio', { name: /Check-in/ })).toBeChecked()
     expect(await screen.findByText(/No check-ins yet/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Save Check-in' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save Ritual' })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('radio', { name: /Medications/ }))
     expect(screen.getByRole('radio', { name: /Medications/ })).toBeChecked()

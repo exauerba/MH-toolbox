@@ -147,6 +147,35 @@
   --color-breathe-800: #6326f0;
   --color-breathe-900: #4c15b0;
 
+  /* Bloom-style airy palette (Pink Mood Tracker) */
+  --color-airy-pink: #fdf2f5;
+  --color-airy-pink-accent: #f8bbd0;
+  --color-airy-blue: #e3f2fd;
+  --color-airy-surface: rgba(255, 255, 255, 0.8);
+  --color-airy-glass: rgba(255, 255, 255, 0.3);
+
+  /* State colors (soft, serene) */
+  --color-state-controlled: #e8f5e9;
+  --color-state-controlled-ink: #2e7d32;
+  --color-state-flare: #ffebee;
+  --color-state-flare-ink: #c62828;
+  --color-state-reward: #fff9c4;
+  --color-state-reward-ink: #f57f17;
+
+  /* Tactile depth */
+  --shadow-tactile-low: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-tactile-mid: 0 8px 24px rgba(248, 187, 208, 0.15);
+  --shadow-tactile-high: 0 16px 48px rgba(227, 242, 253, 0.2);
+  --radius-organic: 24px;
+
+  /* Respiratory Rhythm motion */
+  --dur-inhale: 4000ms;
+  --dur-exhale: 6000ms;
+  --ease-organic: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring-puff: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-exhale: cubic-bezier(0.4, 0, 1, 1);
+
+
   /* ---- Timeline zone picker (user-selectable extras) --------------- */
   --color-lavender-600: #674195;
   --color-slate-600: #4a5a6a;
@@ -483,14 +512,21 @@
   }
 }
 
-/* Breathe animations */
-@keyframes breathe-inhale {
-  from {
-    transform: scale(0.8);
+@keyframes breathe-ambient {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.4;
+    filter: blur(40px);
   }
-  to {
-    transform: scale(1);
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+    filter: blur(60px);
   }
+}
+
+.animate-breathe-ambient {
+  animation: breathe-ambient var(--dur-inhale) var(--ease-organic) infinite alternate;
 }
 
 @keyframes breathe-hold {
