@@ -7,7 +7,7 @@ test('styleguide route renders the design system', async ({ page }) => {
   await expect(page.getByText('The Energy Jar', { exact: true })).toBeVisible()
   await expect(page.getByText('The Timeline zones', { exact: true })).toBeVisible()
   await expect(page.getByText('The hub tool cards', { exact: true })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Implementation spec', exact: true })).toHaveCount(3)
+  await expect(page.getByRole('heading', { name: 'Implementation spec', exact: true })).toHaveCount(4)
 })
 
 test('styleguide has no console errors', async ({ page }) => {
