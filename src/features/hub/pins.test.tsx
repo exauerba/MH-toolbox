@@ -92,9 +92,9 @@ describe('usePinnedTools', () => {
   it("togglePin('more') is a no-op", async () => {
     const repo = new FakeRepository()
     const { result } = renderHook(() => usePinnedTools(), { wrapper: wrapWith(repo) })
-    await waitFor(() => expect(result.current.pinned).toEqual(['jar', 'bloom']))
+    await waitFor(() => expect(result.current.pinned).toEqual(['jar', 'bloom', 'breathe']))
     act(() => result.current.togglePin('more'))
-    expect(result.current.pinned).toEqual(['jar', 'bloom'])
+    expect(result.current.pinned).toEqual(['jar', 'bloom', 'breathe'])
     await expect(repo.getPins()).resolves.toEqual([])
   })
 })

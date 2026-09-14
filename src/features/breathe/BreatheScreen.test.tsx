@@ -20,84 +20,84 @@ describe('BreatheScreen', () => {
   it('renders the header with back button and title', async () => {
     const fake = new FakeRepository()
     renderBreatheScreen(fake)
-    
+
     expect(await screen.findByRole('button', { name: /Back to home/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Breathe')
   })
-  
-  it('shows loading states initially', async () => {
+
+  it('shows the medication loading state on the default Log Dose section', async () => {
     const fake = new FakeRepository()
     renderBreatheScreen(fake)
-    
-    // Should show loading indicators for medications and check-ins
+
+    // The medication picker starts in its loading skeleton on the log tab.
     expect(screen.getByTestId('loading-medications')).toBeInTheDocument()
-    expect(screen.getByTestId('loading-checkins')).toBeInTheDocument()
+
+    // Let the pending medication load settle so the test exits cleanly.
+    await screen.findByText(/No medications available/i)
   })
-  
-  it('renders the Log Dose tab by default', async () => {
-    const fake = new FakeRepository()
-    // Add some medications to avoid empty state
-    await fake.saveBreatheMed({
-      name: 'Ventolin',
-      medType: 'reliever',
-    })
-    
-    renderBreatheScreen(fake)
-    
-    // Should show Log Dose tab selected
-    expect(screen.getByRole('tab', { name: /Log Dose/i })).toHaveAttribute('aria-selected', 'true')
-    expect(await screen.findByText(/Log Dose/i)).toBeInTheDocument()
-  })
-  
-  it('allows switching between tabs', async () => {
+
+  it('renders the Log Dose section selected by default with the dose form', async () => {
     const fake = new FakeRepository()
     renderBreatheScreen(fake)
-    
-    // Click on Check-in tab
-    await userEvent.click(screen.getByRole('tab', { name: /Check-in/i }))
-    expect(screen.getByRole('tab', { name: /Check-in/i })).toHaveAttribute('aria-selected', 'true')
-    
-    // Click on Medications tab
-    await userEvent.click(screen.getByRole('tab', { name: /Medications/i }))
-    expect(screen.getByRole('tab', { name: /Medications/i })).toHaveAttribute('aria-selected', 'true')
+
+    // The tab bar is a radiogroup (SegmentedControl), not a tablist.
+    expect(screen.getByRole('radiogroup', { name: /Sections/i })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Log Dose/ })).toBeChecked()
+
+    // With no medications yet, the picker shows a friendly placeholder.
+    expect(await screen.findByText(/No medications available/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Time/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Log Dose' })).toBeInTheDocument()
   })
-  
-  it('shows empty state for medications when none exist', async () => {
+
+  it('allows switching between sections', async () => {
     const fake = new FakeRepository()
     renderBreatheScreen(fake)
-    
-    // Switch to medications tab
-    await userEvent.click(screen.getByRole('tab', { name: /Medications/i }))
-    
+
+    await userEvent.click(screen.getByRole('radio', { name: /Check-in/ }))
+    expect(screen.getByRole('radio', { name: /Check-in/ })).toBeChecked()
+    expect(await screen.findByText(/No check-ins yet/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save Check-in' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('radio', { name: /Medications/ }))
+    expect(screen.getByRole('radio', { name: /Medications/ })).toBeChecked()
     expect(await screen.findByText(/No medications yet/i)).toBeInTheDocument()
   })
-  
+
+  it('seeds a sample fortnight from the empty state', async () => {
+    const fake = new FakeRepository()
+    renderBreatheScreen(fake)
+
+    await userEvent.click(screen.getByRole('radio', { name: /Check-in/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /Try a sample fortnight/i }))
+
+    await waitFor(async () => {
+      expect((await fake.listBreatheMeds()).length).toBe(2)
+    })
+    expect((await fake.listBreatheCheckins()).length).toBe(14)
+    expect((await fake.listBreatheDoseLogs()).length).toBeGreaterThan(0)
+  })
+
   it('allows logging a dose', async () => {
     const fake = new FakeRepository()
-    // Add a medication
     await fake.saveBreatheMed({
       name: 'Ventolin',
       medType: 'reliever',
     })
-    
+
     renderBreatheScreen(fake)
-    
-    // Select the medication
-    const medicationSelect = screen.getByRole('combobox')
+
+    const medicationSelect = await screen.findByRole('combobox')
     const meds = await fake.listBreatheMeds()
     await userEvent.selectOptions(medicationSelect, meds[0].id)
-    
-    // Set time
+
     const timeInput = screen.getByLabelText(/Time/i)
     await userEvent.clear(timeInput)
     await userEvent.type(timeInput, '14:30')
-    
-    // Click log dose button
-    await userEvent.click(screen.getByRole('button', { name: /Log Dose/i }))
-    
-    // Wait for the repository to be called
+
+    await userEvent.click(screen.getByRole('button', { name: 'Log Dose' }))
+
     await waitFor(() => {
-      // We can't easily spy on the fake repository's method, but we can check that the form resets
       expect(timeInput).toHaveValue('')
     })
   })

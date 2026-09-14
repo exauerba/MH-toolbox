@@ -12,4 +12,7 @@ export { usePrefersReducedMotion, useSyncReducedMotion, syncReducedMotionAttribu
 export { Icon } from './icons'
 export type { IconName } from './icons'
 export * from './primitives'
+export { Chart } from './charts/Chart'
+export type { ChartProps } from './charts/Chart'
+export { normalBandPlugin, rawDotsPlugin } from './charts/chartPlugins'
 export { cx } from './cx'

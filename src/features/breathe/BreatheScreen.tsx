@@ -1,21 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Button,
   Card,
+  Chart,
+  Chip,
   Icon,
   IconButton,
   Modal,
+  ProgressBar,
   SegmentedControl,
   Stepper,
   Tile,
   EmptyState,
 } from '../../design'
+import { buildTimeOfDayConfig, buildTrendConfig, dayLabel, lastNDates, medDoseCountsByDay } from './chartData'
+import { correlations, controlState, spearmanStrength, whatHelpedDelta } from './scoring'
+import { removeAllBreatheData, seedSampleFortnight } from './demoData'
 import type { IconName } from '../../design'
 import { useRepository } from '../../data/RepositoryProvider'
 import type {
   BreatheCheckin,
   BreatheCheckinInput,
+  BreatheDoseLog,
   BreatheMed,
 } from '../../data/types'
 import { todayForResetHour } from '../../shared/day'
@@ -25,10 +32,10 @@ export function BreatheScreen() {
   const navigate = useNavigate()
 
   // State
-  const [tab, setTab] = useState<'log' | 'checkin' | 'meds'>('log')
+  const [tab, setTab] = useState<'log' | 'checkin' | 'meds' | 'viz'>('log')
   const [meds, setMeds] = useState<BreatheMed[]>([])
   const [checkins, setCheckins] = useState<BreatheCheckin[]>([])
-  const [doseLogs, setDoseLogs] = useState<any[]>([]) // We'll type this later if needed, but for now any
+  const [doseLogs, setDoseLogs] = useState<BreatheDoseLog[]>([])
 
   // Loading states
   const [loadingMeds, setLoadingMeds] = useState(true)
@@ -53,12 +60,20 @@ export function BreatheScreen() {
   const [note, setNote] = useState<string>('')
 
   // Edit states
-  const [_editingMed, setEditingMed] = useState<BreatheMed | null>(null)
+  const [, setEditingMed] = useState<BreatheMed | null>(null)
+
+  // Form states for Add Medication
+  const [newMedName, setNewMedName] = useState('')
+  const [newMedType, setNewMedType] = useState<'controller' | 'reliever' | 'other'>('controller')
+  const [newMedReminder, setNewMedReminder] = useState<string>('')
   const [editingCheckin, setEditingCheckin] = useState<BreatheCheckin | null>(null)
 
   // Modal states
   const [deleteMedId, setDeleteMedId] = useState<string | null>(null)
   const [deleteCheckinId, setDeleteCheckinId] = useState<string | null>(null)
+
+  // Demo data states
+  const [demoBusy, setDemoBusy] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -72,7 +87,7 @@ export function BreatheScreen() {
           setMeds(medsData)
           setLoadingMeds(false)
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setErrorMeds('Failed to load medications')
           setLoadingMeds(false)
@@ -87,7 +102,7 @@ export function BreatheScreen() {
           setCheckins(checkinsData)
           setLoadingCheckins(false)
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setErrorCheckins('Failed to load check-ins')
           setLoadingCheckins(false)
@@ -105,7 +120,7 @@ export function BreatheScreen() {
           setDoseLogs(todaysDoseLogs)
           setLoadingDoseLogs(false)
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setErrorDoseLogs('Failed to load dose logs')
           setLoadingDoseLogs(false)
@@ -130,11 +145,11 @@ export function BreatheScreen() {
       // Set default date to today
       setCheckinDate(todayForResetHour(0))
     }
-  }, [tab, meds.length, selectedMedId])
+  }, [tab, meds, selectedMedId])
 
   // Handlers
   const handleTabChange = (value: string) => {
-    setTab(value as 'log' | 'checkin' | 'meds')
+    setTab(value as 'log' | 'checkin' | 'meds' | 'viz')
   }
 
   const handleMedSelect = (medId: string) => {
@@ -234,9 +249,44 @@ export function BreatheScreen() {
   }
 
   const handleSaveMed = async () => {
-    // This would be implemented with a form for adding/editing meds
-    // For now, we'll focus on the structure
-    // We'll implement a simple add medication form in the Medications tab
+    if (!newMedName.trim()) return
+
+    try {
+      await repo.saveBreatheMed({
+        name: newMedName.trim(),
+        medType: newMedType,
+        reminderHour: newMedReminder ? Number(newMedReminder) : null,
+      })
+
+      // Refresh medications
+      setLoadingMeds(true)
+      const updatedMeds = await repo.listBreatheMeds()
+      setMeds(updatedMeds)
+      setLoadingMeds(false)
+
+      // Reset form
+      setNewMedName('')
+      setNewMedType('controller')
+      setNewMedReminder('')
+    } catch (err) {
+      console.error('Failed to save medication:', err)
+    }
+  }
+
+  const handleDeleteDoseLog = async (id: string) => {
+    try {
+      await repo.deleteBreatheDoseLog(id)
+
+      // Refresh today's dose logs
+      setLoadingDoseLogs(true)
+      const todayStr = todayForResetHour(0)
+      const doseLogsData = await repo.listBreatheDoseLogs()
+      const todaysDoseLogs = doseLogsData.filter(log => log.date === todayStr)
+      setDoseLogs(todaysDoseLogs)
+      setLoadingDoseLogs(false)
+    } catch (err) {
+      console.error('Failed to delete dose log:', err)
+    }
   }
 
   const handleDeleteMed = async (id: string) => {
@@ -271,6 +321,55 @@ export function BreatheScreen() {
     }
   }
 
+  // Reload every breathe collection after a bulk change (demo seed / wipe).
+  const refreshAll = async () => {
+    setLoadingMeds(true)
+    setLoadingCheckins(true)
+    setLoadingDoseLogs(true)
+    try {
+      const [m, c, d] = await Promise.all([
+        repo.listBreatheMeds(),
+        repo.listBreatheCheckins(),
+        repo.listBreatheDoseLogs(),
+      ])
+      const todayStr = todayForResetHour(0)
+      setMeds(m)
+      setCheckins(c)
+      setDoseLogs(d.filter(log => log.date === todayStr))
+    } catch (err) {
+      console.error('Failed to refresh breathe data:', err)
+    } finally {
+      setLoadingMeds(false)
+      setLoadingCheckins(false)
+      setLoadingDoseLogs(false)
+      setDemoBusy(false)
+    }
+  }
+
+  const handleSeedSample = async () => {
+    if (demoBusy) return
+    setDemoBusy(true)
+    try {
+      await seedSampleFortnight(repo)
+      await refreshAll()
+    } catch (err) {
+      console.error('Failed to seed sample data:', err)
+      setDemoBusy(false)
+    }
+  }
+
+  const handleRemoveSample = async () => {
+    if (demoBusy) return
+    setDemoBusy(true)
+    try {
+      await removeAllBreatheData(repo)
+      await refreshAll()
+    } catch (err) {
+      console.error('Failed to remove sample data:', err)
+      setDemoBusy(false)
+    }
+  }
+
   // Header
   const header = (
     <div className="flex flex-wrap items-center gap-3">
@@ -292,7 +391,35 @@ export function BreatheScreen() {
     { value: 'log', label: 'Log Dose', icon: 'plus' },
     { value: 'checkin', label: 'Check-in', icon: 'check' },
     { value: 'meds', label: 'Medications', icon: 'inhaler' },
+    { value: 'viz', label: 'Visualize', icon: 'sparkle' },
   ]
+
+  // Visualization-derived data (computed once per data change)
+  const dates = useMemo(() => lastNDates(14), [])
+  const control = controlState(checkins, doseLogs, meds)
+  const insight = whatHelpedDelta(checkins, doseLogs, meds)
+  const trendConfig = useMemo(() => buildTrendConfig(checkins, dates), [checkins, dates])
+  const timeOfDayConfig = useMemo(() => buildTimeOfDayConfig(doseLogs), [doseLogs])
+  const corrCells = useMemo(() => correlations(checkins), [checkins])
+  const adherenceByDay = useMemo(
+    () => medDoseCountsByDay(meds, doseLogs, dates.slice(-7)),
+    [meds, doseLogs, dates],
+  )
+
+  // Correlation strength → readable tone for the heatmap cells.
+  const rhoTone = (rho: number): string => {
+    const strength = spearmanStrength(rho)
+    const positive = rho > 0
+    if (strength === 'strong') {
+      return positive ? 'bg-success-soft text-success-ink' : 'bg-overdrawn-soft text-overdrawn-ink'
+    }
+    if (strength === 'moderate') {
+      return positive ? 'bg-breathe-100 text-ink' : 'bg-low-soft text-ink'
+    }
+    return 'bg-surface-muted text-ink-soft'
+  }
+
+  const hasControllerMed = meds.some((m) => m.medType === 'controller')
 
   return (
     <div className="flex flex-col gap-6">
@@ -314,7 +441,10 @@ export function BreatheScreen() {
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Medication Selector */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-2">
+                <label
+                  htmlFor="breathe-dose-medication"
+                  className="block text-sm font-medium text-ink mb-2"
+                >
                   Medication
                 </label>
                 {loadingMeds ? (
@@ -332,6 +462,7 @@ export function BreatheScreen() {
                  ) : (
                   <div className="relative">
                     <select
+                      id="breathe-dose-medication"
                       value={selectedMedId || ''}
                       onChange={(e) => handleMedSelect(e.target.value)}
                       className="block w-full rounded border-line bg-surface px-3 py-2 text-sm"
@@ -346,10 +477,14 @@ export function BreatheScreen() {
 
               {/* Time Picker */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-2">
+                <label
+                  htmlFor="breathe-dose-time"
+                  className="block text-sm font-medium text-ink mb-2"
+                >
                   Time
                 </label>
                 <input
+                  id="breathe-dose-time"
                   type="time"
                   value={doseTime}
                   onChange={(e) => handleDoseTimeChange(e.target.value)}
@@ -403,7 +538,7 @@ export function BreatheScreen() {
                            variant="ghost"
                            pixel
                             onClick={() => {
-                              console.log('Delete dose log:', log.id)
+                              handleDeleteDoseLog(log.id)
                             }}
                          />
                        </div>
@@ -432,7 +567,7 @@ export function BreatheScreen() {
               </h3>
 
               {loadingCheckins ? (
-                <div className="h-96 flex items-center justify-center">
+                <div data-testid="loading-checkins" className="h-96 flex items-center justify-center">
                   <div className="h-6 w-full rounded border-line bg-surface-muted animate-pulse">
                     <div className="h-full w-full rounded"></div>
                   </div>
@@ -442,12 +577,25 @@ export function BreatheScreen() {
                   {errorCheckins}
                 </div>
               ) : checkins.length === 0 ? (
-                <EmptyState
-                  icon="check"
-                  title="No check-ins yet"
-                  body="Add your first check-in to start tracking your asthma"
-                  action={<Button onClick={() => setTab('checkin')}>Add Check-in</Button>}
-                />
+                <>
+                  <EmptyState
+                    icon="check"
+                    title="No check-ins yet"
+                    body="Add your first check-in to start tracking your asthma, or explore with a sample fortnight"
+                    action={
+                      <Button
+                        onClick={handleSeedSample}
+                        disabled={demoBusy}
+                        leadingIcon={<Icon name="sparkle" size={16} pixel />}
+                      >
+                        Try a sample fortnight
+                      </Button>
+                    }
+                  />
+                  <p className="mt-2 text-center text-xs text-ink-soft">
+                    Sample data — you can remove it anytime.
+                  </p>
+                </>
               ) : (
                 <div className="space-y-3">
                   {checkins
@@ -525,10 +673,14 @@ export function BreatheScreen() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       {/* Date Selector */}
                       <div>
-                        <label className="block text-sm font-medium text-ink mb-2">
+                        <label
+                          htmlFor="breathe-checkin-date"
+                          className="block text-sm font-medium text-ink mb-2"
+                        >
                           Date
                         </label>
                         <input
+                          id="breathe-checkin-date"
                           type="date"
                           value={checkinDate}
                           onChange={(e) => handleCheckinDateChange(e.target.value)}
@@ -538,10 +690,14 @@ export function BreatheScreen() {
 
                       {/* Peak Flow */}
                       <div>
-                        <label className="block text-sm font-medium text-ink mb-2">
+                        <label
+                          htmlFor="breathe-checkin-peak"
+                          className="block text-sm font-medium text-ink mb-2"
+                        >
                           Peak Flow (L/min)
                         </label>
                         <input
+                          id="breathe-checkin-peak"
                           type="number"
                           min={0}
                           value={peakFlow ?? ''}
@@ -554,12 +710,12 @@ export function BreatheScreen() {
                       {/* Sliders */}
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-ink mb-2">
+                          <span className="block text-sm font-medium text-ink mb-2">
                             Symptoms (1-5)
-                          </label>
+                          </span>
                           <div className="flex items-center gap-2">
                             <Stepper
-                              label=""
+                              label="Symptoms"
                               value={symptoms ?? 3}
                               onChange={handleSymptomsChange}
                               step={1}
@@ -573,12 +729,12 @@ export function BreatheScreen() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-ink mb-2">
+                          <span className="block text-sm font-medium text-ink mb-2">
                             Sleep (1-5)
-                          </label>
+                          </span>
                           <div className="flex items-center gap-2">
                             <Stepper
-                              label=""
+                              label="Sleep"
                               value={sleep ?? 3}
                               onChange={handleSleepChange}
                               step={1}
@@ -592,12 +748,12 @@ export function BreatheScreen() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-ink mb-2">
+                          <span className="block text-sm font-medium text-ink mb-2">
                             Activity (1-5)
-                          </label>
+                          </span>
                           <div className="flex items-center gap-2">
                             <Stepper
-                              label=""
+                              label="Activity"
                               value={activity ?? 3}
                               onChange={handleActivityChange}
                               step={1}
@@ -614,10 +770,14 @@ export function BreatheScreen() {
 
                     {/* Note */}
                  <div>
-                   <label className="block text-sm font-medium text-ink mb-2">
+                   <label
+                     htmlFor="breathe-checkin-note"
+                     className="block text-sm font-medium text-ink mb-2"
+                   >
                      Note
                    </label>
                    <textarea
+                     id="breathe-checkin-note"
                      value={note}
                      onChange={(e) => handleNoteChange(e.target.value)}
                      className="block w-full rounded border-line bg-surface px-3 py-2 text-sm"
@@ -652,10 +812,14 @@ export function BreatheScreen() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       {/* Date Selector */}
                       <div>
-                        <label className="block text-sm font-medium text-ink mb-2">
+                        <label
+                          htmlFor="breathe-checkin-date"
+                          className="block text-sm font-medium text-ink mb-2"
+                        >
                           Date
                         </label>
                         <input
+                          id="breathe-checkin-date"
                           type="date"
                           value={checkinDate}
                           onChange={(e) => handleCheckinDateChange(e.target.value)}
@@ -665,10 +829,14 @@ export function BreatheScreen() {
 
                       {/* Peak Flow */}
                       <div>
-                        <label className="block text-sm font-medium text-ink mb-2">
+                        <label
+                          htmlFor="breathe-checkin-peak"
+                          className="block text-sm font-medium text-ink mb-2"
+                        >
                           Peak Flow (L/min)
                         </label>
                         <input
+                          id="breathe-checkin-peak"
                           type="number"
                           min={0}
                           value={peakFlow ?? ''}
@@ -681,12 +849,12 @@ export function BreatheScreen() {
                       {/* Sliders */}
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-ink mb-2">
+                          <span className="block text-sm font-medium text-ink mb-2">
                             Symptoms (1-5)
-                          </label>
+                          </span>
                           <div className="flex items-center gap-2">
                             <Stepper
-                              label=""
+                              label="Symptoms"
                               value={symptoms ?? 3}
                               onChange={handleSymptomsChange}
                               step={1}
@@ -700,12 +868,12 @@ export function BreatheScreen() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-ink mb-2">
+                          <span className="block text-sm font-medium text-ink mb-2">
                             Sleep (1-5)
-                          </label>
+                          </span>
                           <div className="flex items-center gap-2">
                             <Stepper
-                              label=""
+                              label="Sleep"
                               value={sleep ?? 3}
                               onChange={handleSleepChange}
                               step={1}
@@ -719,12 +887,12 @@ export function BreatheScreen() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-ink mb-2">
+                          <span className="block text-sm font-medium text-ink mb-2">
                             Activity (1-5)
-                          </label>
+                          </span>
                           <div className="flex items-center gap-2">
                             <Stepper
-                              label=""
+                              label="Activity"
                               value={activity ?? 3}
                               onChange={handleActivityChange}
                               step={1}
@@ -741,10 +909,14 @@ export function BreatheScreen() {
 
                     {/* Note */}
                     <div>
-                      <label className="block text-sm font-medium text-ink mb-2">
+                      <label
+                        htmlFor="breathe-checkin-note"
+                        className="block text-sm font-medium text-ink mb-2"
+                      >
                         Note
                       </label>
                       <textarea
+                        id="breathe-checkin-note"
                         value={note}
                         onChange={(e) => handleNoteChange(e.target.value)}
                         className="block w-full rounded border-line bg-surface px-3 py-2 text-sm"
@@ -777,22 +949,35 @@ export function BreatheScreen() {
               </h3>
               <form className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-ink mb-1">
+                  <label
+                    htmlFor="breathe-med-name"
+                    className="block text-sm font-medium text-ink mb-1"
+                  >
                     Name
                   </label>
                   <input
+                    id="breathe-med-name"
                     type="text"
-                    // In a real implementation, this would have its own state
+                    value={newMedName}
+                    onChange={(e) => setNewMedName(e.target.value)}
                     className="block w-full rounded border-line bg-surface px-3 py-2 text-sm"
                     placeholder="e.g. Ventolin, Fluticasone"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink mb-1">
+                  <label
+                    htmlFor="breathe-med-type"
+                    className="block text-sm font-medium text-ink mb-1"
+                  >
                     Type
                   </label>
-                  <select className="block w-full rounded border-line bg-surface px-3 py-2 text-sm">
+                  <select
+                    id="breathe-med-type"
+                    value={newMedType}
+                    onChange={(e) => setNewMedType(e.target.value as 'controller' | 'reliever' | 'other')}
+                    className="block w-full rounded border-line bg-surface px-3 py-2 text-sm"
+                  >
                     <option value="controller">Controller</option>
                     <option value="reliever">Reliever</option>
                     <option value="other">Other</option>
@@ -800,13 +985,19 @@ export function BreatheScreen() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink mb-1">
+                  <label
+                    htmlFor="breathe-med-reminder"
+                    className="block text-sm font-medium text-ink mb-1"
+                  >
                     Reminder Hour (0-23)
                   </label>
                   <input
+                    id="breathe-med-reminder"
                     type="number"
                     min={0}
                     max={23}
+                    value={newMedReminder}
+                    onChange={(e) => setNewMedReminder(e.target.value)}
                     className="block w-full rounded border-line bg-surface px-3 py-2 text-sm"
                     placeholder="Optional"
                   />
@@ -829,7 +1020,7 @@ export function BreatheScreen() {
               </h3>
 
               {loadingMeds ? (
-                <div className="h-96 flex items-center justify-center">
+                <div data-testid="loading-medications" className="h-96 flex items-center justify-center">
                   <div className="h-6 w-full rounded border-line bg-surface-muted animate-pulse">
                     <div className="h-full w-full rounded"></div>
                   </div>
@@ -839,12 +1030,25 @@ export function BreatheScreen() {
                   {errorMeds}
                 </div>
               ) : meds.length === 0 ? (
-                <EmptyState
-                  icon="inhaler"
-                  title="No medications yet"
-                  body="Add your asthma medications to start tracking"
-                  action={<Button onClick={handleSaveMed}>Add Medication</Button>}
-                />
+                <>
+                  <EmptyState
+                    icon="inhaler"
+                    title="No medications yet"
+                    body="Add your asthma medications to start tracking"
+                    action={
+                      <Button
+                        onClick={handleSeedSample}
+                        disabled={demoBusy}
+                        leadingIcon={<Icon name="sparkle" size={16} pixel />}
+                      >
+                        Try a sample fortnight
+                      </Button>
+                    }
+                  />
+                  <p className="mt-2 text-center text-xs text-ink-soft">
+                    Sample data — you can remove it anytime.
+                  </p>
+                </>
               ) : (
                 <ul className="divide-y divide-line">
                   {meds.map((med) => (
@@ -865,9 +1069,17 @@ export function BreatheScreen() {
                               <Icon name="droplet" size={16} pixel className="text-ink-600" />
                             )}
                           </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-ink truncate">{med.name}</p>
+                            <p className="text-xs text-ink-soft">
+                              {med.medType === 'controller' ? 'Controller' : med.medType === 'reliever' ? 'Reliever' : 'Other'}
+                              {med.reminderHour != null ? ` · ${med.reminderHour}:00` : ''}
+                            </p>
+                          </div>
                         </div>
+                      </div>
 
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                           <IconButton
                             icon="edit"
                             label={`Edit ${med.name}`}
@@ -883,11 +1095,259 @@ export function BreatheScreen() {
                             onClick={() => setDeleteMedId(med.id)}
                           />
                         </div>
-                      </div>
                     </li>
                     ))}
                 </ul>
               )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'viz' && (
+          <div className="space-y-6">
+            {/* Control card */}
+            <section aria-labelledby="viz-control-heading">
+              <h3 id="viz-control-heading" className="mb-3 text-lg font-semibold text-ink">
+                Asthma control
+              </h3>
+              <Card variant="soft" padding="md" className="pixel-card">
+                <div role="status">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-display text-4xl font-bold text-ink">
+                        {control.score}
+                      </span>
+                      <span className="text-sm text-ink-soft">/ 100</span>
+                    </div>
+                    <Chip
+                      tone={
+                        control.label === 'Controlled'
+                          ? 'brand'
+                          : control.label === 'Partly controlled'
+                            ? 'low'
+                            : control.label === 'Uncontrolled'
+                              ? 'overdrawn'
+                              : 'neutral'
+                      }
+                      icon={
+                        <Icon
+                          name={
+                            control.label === 'Controlled'
+                              ? 'success'
+                              : control.label === 'No data'
+                                ? 'info'
+                                : 'alert'
+                          }
+                          size={14}
+                          pixel
+                        />
+                      }
+                    >
+                      {control.label}
+                    </Chip>
+                  </div>
+                  <ProgressBar
+                    value={control.score}
+                    max={100}
+                    label="Control score"
+                    valueText={`${control.score}/100`}
+                    tone={
+                      control.label === 'Controlled'
+                        ? 'ok'
+                        : control.label === 'Partly controlled'
+                          ? 'low'
+                          : control.label === 'Uncontrolled'
+                            ? 'overdrawn'
+                            : 'default'
+                    }
+                    className="mt-3"
+                  />
+                  <p className="mt-3 text-sm text-ink-soft">{control.copy}</p>
+                </div>
+              </Card>
+            </section>
+
+            {/* Trend chart */}
+            <section aria-labelledby="viz-trend-heading">
+              <h3 id="viz-trend-heading" className="mb-2 text-lg font-semibold text-ink">
+                Symptom trend
+              </h3>
+              {checkins.length >= 2 ? (
+                <div className="rounded-lg border border-line bg-surface p-3">
+                  <Chart
+                    config={trendConfig}
+                    label="Line chart of symptom severity and peak flow over the last 14 days"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-ink-soft">
+                  Add a few check-ins to see your symptom trend over time.
+                </p>
+              )}
+            </section>
+
+            {/* Time-of-day chart */}
+            <section aria-labelledby="viz-tod-heading">
+              <h3 id="viz-tod-heading" className="mb-2 text-lg font-semibold text-ink">
+                Puffs by time of day
+              </h3>
+              {doseLogs.length >= 1 ? (
+                <div className="rounded-lg border border-line bg-surface p-3">
+                  <Chart
+                    config={timeOfDayConfig}
+                    label="Bar chart of dose logs by Morning, Afternoon, Evening and Night"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-ink-soft">
+                  Log a dose to start seeing when you take your medicine most.
+                </p>
+              )}
+            </section>
+
+            {/* Adherence bars */}
+            <section aria-labelledby="viz-adherence-heading">
+              <h3 id="viz-adherence-heading" className="mb-2 text-lg font-semibold text-ink">
+                Preventer adherence
+              </h3>
+              {hasControllerMed && doseLogs.length > 0 ? (
+                <div className="space-y-3">
+                  {meds
+                    .filter((m) => m.medType === 'controller')
+                    .map((med) => {
+                      const counts = adherenceByDay[med.id] ?? []
+                      const taken = counts.filter((n) => n > 0).length
+                      return (
+                        <div
+                          key={med.id}
+                          className="rounded-lg border border-line bg-surface p-3"
+                        >
+                          <div className="mb-2 flex items-baseline justify-between gap-2">
+                            <p className="text-sm font-semibold text-ink">{med.name}</p>
+                            <p className="text-xs text-ink-soft">
+                              {taken} of {counts.length} days
+                            </p>
+                          </div>
+                          <div
+                            className="grid grid-cols-7 gap-1.5"
+                            aria-label={`${med.name} adherence over the last 7 days`}
+                          >
+                            {counts.map((n, i) => (
+                              <div key={i} className="flex flex-col items-center gap-1">
+                                <div
+                                  className={
+                                    'h-10 w-full rounded ' +
+                                    (n > 0
+                                      ? 'bg-breathe-500'
+                                      : 'border border-line bg-surface-muted')
+                                  }
+                                />
+                                <span className="text-[10px] text-ink-soft">
+                                  {dayLabel(dates[dates.length - 7 + i])}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              ) : (
+                <p className="text-sm text-ink-soft">
+                  Add a controller medication and log doses to see your adherence.
+                </p>
+              )}
+            </section>
+
+            {/* Insight card */}
+            <section aria-labelledby="viz-insight-heading">
+              <h3 id="viz-insight-heading" className="mb-2 text-lg font-semibold text-ink">
+                What helped?
+              </h3>
+              <Card variant="soft" padding="md">
+                {insight.delta != null ? (
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="font-display text-4xl font-bold text-breathe-700">
+                      {insight.delta > 0 ? '−' : ''}
+                      {insight.delta !== 0 ? Math.abs(insight.delta).toFixed(1) : '0.0'}
+                    </span>
+                    <p className="flex-1 text-sm text-ink-soft">{insight.sentence}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-ink-soft">{insight.sentence}</p>
+                )}
+              </Card>
+            </section>
+
+            {/* Correlation heatmap */}
+            <section aria-labelledby="viz-heatmap-heading">
+              <h3 id="viz-heatmap-heading" className="mb-2 text-lg font-semibold text-ink">
+                Correlations
+              </h3>
+              {corrCells.some((c) => c.rho != null) ? (
+                <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+                  <table className="w-full text-sm">
+                    <caption className="sr-only">
+                      Spearman correlations between symptoms, sleep, activity and peak flow
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-ink-soft"
+                        >
+                          Pair
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-2 text-right text-xs font-bold uppercase tracking-wide text-ink-soft"
+                        >
+                          Correlation
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {corrCells.map((cell) => (
+                        <tr key={cell.a} className="border-t border-line">
+                          <th
+                            scope="row"
+                            className="px-3 py-2 text-left font-medium text-ink"
+                          >
+                            {cell.a}
+                          </th>
+                          <td
+                            className={
+                              'rounded px-3 py-2 text-right font-bold ' +
+                              (cell.rho != null ? rhoTone(cell.rho) : 'text-ink-soft')
+                            }
+                          >
+                            {cell.rho != null ? cell.rho.toFixed(2) : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-sm text-ink-soft">
+                  Add paired check-in data (e.g. symptoms and sleep) to see correlations.
+                </p>
+              )}
+            </section>
+
+            {/* Manage sample data */}
+            <div className="border-t border-line pt-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  variant="ghost"
+                  onClick={handleRemoveSample}
+                  disabled={demoBusy}
+                  leadingIcon={<Icon name="trash" size={16} pixel />}
+                >
+                  Remove sample data
+                </Button>
+                <p className="text-xs text-ink-soft">Sample data — you can remove it anytime.</p>
+              </div>
             </div>
           </div>
         )}
