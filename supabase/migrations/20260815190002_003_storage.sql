@@ -11,6 +11,10 @@ insert into storage.buckets (id, name, public)
 values ('steady-media', 'steady-media', false)
 on conflict (id) do nothing;
 
+-- Explicitly enable RLS on storage.objects rather than relying on the platform
+-- default. Idempotent; guarantees the policies below are enforced.
+alter table storage.objects enable row level security;
+
 -- ---------- storage.objects policies (scoped to the steady-media bucket) ----------
 -- Objects live at {user_id}/{entry_id}/{uuid}{ext}. `owner_id` is set by
 -- Supabase Storage on upload from the authenticated client.
@@ -29,7 +33,11 @@ begin
     where schemaname = 'storage' and tablename = 'objects' and policyname = 'steady-media owner insert'
   ) then
     create policy "steady-media owner insert" on storage.objects
-      for insert with check (bucket_id = 'steady-media' and auth.uid()::text = owner_id);
+      for insert with check (
+        bucket_id = 'steady-media'
+        and auth.uid()::text = owner_id
+        and (storage.extension(name) in ('jpg', 'jpeg', 'png', 'webp'))
+      );
   end if;
 
   if not exists (

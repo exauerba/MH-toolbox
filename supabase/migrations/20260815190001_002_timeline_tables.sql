@@ -78,7 +78,13 @@ alter table public.steady_timeline_images enable row level security;
 create policy "steady_timeline_images owner select" on public.steady_timeline_images
   for select using (auth.uid() = user_id);
 create policy "steady_timeline_images owner insert" on public.steady_timeline_images
-  for insert with check (auth.uid() = user_id);
+  for insert with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.steady_timeline_entries e
+      where e.id = entry_id and e.user_id = auth.uid()
+    )
+  );
 create policy "steady_timeline_images owner update" on public.steady_timeline_images
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "steady_timeline_images owner delete" on public.steady_timeline_images

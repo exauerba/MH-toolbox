@@ -2,13 +2,14 @@ import type { IconName } from '../icons'
 import { Icon } from '../icons'
 import { cx } from '../cx'
 
-export type TileAccent = 'hub' | 'bloom' | 'jar' | 'timeline' | 'warning'
+export type TileAccent = 'hub' | 'bloom' | 'jar' | 'timeline' | 'breathe' | 'warning'
 
 const tileAccentClass: Record<TileAccent, string> = {
   hub: 'bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300',
   bloom: 'bg-bloom-100 text-bloom-700 dark:bg-bloom-300/20 dark:text-bloom-300',
   jar: 'bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300',
   timeline: 'bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300',
+  breathe: 'bg-breathe-100 text-breathe-700 dark:bg-breathe-300/20 dark:text-breathe-300',
   warning: 'bg-warning-soft text-warning-ink',
 }
 

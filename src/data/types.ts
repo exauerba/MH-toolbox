@@ -118,6 +118,72 @@ export interface ImageRef {
   createdAt: string
 }
 
+/* ------------------------------------------------------------------ *
+ * Breathe — asthma-control tracker
+ * ------------------------------------------------------------------ */
+
+/** A medication the user tracks (e.g. preventer inhaler, reliever). */
+export interface BreatheMed {
+  id: string
+  name: string
+  /** 'controller' | 'reliever' | 'other' — controls display defaults. */
+  medType: 'controller' | 'reliever' | 'other'
+  /** Opt-in reminder hour (0–23, local); null = no reminder. */
+  reminderHour: number | null
+  createdAt: string
+}
+
+export interface BreatheMedInput {
+  name: string
+  medType?: 'controller' | 'reliever' | 'other'
+  reminderHour?: number | null
+}
+
+/**
+ * A daily check-in — at most one per calendar day.
+ * `date` is the local YYYY-MM-DD key. Ratings are 1–5 and nullable
+ * (user may leave a field blank).
+ */
+export interface BreatheCheckin {
+  id: string
+  date: string
+  /** Peak flow: latest L/min reading that day, or null. */
+  peakFlow: number | null
+  symptoms: number | null  // 1–5
+  sleep: number | null     // 1–5
+  activity: number | null  // 1–5
+  note: string | null
+  createdAt: string
+}
+
+export interface BreatheCheckinInput {
+  date: string
+  peakFlow?: number | null
+  symptoms?: number | null
+  sleep?: number | null
+  activity?: number | null
+  note?: string | null
+}
+
+/**
+ * A medication dose log. Multiple per day (one per med per dose).
+ */
+export interface BreatheDoseLog {
+  id: string
+  medId: string
+  /** Local date (YYYY-MM-DD). */
+  date: string
+  /** Optional time 'HH:MM'. */
+  time: string | null
+  createdAt: string
+}
+
+export interface BreatheDoseLogInput {
+  medId: string
+  date: string
+  time?: string | null
+}
+
 /**
  * Full JSON export. Image blobs are intentionally excluded (metadata only) —
  * the export is a data backup; images are restored via the migration path.
@@ -131,4 +197,8 @@ export interface ExportBundle {
   timelineEntries: TimelineEntry[]
   timelineZones: TimelineZone[]
   timelineImages: TimelineImage[]
+  /** Breathe data (added with the breathe tool). */
+  breatheMeds: BreatheMed[]
+  breatheCheckins: BreatheCheckin[]
+  breatheDoseLogs: BreatheDoseLog[]
 }

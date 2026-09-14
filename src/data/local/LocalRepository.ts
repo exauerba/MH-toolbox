@@ -7,6 +7,12 @@
  */
 import type { ToolboxRepository } from '../repository'
 import type {
+  BreatheCheckin,
+  BreatheCheckinInput,
+  BreatheDoseLog,
+  BreatheDoseLogInput,
+  BreatheMed,
+  BreatheMedInput,
   ExportBundle,
   ImageRef,
   JarDay,
@@ -216,8 +222,129 @@ export class LocalRepository implements ToolboxRepository {
     await this.db.images.delete(ref.id)
   }
 
+  /* ---- Breathe ---------------------------------------------------- */
+
+  async listBreatheMeds(): Promise<BreatheMed[]> {
+    const meds = await this.db.breatheMeds.toArray()
+    return meds.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  async saveBreatheMed(m: BreatheMedInput, existingId?: string): Promise<BreatheMed> {
+    if (existingId) {
+      const existing = await this.db.breatheMeds.get(existingId)
+      if (existing) {
+        const updated: BreatheMed = {
+          ...existing,
+          name: m.name,
+          medType: m.medType ?? existing.medType,
+          reminderHour: m.reminderHour !== undefined ? (m.reminderHour ?? null) : existing.reminderHour,
+        }
+        await this.db.breatheMeds.put(updated)
+        return updated
+      }
+      const med: BreatheMed = {
+        id: existingId,
+        name: m.name,
+        medType: m.medType ?? 'controller',
+        reminderHour: m.reminderHour ?? null,
+        createdAt: new Date().toISOString(),
+      }
+      await this.db.breatheMeds.put(med)
+      return med
+    }
+    const med: BreatheMed = {
+      id: crypto.randomUUID(),
+      name: m.name,
+      medType: m.medType ?? 'controller',
+      reminderHour: m.reminderHour ?? null,
+      createdAt: new Date().toISOString(),
+    }
+    await this.db.breatheMeds.put(med)
+    return med
+  }
+
+  async deleteBreatheMed(id: string): Promise<void> {
+    await this.db.breatheMeds.delete(id)
+  }
+
+  async listBreatheCheckins(): Promise<BreatheCheckin[]> {
+    const checkins = await this.db.breatheCheckins.toArray()
+    return checkins.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  async saveBreatheCheckin(c: BreatheCheckinInput, existingId?: string): Promise<BreatheCheckin> {
+    if (existingId) {
+      const existing = await this.db.breatheCheckins.get(existingId)
+      if (existing) {
+        const updated: BreatheCheckin = {
+          ...existing,
+          date: c.date,
+          peakFlow: c.peakFlow !== undefined ? (c.peakFlow ?? null) : existing.peakFlow,
+          symptoms: c.symptoms !== undefined ? (c.symptoms ?? null) : existing.symptoms,
+          sleep: c.sleep !== undefined ? (c.sleep ?? null) : existing.sleep,
+          activity: c.activity !== undefined ? (c.activity ?? null) : existing.activity,
+          note: c.note !== undefined ? (c.note ?? null) : existing.note,
+        }
+        await this.db.breatheCheckins.put(updated)
+        return updated
+      }
+      const checkin: BreatheCheckin = {
+        id: existingId,
+        date: c.date,
+        peakFlow: c.peakFlow ?? null,
+        symptoms: c.symptoms ?? null,
+        sleep: c.sleep ?? null,
+        activity: c.activity ?? null,
+        note: c.note ?? null,
+        createdAt: new Date().toISOString(),
+      }
+      await this.db.breatheCheckins.put(checkin)
+      return checkin
+    }
+    const checkin: BreatheCheckin = {
+      id: crypto.randomUUID(),
+      date: c.date,
+      peakFlow: c.peakFlow ?? null,
+      symptoms: c.symptoms ?? null,
+      sleep: c.sleep ?? null,
+      activity: c.activity ?? null,
+      note: c.note ?? null,
+      createdAt: new Date().toISOString(),
+    }
+    await this.db.breatheCheckins.put(checkin)
+    return checkin
+  }
+
+  async deleteBreatheCheckin(id: string): Promise<void> {
+    await this.db.breatheCheckins.delete(id)
+  }
+
+  async listBreatheDoseLogs(): Promise<BreatheDoseLog[]> {
+    const logs = await this.db.breatheDoseLogs.toArray()
+    return logs.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  async addBreatheDoseLog(d: BreatheDoseLogInput): Promise<BreatheDoseLog> {
+    const log: BreatheDoseLog = {
+      id: crypto.randomUUID(),
+      medId: d.medId,
+      date: d.date,
+      time: d.time ?? null,
+      createdAt: new Date().toISOString(),
+    }
+    await this.db.breatheDoseLogs.put(log)
+    return log
+  }
+
+  async deleteBreatheDoseLog(id: string): Promise<void> {
+    await this.db.breatheDoseLogs.delete(id)
+  }
+
   async exportAll(): Promise<ExportBundle> {
-    const [profile, pins, jarDays, jarLogs, timelineEntries, timelineZones, images] = await Promise.all([
+    const [
+      profile, pins, jarDays, jarLogs, timelineEntries, timelineZones, images,
+      breatheMeds, breatheCheckins, breatheDoseLogs,
+    ] = await Promise.all([
       this.getProfile(),
       this.getPins(),
       this.db.jarDays.toArray(),
@@ -225,6 +352,9 @@ export class LocalRepository implements ToolboxRepository {
       this.db.timelineEntries.toArray(),
       this.db.timelineZones.toArray(),
       this.db.images.toArray(),
+      this.db.breatheMeds.toArray(),
+      this.db.breatheCheckins.toArray(),
+      this.db.breatheDoseLogs.toArray(),
     ])
     return {
       exportedAt: new Date().toISOString(),
@@ -240,6 +370,9 @@ export class LocalRepository implements ToolboxRepository {
         storagePath: img.id,
         createdAt: img.createdAt,
       })),
+      breatheMeds,
+      breatheCheckins,
+      breatheDoseLogs,
     }
   }
 
@@ -252,6 +385,9 @@ export class LocalRepository implements ToolboxRepository {
       this.db.timelineEntries.clear(),
       this.db.timelineZones.clear(),
       this.db.images.clear(),
+      this.db.breatheMeds.clear(),
+      this.db.breatheCheckins.clear(),
+      this.db.breatheDoseLogs.clear(),
     ])
   }
 }

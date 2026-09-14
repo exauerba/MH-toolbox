@@ -6,9 +6,9 @@ import type { IconName } from '../design';
  * from this array; new tools are one entry here plus a route in AppShell.
  */
 
-export type ToolId = 'jar' | 'bloom' | 'timeline' | 'more';
+export type ToolId = 'jar' | 'bloom' | 'timeline' | 'more' | 'breathe';
 
-export type ToolAccent = 'hub' | 'bloom' | 'jar' | 'timeline';
+export type ToolAccent = 'hub' | 'bloom' | 'jar' | 'timeline' | 'breathe';
 
 export interface ToolConfig {
   id: ToolId;
@@ -51,25 +51,36 @@ export const TOOLS: ToolConfig[] = [
     externalUrl: BLOOM_URL,
     pinnedByDefault: true,
   },
-  {
-    id: 'timeline',
-    name: 'Personal Timeline',
-    tagline: 'Build the story of your life, one zone at a time.',
-    description:
-      'Moments, zones, and the shape of your own story — your words, your colours, never shared.',
-    icon: 'timeline',
-    accent: 'timeline',
-    route: '/tools/timeline',
-  },
-  {
-    id: 'more',
-    name: 'More tools soon',
-    tagline: 'The toolbox grows as you need it.',
-    description: 'New tools arrive as they earn their place here.',
-    icon: 'sparkle',
-    accent: 'hub',
-    comingSoon: true,
-  },
+    {
+      id: 'timeline',
+      name: 'Personal Timeline',
+      tagline: 'Build the story of your life, one zone at a time.',
+      description:
+        'Moments, zones, and the shape of your own story — your words, your colours, never shared.',
+      icon: 'timeline',
+      accent: 'timeline',
+      route: '/tools/timeline',
+    },
+    {
+      id: 'breathe',
+      name: 'Breathe',
+      tagline: 'Guided breathing exercises for calm and focus.',
+      description:
+        'Simple breathing exercises to help you find calm, reduce stress, and improve focus.',
+      icon: 'wind',
+      accent: 'breathe',
+      route: '/tools/breathe',
+      pinnedByDefault: true,
+    },
+    {
+      id: 'more',
+      name: 'More tools soon',
+      tagline: 'The toolbox grows as you need it.',
+      description: 'New tools arrive as they earn their place here.',
+      icon: 'sparkle',
+      accent: 'hub',
+      comingSoon: true,
+    },
 ];
 
 export const DEFAULT_PINS: ToolId[] = TOOLS.filter((tool) => tool.pinnedByDefault).map((tool) => tool.id);

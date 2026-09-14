@@ -1,0 +1,3 @@
+# Require review for security-sensitive paths. Update the username if ownership changes.
+.github/   @exauerba
+supabase/  @exauerba

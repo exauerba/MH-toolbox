@@ -135,6 +135,18 @@
   --color-timeline-800: #2f4229;
   --color-timeline-900: #23301f;
 
+  /* ---- Breathe — soft lilac / periwinkle ----------------------- */
+  --color-breathe-50: #fdf8ff;
+  --color-breathe-100: #f9f2fe;
+  --color-breathe-200: #f3e9ff;
+  --color-breathe-300: #ebe5fe;
+  --color-breathe-400: #dcc8fe;
+  --color-breathe-500: #c4a5fe;
+  --color-breathe-600: #9d78ff;
+  --color-breathe-700: #7d4cff;
+  --color-breathe-800: #6326f0;
+  --color-breathe-900: #4c15b0;
+
   /* ---- Timeline zone picker (user-selectable extras) --------------- */
   --color-lavender-600: #674195;
   --color-slate-600: #4a5a6a;
@@ -468,6 +480,61 @@
   to {
     opacity: 0;
     transform: translateY(-36px) scale(0.9);
+  }
+}
+
+/* Breathe animations */
+@keyframes breathe-inhale {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes breathe-hold {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes breathe-exhale {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.8);
+  }
+}
+
+@keyframes breathe-inhale-fill {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.2;
+  }
+}
+
+@keyframes breathe-hold-fill {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0.2;
+  }
+}
+
+@keyframes breathe-exhale-fill {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0;
   }
 }
 

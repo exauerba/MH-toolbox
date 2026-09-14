@@ -25,6 +25,7 @@ import { syncReducedMotionAttribute } from '../motion'
 import { JarHero } from '../hero/JarHero'
 import { TimelineHero } from '../hero/TimelineHero'
 import { HubHero } from '../hero/HubHero'
+import { BreatheHero } from '../hero/BreatheHero'
 import { cx } from '../cx'
 
 /* ---- colour utilities for live contrast badges ----------------------- */
@@ -659,42 +660,51 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      {/* Hero visuals */}
-      <Section
-        id="hero-visuals"
-        kicker="07 · Hero visuals"
-        title="The three things you'll look at most"
-        intro="Each is rendered live below with mock data so the direction can be felt, and shipped with an exact implementation spec for the feature work package that builds it."
-      >
-        <div className="flex flex-col gap-14">
-          <div>
-            <h3 className="mb-1 text-2xl font-extrabold text-ink">The Energy Jar</h3>
-            <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-soft">
-              Spoon theory, made legible at a glance. Chips move from the jar to the spent tray; states are gentle and
-              never shaming. Build by WP6.
-            </p>
-            <JarHero />
-          </div>
+       {/* Hero visuals */}
+       <Section
+         id="hero-visuals"
+         kicker="07 · Hero visuals"
+         title="The four things you'll look at most"
+         intro="Each is rendered live below with mock data so the direction can be felt, and shipped with an exact implementation spec for the feature work package that builds it."
+       >
+         <div className="flex flex-col gap-14">
+           <div>
+             <h3 className="mb-1 text-2xl font-extrabold text-ink">The Energy Jar</h3>
+             <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-soft">
+               Spoon theory, made legible at a glance. Chips move from the jar to the spent tray; states are gentle and
+               never shaming. Build by WP6.
+             </p>
+             <JarHero />
+           </div>
 
-          <div>
-            <h3 className="mb-1 text-2xl font-extrabold text-ink">The Timeline zones</h3>
-            <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-soft">
-              Your history as bands and cards — zones you name and colour yourself, always shown with their name, never
-              colour alone. Build by WP9.
-            </p>
-            <TimelineHero />
-          </div>
+           <div>
+             <h3 className="mb-1 text-2xl font-extrabold text-ink">The Timeline zones</h3>
+             <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-soft">
+               Your history as bands and cards — zones you name and colour yourself, always shown with their name, never
+               colour alone. Build by WP9.
+             </p>
+             <TimelineHero />
+           </div>
 
-          <div>
-            <h3 className="mb-1 text-2xl font-extrabold text-ink">The hub tool cards</h3>
-            <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-soft">
-              The pin grid: favourites up top, full directory below, bloom's own pink on its card so the hand-off feels
-              continuous. Build by WP5.
-            </p>
-            <HubHero />
-          </div>
-        </div>
-      </Section>
+           <div>
+             <h3 className="mb-1 text-2xl font-extrabold text-ink">The hub tool cards</h3>
+             <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-soft">
+               The pin grid: favourites up top, full directory below, bloom's own pink on its card so the hand-off feels
+               continuous. Build by WP5.
+             </p>
+             <HubHero />
+           </div>
+
+           <div>
+             <h3 className="mb-1 text-2xl font-extrabold text-ink">Guided breathing</h3>
+             <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-soft">
+               Simple breath cycles to calm the nervous system — choose a pattern, follow the visual, and return to your
+               baseline. Build by WP10.
+             </p>
+             <BreatheHero />
+           </div>
+         </div>
+       </Section>
 
       <footer className="mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-sm text-ink-faint">
         <p>steady design direction · WP3 · tokens, primitives, hero visuals, styleguide</p>

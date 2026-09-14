@@ -26,6 +26,9 @@ const emptyBundle: ExportBundle = {
   timelineEntries: [],
   timelineZones: [],
   timelineImages: [],
+  breatheMeds: [],
+  breatheCheckins: [],
+  breatheDoseLogs: [],
 }
 
 const dataBundle: ExportBundle = {

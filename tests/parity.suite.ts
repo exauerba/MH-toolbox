@@ -38,6 +38,9 @@ export function runRepositorySuite(
       expect(await repo.listJarLogs()).toEqual([])
       expect(await repo.listTimelineEntries()).toEqual([])
       expect(await repo.listZones()).toEqual([])
+      expect(await repo.listBreatheMeds()).toEqual([])
+      expect(await repo.listBreatheCheckins()).toEqual([])
+      expect(await repo.listBreatheDoseLogs()).toEqual([])
     })
 
     it('round-trips a profile', async () => {
@@ -245,6 +248,126 @@ export function runRepositorySuite(
       expect(await repo.listImages(e.id)).toEqual([])
     })
 
+    it('creates, updates, and deletes breathe meds', async () => {
+      const m = await repo.saveBreatheMed({ name: 'Preventer', medType: 'controller', reminderHour: 8 })
+      expect(m.id).toBeTruthy()
+      expect(m.name).toBe('Preventer')
+      expect(m.medType).toBe('controller')
+      expect(m.reminderHour).toBe(8)
+      expect(m.createdAt).toBeTruthy()
+
+      // Omitting medType/reminderHour uses defaults.
+      const plain = await repo.saveBreatheMed({ name: 'Reliever' })
+      expect(plain.medType).toBe('controller')
+      expect(plain.reminderHour).toBeNull()
+
+      expect(await repo.listBreatheMeds()).toHaveLength(2)
+
+      const updated = await repo.saveBreatheMed({ name: 'Preventer (new)', medType: 'other', reminderHour: null }, m.id)
+      expect(updated.id).toBe(m.id)
+      expect(updated.name).toBe('Preventer (new)')
+      expect(updated.medType).toBe('other')
+      expect(updated.reminderHour).toBeNull()
+      expect(updated.createdAt).toBe(m.createdAt) // createdAt preserved on update
+
+      await repo.deleteBreatheMed(m.id)
+      const meds = await repo.listBreatheMeds()
+      expect(meds).toHaveLength(1)
+      expect(meds[0].id).toBe(plain.id)
+    })
+
+    it('upserts a breathe med with a fixed id', async () => {
+      const created = await repo.saveBreatheMed(
+        { name: 'Seeded med', medType: 'controller', reminderHour: 7 },
+        '550e8400-e29b-41d4-a716-446655440002',
+      )
+      expect(created.id).toBe('550e8400-e29b-41d4-a716-446655440002')
+      expect(await repo.listBreatheMeds()).toHaveLength(1)
+
+      const updated = await repo.saveBreatheMed(
+        { name: 'Seeded med (edited)', medType: 'controller', reminderHour: 9 },
+        '550e8400-e29b-41d4-a716-446655440002',
+      )
+      expect(updated.id).toBe('550e8400-e29b-41d4-a716-446655440002')
+      expect(updated.name).toBe('Seeded med (edited)')
+      expect(updated.reminderHour).toBe(9)
+      expect(updated.createdAt).toBe(created.createdAt)
+      expect(await repo.listBreatheMeds()).toHaveLength(1)
+    })
+
+    it('creates, lists, upserts, and deletes breathe checkins', async () => {
+      const c1 = await repo.saveBreatheCheckin({ date: '2026-08-16', peakFlow: 420, symptoms: 2, note: 'decent' })
+      expect(c1.id).toBeTruthy()
+      expect(c1.date).toBe('2026-08-16')
+      expect(c1.peakFlow).toBe(420)
+      expect(c1.symptoms).toBe(2)
+      expect(c1.sleep).toBeNull()
+      expect(c1.activity).toBeNull()
+      expect(c1.note).toBe('decent')
+
+      const c2 = await repo.saveBreatheCheckin({ date: '2026-08-15' })
+      expect(c2.peakFlow).toBeNull()
+      expect(c2.symptoms).toBeNull()
+
+      expect(await repo.listBreatheCheckins()).toHaveLength(2)
+
+      const updated = await repo.saveBreatheCheckin(
+        { date: '2026-08-16', peakFlow: 450, symptoms: 1, sleep: 4, activity: 3, note: 'better' },
+        c1.id,
+      )
+      expect(updated.id).toBe(c1.id)
+      expect(updated.peakFlow).toBe(450)
+      expect(updated.sleep).toBe(4)
+      expect(updated.createdAt).toBe(c1.createdAt) // createdAt preserved on upsert
+
+      await repo.deleteBreatheCheckin(c1.id)
+      const left = await repo.listBreatheCheckins()
+      expect(left).toHaveLength(1)
+      expect(left[0].id).toBe(c2.id)
+    })
+
+    it('upserts a breathe checkin with a fixed id', async () => {
+      const created = await repo.saveBreatheCheckin(
+        { date: '2026-08-16', peakFlow: 400, symptoms: 3 },
+        '550e8400-e29b-41d4-a716-446655440003',
+      )
+      expect(created.id).toBe('550e8400-e29b-41d4-a716-446655440003')
+      expect(await repo.listBreatheCheckins()).toHaveLength(1)
+
+      const updated = await repo.saveBreatheCheckin(
+        { date: '2026-08-17', peakFlow: 410, symptoms: 2, sleep: 5 },
+        '550e8400-e29b-41d4-a716-446655440003',
+      )
+      expect(updated.id).toBe('550e8400-e29b-41d4-a716-446655440003')
+      expect(updated.date).toBe('2026-08-17')
+      expect(updated.sleep).toBe(5)
+      expect(updated.createdAt).toBe(created.createdAt)
+      expect(await repo.listBreatheCheckins()).toHaveLength(1)
+    })
+
+    it('adds, lists (newest first), and deletes breathe dose logs', async () => {
+      const med = await repo.saveBreatheMed({ name: 'Reliever' })
+      const d1 = await repo.addBreatheDoseLog({ medId: med.id, date: '2026-08-16', time: '08:00' })
+      const d2 = await repo.addBreatheDoseLog({ medId: med.id, date: '2026-08-16' })
+      expect(d1.id).toBeTruthy()
+      expect(d1.createdAt).toBeTruthy()
+      expect(d1.medId).toBe(med.id)
+      expect(d1.time).toBe('08:00')
+      expect(d2.time).toBeNull()
+
+      const logs = await repo.listBreatheDoseLogs()
+      expect(logs).toHaveLength(2)
+      // newest first (ties allowed — createdAt must be non-increasing)
+      for (let i = 1; i < logs.length; i++) {
+        expect(logs[i - 1].createdAt >= logs[i].createdAt).toBe(true)
+      }
+
+      await repo.deleteBreatheDoseLog(d1.id)
+      const left = await repo.listBreatheDoseLogs()
+      expect(left).toHaveLength(1)
+      expect(left[0].id).toBe(d2.id)
+    })
+
     it('exports everything', async () => {
       await repo.setProfile({
         theme: 'system',
@@ -258,6 +381,10 @@ export function runRepositorySuite(
       await repo.addJarLog({ date: '2026-08-16', spent: 2 })
       await repo.saveTimelineEntry({ title: 'T', startDate: '2026-01-01', color: '#000' })
       await repo.saveZone({ name: 'Z', color: '#000', startDate: '2026-01-01' })
+      await repo.saveBreatheMed({ name: 'Preventer', medType: 'controller', reminderHour: 8 })
+      await repo.saveBreatheCheckin({ date: '2026-08-16', peakFlow: 420, symptoms: 2 })
+      const med = await repo.saveBreatheMed({ name: 'Reliever' })
+      await repo.addBreatheDoseLog({ medId: med.id, date: '2026-08-16', time: '08:00' })
 
       const bundle = await repo.exportAll()
       expect(bundle.exportedAt).toBeTruthy()
@@ -268,6 +395,9 @@ export function runRepositorySuite(
       expect(bundle.timelineEntries).toHaveLength(1)
       expect(bundle.timelineZones).toHaveLength(1)
       expect(bundle.timelineImages).toEqual([])
+      expect(bundle.breatheMeds).toHaveLength(2)
+      expect(bundle.breatheCheckins).toHaveLength(1)
+      expect(bundle.breatheDoseLogs).toHaveLength(1)
     })
 
     it('wipes all data', async () => {
@@ -282,6 +412,10 @@ export function runRepositorySuite(
       await repo.addJarLog({ date: '2026-08-16', spent: 1 })
       const e = await repo.saveTimelineEntry({ title: 'T', startDate: '2026-01-01', color: '#000' })
       await repo.uploadImage(new File(['x'], 'a.png', { type: 'image/png' }), e.id)
+      await repo.saveBreatheMed({ name: 'Preventer', medType: 'controller', reminderHour: 8 })
+      await repo.saveBreatheCheckin({ date: '2026-08-16', peakFlow: 420, symptoms: 2 })
+      const med = await repo.saveBreatheMed({ name: 'Reliever' })
+      await repo.addBreatheDoseLog({ medId: med.id, date: '2026-08-16', time: '08:00' })
 
       await repo.deleteAllData()
       expect(await repo.getProfile()).toBeNull()
@@ -290,6 +424,9 @@ export function runRepositorySuite(
       expect(await repo.listTimelineEntries()).toEqual([])
       expect(await repo.listZones()).toEqual([])
       expect(await repo.listImages(e.id)).toEqual([])
+      expect(await repo.listBreatheMeds()).toEqual([])
+      expect(await repo.listBreatheCheckins()).toEqual([])
+      expect(await repo.listBreatheDoseLogs()).toEqual([])
     })
   })
 }

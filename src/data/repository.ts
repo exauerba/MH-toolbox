@@ -12,6 +12,12 @@
  *   insert-or-update (idempotent re-runs), absence means create (covers the edit flows in §6.4).
  */
 import type {
+  BreatheCheckin,
+  BreatheCheckinInput,
+  BreatheDoseLog,
+  BreatheDoseLogInput,
+  BreatheMed,
+  BreatheMedInput,
   ExportBundle,
   ImageRef,
   JarDay,
@@ -60,4 +66,17 @@ export interface ToolboxRepository {
 
   /** Wipe the current mode's steady data (keeps the account itself). */
   deleteAllData(): Promise<void>
+
+  /* ---- Breathe ---------------------------------------------------- */
+  listBreatheMeds(): Promise<BreatheMed[]>
+  saveBreatheMed(m: BreatheMedInput, existingId?: string): Promise<BreatheMed>
+  deleteBreatheMed(id: string): Promise<void>
+
+  listBreatheCheckins(): Promise<BreatheCheckin[]>
+  saveBreatheCheckin(c: BreatheCheckinInput, existingId?: string): Promise<BreatheCheckin>
+  deleteBreatheCheckin(id: string): Promise<void>
+
+  listBreatheDoseLogs(): Promise<BreatheDoseLog[]>
+  addBreatheDoseLog(d: BreatheDoseLogInput): Promise<BreatheDoseLog>
+  deleteBreatheDoseLog(id: string): Promise<void>
 }

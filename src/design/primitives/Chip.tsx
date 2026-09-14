@@ -7,6 +7,7 @@ export type ChipTone =
   | 'jar'
   | 'timeline'
   | 'bloom'
+  | 'breathe'
   | 'low'
   | 'overdrawn'
 
@@ -28,6 +29,7 @@ const toneLight: Record<ChipTone, string> = {
   jar: 'bg-jar-100 text-jar-700 border border-jar-200',
   timeline: 'bg-timeline-100 text-timeline-700 border border-timeline-200',
   bloom: 'bg-bloom-100 text-bloom-700 border border-bloom-200',
+  breathe: 'bg-breathe-100 text-breathe-700 border border-breathe-200',
   low: 'bg-low-soft text-low-ink border border-low-line',
   overdrawn: 'bg-overdrawn-soft text-overdrawn-ink border border-overdrawn-line',
 }
@@ -41,6 +43,7 @@ const toneDark: Record<ChipTone, string> = {
   jar: 'dark:bg-jar-300/20 dark:text-jar-300',
   timeline: 'dark:bg-timeline-300/20 dark:text-timeline-300',
   bloom: 'dark:bg-bloom-300/20 dark:text-bloom-300',
+  breathe: 'dark:bg-breathe-300/20 dark:text-breathe-300',
   low: '',
   overdrawn: '',
 }

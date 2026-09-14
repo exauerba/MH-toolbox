@@ -84,6 +84,20 @@ export const colors = {
     900: '#23301f',
   },
 
+  /* Breathe — soft lilac / periwinkle */
+  breathe: {
+    50: '#fdf8ff',
+    100: '#f9f2fe',
+    200: '#f3e9ff',
+    300: '#ebe5fe',
+    400: '#dcc8fe',
+    500: '#c4a5fe',
+    600: '#9d78ff',
+    700: '#7d4cff',
+    800: '#6326f0',
+    900: '#4c15b0',
+  },
+
   /* Status (never color-alone: always icon + label + pattern) */
   info: { ink: '#3d6286', soft: '#e9eff6', line: '#c2d0e0', strong: '#2d4a68' },
   success: { ink: '#2f6b46', soft: '#e7f1e6', line: '#bdd7be', strong: '#24533a' },
@@ -233,6 +247,7 @@ export const toolAccents = {
   bloom: { family: 'bloom', label: 'bloom pink' },
   jar: { family: 'jar', label: 'honey' },
   timeline: { family: 'timeline', label: 'sage' },
+  breathe: { family: 'breathe', label: 'lilac' },
 } as const
 
 /** Timeline zone palette — user-selectable, all AA on canvas. */

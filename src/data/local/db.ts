@@ -5,7 +5,7 @@
  */
 import Dexie, { type EntityTable } from 'dexie'
 
-import type { JarDay, JarLog, Profile, TimelineEntry, TimelineZone } from '../types'
+import type { BreatheCheckin, BreatheDoseLog, BreatheMed, JarDay, JarLog, Profile, TimelineEntry, TimelineZone } from '../types'
 
 /** Single-row wrapper for the profile store (one guest profile). */
 export interface ProfileRow {
@@ -35,6 +35,9 @@ export interface SteadyDB extends Dexie {
   timelineEntries: EntityTable<TimelineEntry, 'id'>
   timelineZones: EntityTable<TimelineZone, 'id'>
   images: EntityTable<LocalImage, 'id'>
+  breatheMeds: EntityTable<BreatheMed, 'id'>
+  breatheCheckins: EntityTable<BreatheCheckin, 'id'>
+  breatheDoseLogs: EntityTable<BreatheDoseLog, 'id'>
 }
 
 export function createSteadyDB(name = 'steady'): SteadyDB {
@@ -47,6 +50,18 @@ export function createSteadyDB(name = 'steady'): SteadyDB {
     timelineEntries: 'id',
     timelineZones: 'id',
     images: 'id, entryId',
+  })
+  db.version(2).stores({
+    profiles: 'key',
+    pins: 'key',
+    jarDays: 'date',
+    jarLogs: 'id',
+    timelineEntries: 'id',
+    timelineZones: 'id',
+    images: 'id, entryId',
+    breatheMeds: 'id',
+    breatheCheckins: 'id, date',
+    breatheDoseLogs: 'id, date, medId',
   })
   return db
 }

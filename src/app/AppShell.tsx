@@ -6,6 +6,7 @@ import { RepositoryProvider } from '../data/RepositoryProvider'
 import { HubHome } from '../features/hub/HubHome'
 import { JarScreen } from '../features/jar/JarScreen'
 import { TimelineScreen } from '../features/timeline/TimelineScreen'
+import { BreatheScreen } from '../features/breathe/BreatheScreen'
 import { SettingsScreen } from '../features/settings/SettingsScreen'
 import { AboutScreen } from '../features/about/AboutScreen'
 
@@ -15,17 +16,18 @@ export default function AppShell() {
       <ThemeProvider>
         <RepositoryProvider>
           <Shell>
-            <Routes>
-              <Route path="/" element={<HubHome />} />
-              <Route path="/tools/jar" element={<JarScreen />} />
-              <Route path="/tools/timeline" element={<TimelineScreen />} />
-              <Route path="/settings" element={<SettingsScreen />} />
-              <Route path="/about" element={<AboutScreen />} />
-              {/* WP3 sanctioned addition: design styleguide, not linked from any nav */}
-              <Route path="/styleguide" element={<Styleguide />} />
-              {/* No dead ends — anything unknown lands back on the hub */}
-              <Route path="*" element={<HubHome />} />
-            </Routes>
+             <Routes>
+               <Route path="/" element={<HubHome />} />
+               <Route path="/tools/jar" element={<JarScreen />} />
+               <Route path="/tools/timeline" element={<TimelineScreen />} />
+               <Route path="/tools/breathe" element={<BreatheScreen />} />
+               <Route path="/settings" element={<SettingsScreen />} />
+               <Route path="/about" element={<AboutScreen />} />
+               {/* WP3 sanctioned addition: design styleguide, not linked from any nav */}
+               <Route path="/styleguide" element={<Styleguide />} />
+               {/* No dead ends — anything unknown lands back on the hub */}
+               <Route path="*" element={<HubHome />} />
+             </Routes>
           </Shell>
         </RepositoryProvider>
       </ThemeProvider>

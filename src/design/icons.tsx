@@ -55,6 +55,7 @@ export type IconName =
   | 'home'
   | 'image'
   | 'info'
+  | 'inhaler'
   | 'jar'
   | 'leaf'
   | 'lock'
@@ -68,8 +69,6 @@ export type IconName =
   | 'plus'
   | 'refresh'
   | 'save'
-  | 'search'
-  | 'settings'
   | 'share'
   | 'shield'
   | 'smile'
@@ -83,6 +82,13 @@ export type IconName =
   | 'trash'
   | 'undo'
   | 'user'
+  | 'wind'
+  | 'settings'
+  | 'search'
+  | 'timer'
+  | 'repeat'
+  | 'stop'
+  | 'play'
   | 'zzz'
 
 function strokeProps() {
@@ -299,6 +305,17 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M12 8h.01" />
     </g>
   ),
+  inhaler: () => (
+    <g {...strokeProps()}>
+      <path d="M4 7h16" />
+      <path d="M5 7v2h14V7" />
+      <path d="M7 9h2v8H9z" />
+      <path d="M10 9h2v5h2V9h2v7h-2v2h-2z" />
+      <path d="M13 9h2v5h2V9h2v7h-2v2h-2z" />
+      <path d="M4 11h2v2H6z" />
+      <path d="M16 11h2v2h-2z" />
+    </g>
+  ),
   jar: () => (
     <g {...strokeProps()}>
       <path d="M4 4h16" />
@@ -401,7 +418,7 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M15 9h.01" />
     </g>
   ),
-  search: () => (
+   search: () => (
     <g {...strokeProps()}>
       <circle cx="11" cy="11" r="7" />
       <path d="M21 21l-4.3-4.3" />
@@ -417,6 +434,29 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
     <g {...strokeProps()}>
       <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
       <path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />
+    </g>
+  ),
+  timer: () => (
+    <g {...strokeProps()}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </g>
+  ),
+  repeat: () => (
+    <g {...strokeProps()}>
+      <path d="M4 12a8 8 0 0 1 8 8v3" />
+      <path d="M12 16v1.5" />
+      <path d="M16 12h1.5" />
+    </g>
+  ),
+  stop: () => (
+    <g {...strokeProps()}>
+      <rect x="9" y="9" width="6" height="6" />
+    </g>
+  ),
+  play: () => (
+    <g {...strokeProps()}>
+      <polygon points="5 5 19 12 5 19" />
     </g>
   ),
   spoon: () => (
@@ -471,10 +511,17 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
     </g>
   ),
-  user: () => (
+   user: () => (
     <g {...strokeProps()}>
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21v-1a7 7 0 0 1 14 0v1" />
+    </g>
+  ),
+   wind: () => (
+    <g {...strokeProps()}>
+      <path d="M5 12h14" />
+      <path d="M5 16h10" />
+      <path d="M5 8h6" />
     </g>
   ),
   zzz: () => (
@@ -483,6 +530,7 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M14 4h6l-6 8h6" />
     </g>
   ),
+
 }
 
 export function Icon({ name, size = 20, filled = false, pixel = false, label, ...rest }: IconProps) {

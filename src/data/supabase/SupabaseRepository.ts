@@ -10,6 +10,12 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { ToolboxRepository } from '../repository'
 import type {
+  BreatheCheckin,
+  BreatheCheckinInput,
+  BreatheDoseLog,
+  BreatheDoseLogInput,
+  BreatheMed,
+  BreatheMedInput,
   ExportBundle,
   ImageRef,
   JarDay,
@@ -70,6 +76,36 @@ interface TimelineImageRow {
   created_at: string
 }
 
+interface BreatheMedRow {
+  id: string
+  user_id: string
+  name: string
+  med_type: string
+  reminder_hour: number | null
+  created_at: string
+}
+
+interface BreatheCheckinRow {
+  id: string
+  user_id: string
+  date: string
+  peak_flow: number | null
+  symptoms: number | null
+  sleep: number | null
+  activity: number | null
+  note: string | null
+  created_at: string
+}
+
+interface BreatheDoseLogRow {
+  id: string
+  user_id: string
+  med_id: string
+  date: string
+  time: string | null
+  created_at: string
+}
+
 /** Canonicalize Postgres timestamptz output (`...+00:00`) to ISO `.000Z`. */
 function iso(v: string | null): string | null {
   return v ? new Date(v).toISOString() : null
@@ -127,6 +163,64 @@ function extensionFor(mime: string): string {
       return '.webp'
     default:
       return ''
+  }
+}
+
+function breatheMedFromRow(r: BreatheMedRow): BreatheMed {
+  return {
+    id: r.id,
+    name: r.name,
+    medType: (r.med_type as BreatheMed['medType']) ?? 'controller',
+    reminderHour: r.reminder_hour,
+    createdAt: iso(r.created_at) ?? '',
+  }
+}
+
+function breatheMedToRow(m: BreatheMedInput, userId: string, existingId?: string) {
+  const row: Record<string, unknown> = {
+    user_id: userId,
+    name: m.name,
+    med_type: m.medType ?? 'controller',
+    reminder_hour: m.reminderHour ?? null,
+  }
+  if (existingId) row.id = existingId
+  return row
+}
+
+function breatheCheckinFromRow(r: BreatheCheckinRow): BreatheCheckin {
+  return {
+    id: r.id,
+    date: r.date,
+    peakFlow: r.peak_flow,
+    symptoms: r.symptoms,
+    sleep: r.sleep,
+    activity: r.activity,
+    note: r.note,
+    createdAt: iso(r.created_at) ?? '',
+  }
+}
+
+function breatheCheckinToRow(c: BreatheCheckinInput, userId: string, existingId?: string) {
+  const row: Record<string, unknown> = {
+    user_id: userId,
+    date: c.date,
+    peak_flow: c.peakFlow ?? null,
+    symptoms: c.symptoms ?? null,
+    sleep: c.sleep ?? null,
+    activity: c.activity ?? null,
+    note: c.note ?? null,
+  }
+  if (existingId) row.id = existingId
+  return row
+}
+
+function breatheDoseLogFromRow(r: BreatheDoseLogRow): BreatheDoseLog {
+  return {
+    id: r.id,
+    medId: r.med_id,
+    date: r.date,
+    time: r.time,
+    createdAt: iso(r.created_at) ?? '',
   }
 }
 
@@ -452,9 +546,156 @@ export class SupabaseRepository implements ToolboxRepository {
     if (error) throw error
   }
 
+  /* ---- Breathe ---------------------------------------------------- */
+
+  async listBreatheMeds(): Promise<BreatheMed[]> {
+    const uid = await this.requireUserId()
+    const { data, error } = await this.client
+      .from('steady_breathe_meds')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return (data ?? []).map(breatheMedFromRow)
+  }
+
+  async saveBreatheMed(m: BreatheMedInput, existingId?: string): Promise<BreatheMed> {
+    const uid = await this.requireUserId()
+    if (existingId) {
+      const { data: existing } = await this.client
+        .from('steady_breathe_meds')
+        .select('id')
+        .eq('id', existingId)
+        .eq('user_id', uid)
+        .maybeSingle()
+      if (existing) {
+        const row = breatheMedToRow(m, uid)
+        delete row.user_id
+        const { data, error } = await this.client
+          .from('steady_breathe_meds')
+          .update(row)
+          .eq('id', existingId)
+          .eq('user_id', uid)
+          .select()
+          .single()
+        if (error) throw error
+        return breatheMedFromRow(data)
+      }
+      const { data, error } = await this.client
+        .from('steady_breathe_meds')
+        .insert(breatheMedToRow(m, uid, existingId))
+        .select()
+        .single()
+      if (error) throw error
+      return breatheMedFromRow(data)
+    }
+    const { data, error } = await this.client
+      .from('steady_breathe_meds')
+      .insert(breatheMedToRow(m, uid))
+      .select()
+      .single()
+    if (error) throw error
+    return breatheMedFromRow(data)
+  }
+
+  async deleteBreatheMed(id: string): Promise<void> {
+    const uid = await this.requireUserId()
+    const { error } = await this.client.from('steady_breathe_meds').delete().eq('id', id).eq('user_id', uid)
+    if (error) throw error
+  }
+
+  async listBreatheCheckins(): Promise<BreatheCheckin[]> {
+    const uid = await this.requireUserId()
+    const { data, error } = await this.client
+      .from('steady_breathe_checkins')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return (data ?? []).map(breatheCheckinFromRow)
+  }
+
+  async saveBreatheCheckin(c: BreatheCheckinInput, existingId?: string): Promise<BreatheCheckin> {
+    const uid = await this.requireUserId()
+    if (existingId) {
+      const { data: existing } = await this.client
+        .from('steady_breathe_checkins')
+        .select('id')
+        .eq('id', existingId)
+        .eq('user_id', uid)
+        .maybeSingle()
+      if (existing) {
+        const row = breatheCheckinToRow(c, uid)
+        delete row.user_id
+        const { data, error } = await this.client
+          .from('steady_breathe_checkins')
+          .update(row)
+          .eq('id', existingId)
+          .eq('user_id', uid)
+          .select()
+          .single()
+        if (error) throw error
+        return breatheCheckinFromRow(data)
+      }
+      const { data, error } = await this.client
+        .from('steady_breathe_checkins')
+        .insert(breatheCheckinToRow(c, uid, existingId))
+        .select()
+        .single()
+      if (error) throw error
+      return breatheCheckinFromRow(data)
+    }
+    const { data, error } = await this.client
+      .from('steady_breathe_checkins')
+      .insert(breatheCheckinToRow(c, uid))
+      .select()
+      .single()
+    if (error) throw error
+    return breatheCheckinFromRow(data)
+  }
+
+  async deleteBreatheCheckin(id: string): Promise<void> {
+    const uid = await this.requireUserId()
+    const { error } = await this.client.from('steady_breathe_checkins').delete().eq('id', id).eq('user_id', uid)
+    if (error) throw error
+  }
+
+  async listBreatheDoseLogs(): Promise<BreatheDoseLog[]> {
+    const uid = await this.requireUserId()
+    const { data, error } = await this.client
+      .from('steady_breathe_dose_logs')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return (data ?? []).map(breatheDoseLogFromRow)
+  }
+
+  async addBreatheDoseLog(d: BreatheDoseLogInput): Promise<BreatheDoseLog> {
+    const uid = await this.requireUserId()
+    const { data, error } = await this.client
+      .from('steady_breathe_dose_logs')
+      .insert({
+        user_id: uid,
+        med_id: d.medId,
+        date: d.date,
+        time: d.time ?? null,
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return breatheDoseLogFromRow(data)
+  }
+
+  async deleteBreatheDoseLog(id: string): Promise<void> {
+    const uid = await this.requireUserId()
+    const { error } = await this.client.from('steady_breathe_dose_logs').delete().eq('id', id).eq('user_id', uid)
+    if (error) throw error
+  }
+
   async exportAll(): Promise<ExportBundle> {
     const uid = await this.requireUserId()
-    const [profile, pins, jarDays, jarLogs, entries, zones, images] = await Promise.all([
+    const [profile, pins, jarDays, jarLogs, entries, zones, images, meds, checkins, doseLogs] = await Promise.all([
       this.getProfile(),
       this.getPins(),
       this.client.from('steady_jar_days').select('*').eq('user_id', uid),
@@ -462,8 +703,11 @@ export class SupabaseRepository implements ToolboxRepository {
       this.client.from('steady_timeline_entries').select('*').eq('user_id', uid),
       this.client.from('steady_timeline_zones').select('*').eq('user_id', uid),
       this.client.from('steady_timeline_images').select('*').eq('user_id', uid),
+      this.client.from('steady_breathe_meds').select('*').eq('user_id', uid),
+      this.client.from('steady_breathe_checkins').select('*').eq('user_id', uid),
+      this.client.from('steady_breathe_dose_logs').select('*').eq('user_id', uid),
     ])
-    for (const r of [jarDays, jarLogs, entries, zones, images]) {
+    for (const r of [jarDays, jarLogs, entries, zones, images, meds, checkins, doseLogs]) {
       if (r.error) throw r.error
     }
     return {
@@ -480,6 +724,9 @@ export class SupabaseRepository implements ToolboxRepository {
         storagePath: r.storage_path,
         createdAt: iso(r.created_at) ?? '',
       })),
+      breatheMeds: (meds.data ?? []).map(breatheMedFromRow),
+      breatheCheckins: (checkins.data ?? []).map(breatheCheckinFromRow),
+      breatheDoseLogs: (doseLogs.data ?? []).map(breatheDoseLogFromRow),
     }
   }
 
@@ -493,6 +740,9 @@ export class SupabaseRepository implements ToolboxRepository {
       'steady_timeline_entries',
       'steady_timeline_zones',
       'steady_timeline_images',
+      'steady_breathe_meds',
+      'steady_breathe_checkins',
+      'steady_breathe_dose_logs',
     ]
     for (const t of tables) {
       const { error } = await this.client.from(t).delete().eq('user_id', uid)
