@@ -130,6 +130,11 @@ function ToolCard({
         <div className="min-w-0 flex-1">
           <h3 className="flex flex-wrap items-center gap-2 text-base font-extrabold text-ink">
             {tool.name}
+            {tool.beta && (
+              <Chip tone="breathe" className="pixel-chip">
+                Beta
+              </Chip>
+            )}
             {tool.comingSoon && (
               <Chip tone="neutral" className="pixel-chip">
                 Soon

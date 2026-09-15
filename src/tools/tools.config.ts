@@ -24,6 +24,8 @@ export interface ToolConfig {
   externalUrl?: string;
   pinnedByDefault?: boolean;
   comingSoon?: boolean;
+  /** Marks the tool as beta on the hub cards. */
+  beta?: boolean;
 }
 
 export const BLOOM_URL = 'https://exauerba.github.io/pink-mood-tracker/';
@@ -71,6 +73,7 @@ export const TOOLS: ToolConfig[] = [
       accent: 'breathe',
       route: '/tools/breathe',
       pinnedByDefault: true,
+      beta: true,
     },
     {
       id: 'more',
