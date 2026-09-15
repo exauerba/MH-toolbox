@@ -543,6 +543,7 @@ export default function Styleguide() {
                 <Chip tone="jar">jar</Chip>
                 <Chip tone="timeline">timeline</Chip>
                 <Chip tone="bloom">bloom</Chip>
+                <Chip tone="breathe">breathe</Chip>
                 <Chip tone="low">running low</Chip>
                 <Chip tone="overdrawn">overdrawn</Chip>
               </div>

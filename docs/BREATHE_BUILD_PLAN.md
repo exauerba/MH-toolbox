@@ -1,6 +1,27 @@
 # Plan: "Daily Breath" — Medication & Symptom Tracker for steady
 
+> **Status: ✅ COMPLETE** — shipped on `main` (WP0–WP8, e2e, RLS specs, guest→account migration). The spec below is the original plan and is kept as a historical record; the **Shipped vs spec** section documents where the implementation intentionally diverged (notably the Bloom visual overhaul).
+
 > **Scope:** A new in-app tool modeled on **bloom** (`pink-mood-tracker`) for scoring and visualization, scoped to the inhaler + asthma demo: dose recording, symptom check-ins, bloom-style analytics, plus a composite control score. Persists via steady's existing contract (Dexie when signed out, the shared Supabase project when signed in — never touching bloom's tables). Ships with a styleguide hero visual matching the cozy pixel retro vibe.
+
+---
+
+## Shipped vs spec (reconciliation)
+
+The feature shipped with a **Bloom visual overhaul** (airy pink, tactile journal, ritual-first check-in) that intentionally diverged from parts of this spec. Key deltas:
+
+| Aspect | Spec (below) | Shipped |
+|---|---|---|
+| Medication model | `kind: 'rescue' \| 'preventer'`, `dailyPrescription`, `puffsPerDose` | `medType: 'controller' \| 'reliever' \| 'other'`, `reminderHour` (opt-in, 0–23) |
+| Dose log | `medicationId` + `puffs` count | `medId` + `date` + optional `time` (no puff count) |
+| Check-in | 4 symptoms rated 1–7 + `nightWaking` | One per day: `peakFlow` (L/min), `symptoms`/`sleep`/`activity` rated 1–5 (nullable), `note` |
+| Control score | Composite: symptom burden (40) + night waking (20) + rescue puffs (40), thresholds 80/50 | `controlState()`: `100 − symptomAvg×14` + preventer-coverage bonus; labels `Controlled` / `Partly controlled` / `Uncontrolled` / `No data` |
+| Accent ramp | Sky/ice-blue (`breathe-*`) | Lilac/periwinkle ramp (Bloom overhaul) |
+| Charts | Chart.js trend + time-of-day + adherence bars + correlation heatmap | Chart.js v4 trend + time-of-day charts; DOM-based sections for the rest |
+| Tables | `steady_medications`, `steady_dose_logs`, `steady_symptom_checks` | `steady_breathe_meds`, `steady_breathe_dose_logs`, `steady_breathe_checkins` (RLS owner policies, unique `(user_id, date)` on check-ins) |
+| Migration | Preserve med ids as dose-log FK anchor | Implemented in `src/data/migrateLocal.ts` (meds → dose logs → check-ins, idempotent) |
+
+Verification: `typecheck`, `lint`, `test` (185 passing), `build` all green. `test:rls` and `e2e/breathe.spec.ts` are env-gated.
 
 ---
 

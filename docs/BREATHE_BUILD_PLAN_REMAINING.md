@@ -1,6 +1,6 @@
 # Breathe — Remaining Build Plan
 
-Status: **IN PROGRESS** (tracked in `docs/BREATHE_BUILD_PLAN.md`; this doc covers the remaining work found after the main feature shipped)
+Status: **✅ COMPLETE** — all items shipped in `bc92239` (migration + tests) and this session (styleguide chip, plan finalization).
 
 ## Context
 
@@ -38,5 +38,5 @@ npm run build
 
 ## Out of scope (deferred)
 
-- Finalizing `docs/BREATHE_BUILD_PLAN.md` (mark COMPLETE, reconcile stale spec vs Bloom visual overhaul).
-- Styleguide Chip tone row missing the `breathe` chip.
+- ~~Finalizing `docs/BREATHE_BUILD_PLAN.md`~~ — done: marked COMPLETE with a shipped-vs-spec reconciliation.
+- ~~Styleguide Chip tone row missing the `breathe` chip~~ — done: `<Chip tone="breathe">breathe</Chip>` added to the Chip `DemoCard`.
