@@ -109,6 +109,8 @@ suite('RLS security', () => {
 
   let entryAId = ''
   let entryBId = ''
+  let medAId = ''
+  let medBId = ''
 
   const specs: TableSpec[] = [
     {
@@ -172,6 +174,42 @@ suite('RLS security', () => {
         entryBId = eb?.[0]?.id ?? ''
         if (!entryAId || !entryBId) {
           throw new Error('could not create parent entries for images spec')
+        }
+      },
+    },
+    {
+      table: 'steady_breathe_meds',
+      makeRowA: (uid) => ({ user_id: uid, name: 'A med', med_type: 'controller' }),
+      makeRowB: (uid) => ({ user_id: uid, name: 'B med', med_type: 'reliever' }),
+      filterB: (rowB) => ({ user_id: rowB.user_id, name: rowB.name }),
+      mutate: { column: 'name', value: 'hacked' },
+    },
+    {
+      table: 'steady_breathe_checkins',
+      makeRowA: (uid) => ({ user_id: uid, date: '2026-09-16', peak_flow: 450 }),
+      makeRowB: (uid) => ({ user_id: uid, date: '2026-09-17', peak_flow: 420 }),
+      filterB: (rowB) => ({ user_id: rowB.user_id, date: rowB.date }),
+      mutate: { column: 'peak_flow', value: 999 },
+    },
+    {
+      table: 'steady_breathe_dose_logs',
+      makeRowA: () => ({ user_id: userA?.id, id: uuid(), med_id: medAId, date: '2026-09-16', time: '14:30' }),
+      makeRowB: () => ({ user_id: userB?.id, id: uuid(), med_id: medBId, date: '2026-09-16', time: '15:00' }),
+      filterB: (rowB) => ({ id: rowB.id }),
+      mutate: { column: 'time', value: '23:59' },
+      before: async () => {
+        const { data: ma } = await clientA
+          .from('steady_breathe_meds')
+          .insert({ user_id: userA?.id, name: 'A dose med', med_type: 'reliever' })
+          .select()
+        const { data: mb } = await clientB
+          .from('steady_breathe_meds')
+          .insert({ user_id: userB?.id, name: 'B dose med', med_type: 'reliever' })
+          .select()
+        medAId = ma?.[0]?.id ?? ''
+        medBId = mb?.[0]?.id ?? ''
+        if (!medAId || !medBId) {
+          throw new Error('could not create parent meds for dose logs spec')
         }
       },
     },

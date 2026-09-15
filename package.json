@@ -10,7 +10,7 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:rls": "vitest run tests/rls-security.test.ts",
+    "test:rls": "vitest run tests/rls-security.test.ts tests/repository-supabase.test.ts",
     "test:watch": "vitest",
     "e2e": "playwright test"
   },
