@@ -467,6 +467,7 @@ export function BreatheScreen() {
   const handleLogDose = async () => {
     if (!selectedMedId) return
 
+    setErrorDoseLogs(null)
     try {
       const date = todayForResetHour(0)
       const time = doseTime || null
@@ -482,14 +483,17 @@ export function BreatheScreen() {
       const doseLogsData = await repo.listBreatheDoseLogs()
       const todaysDoseLogs = doseLogsData.filter(log => log.date === todayStr)
       setDoseLogs(todaysDoseLogs)
-      setLoadingDoseLogs(false)
       setDoseTime('')
     } catch (err) {
       console.error('Failed to log dose:', err)
+      setErrorDoseLogs('Failed to log dose')
+    } finally {
+      setLoadingDoseLogs(false)
     }
   }
 
   const handleSaveCheckin = async () => {
+    setErrorCheckins(null)
     try {
       const checkinData: BreatheCheckinInput = {
         date: checkinDate,
@@ -510,7 +514,6 @@ export function BreatheScreen() {
       setLoadingCheckins(true)
       const updatedCheckins = await repo.listBreatheCheckins()
       setCheckins(updatedCheckins)
-      setLoadingCheckins(false)
 
       setCheckinDate(todayForResetHour(0))
       setPeakFlow(null)
@@ -519,6 +522,9 @@ export function BreatheScreen() {
       setNote('')
     } catch (err) {
       console.error('Failed to save check-in:', err)
+      setErrorCheckins('Failed to save check-in')
+    } finally {
+      setLoadingCheckins(false)
     }
   }
 
@@ -529,6 +535,7 @@ export function BreatheScreen() {
   const handleSaveMed = async () => {
     if (!newMedName.trim()) return
 
+    setErrorMeds(null)
     try {
       await repo.saveBreatheMed({
         name: newMedName.trim(),
@@ -539,16 +546,19 @@ export function BreatheScreen() {
       setLoadingMeds(true)
       const updatedMeds = await repo.listBreatheMeds()
       setMeds(updatedMeds)
-      setLoadingMeds(false)
       setNewMedName('')
       setNewMedType('controller')
       setNewMedReminder('')
     } catch (err) {
       console.error('Failed to save medication:', err)
+      setErrorMeds('Failed to save medication')
+    } finally {
+      setLoadingMeds(false)
     }
   }
 
   const handleDeleteDoseLog = async (id: string) => {
+    setErrorDoseLogs(null)
     try {
       await repo.deleteBreatheDoseLog(id)
       setLoadingDoseLogs(true)
@@ -556,37 +566,45 @@ export function BreatheScreen() {
       const doseLogsData = await repo.listBreatheDoseLogs()
       const todaysDoseLogs = doseLogsData.filter(log => log.date === todayStr)
       setDoseLogs(todaysDoseLogs)
-      setLoadingDoseLogs(false)
     } catch (err) {
       console.error('Failed to delete dose log:', err)
+      setErrorDoseLogs('Failed to delete dose log')
+    } finally {
+      setLoadingDoseLogs(false)
     }
   }
 
   const handleDeleteMed = async (id: string) => {
+    setErrorMeds(null)
     try {
       await repo.deleteBreatheMed(id)
       setDeleteMedId(null)
       setLoadingMeds(true)
       const updatedMeds = await repo.listBreatheMeds()
       setMeds(updatedMeds)
-      setLoadingMeds(false)
     } catch (err) {
       console.error('Failed to delete medication:', err)
+      setErrorMeds('Failed to delete medication')
       setDeleteMedId(null)
+    } finally {
+      setLoadingMeds(false)
     }
   }
 
   const handleDeleteCheckin = async (id: string) => {
+    setErrorCheckins(null)
     try {
       await repo.deleteBreatheCheckin(id)
       setDeleteCheckinId(null)
       setLoadingCheckins(true)
       const updatedCheckins = await repo.listBreatheCheckins()
       setCheckins(updatedCheckins)
-      setLoadingCheckins(false)
     } catch (err) {
       console.error('Failed to delete check-in:', err)
+      setErrorCheckins('Failed to delete check-in')
       setDeleteCheckinId(null)
+    } finally {
+      setLoadingCheckins(false)
     }
   }
 
