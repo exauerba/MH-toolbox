@@ -20,6 +20,9 @@ export interface MigrationResult {
     timelineEntries: number
     timelineZones: number
     timelineImages: number
+    breatheMeds: number
+    breatheCheckins: number
+    breatheDoseLogs: number
   }
 }
 
@@ -40,6 +43,9 @@ const zeroCounts = (): MigrationResult['counts'] => ({
   timelineEntries: 0,
   timelineZones: 0,
   timelineImages: 0,
+  breatheMeds: 0,
+  breatheCheckins: 0,
+  breatheDoseLogs: 0,
 })
 
 function hasLocalData(bundle: ExportBundle): boolean {
@@ -50,7 +56,10 @@ function hasLocalData(bundle: ExportBundle): boolean {
     bundle.jarLogs.length > 0 ||
     bundle.timelineEntries.length > 0 ||
     bundle.timelineZones.length > 0 ||
-    bundle.timelineImages.length > 0
+    bundle.timelineImages.length > 0 ||
+    bundle.breatheMeds.length > 0 ||
+    bundle.breatheCheckins.length > 0 ||
+    bundle.breatheDoseLogs.length > 0
   )
 }
 
@@ -126,6 +135,35 @@ export async function migrateLocalToSupabase(
     } catch {
       // Blob unavailable — skip this image rather than failing the migration.
     }
+  }
+
+  // Breathe meds first — their ids anchor the dose-log FK below.
+  for (const med of bundle.breatheMeds) {
+    await remote.saveBreatheMed(
+      { name: med.name, medType: med.medType, reminderHour: med.reminderHour },
+      med.id,
+    )
+    counts.breatheMeds++
+  }
+
+  for (const log of bundle.breatheDoseLogs) {
+    await remote.addBreatheDoseLog({ medId: log.medId, date: log.date, time: log.time })
+    counts.breatheDoseLogs++
+  }
+
+  for (const checkin of bundle.breatheCheckins) {
+    await remote.saveBreatheCheckin(
+      {
+        date: checkin.date,
+        peakFlow: checkin.peakFlow,
+        symptoms: checkin.symptoms,
+        sleep: checkin.sleep,
+        activity: checkin.activity,
+        note: checkin.note,
+      },
+      checkin.id,
+    )
+    counts.breatheCheckins++
   }
 
   const current = (await remote.getProfile()) ?? DEFAULT_PROFILE

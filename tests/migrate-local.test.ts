@@ -10,6 +10,9 @@ const zeroCounts = {
   timelineEntries: 0,
   timelineZones: 0,
   timelineImages: 0,
+  breatheMeds: 0,
+  breatheCheckins: 0,
+  breatheDoseLogs: 0,
 }
 
 function mockFetchResolves(): void {
@@ -54,6 +57,23 @@ describe('migrateLocalToSupabase', () => {
     })
     await local.uploadImage(new File(['x'], 'photo.png', { type: 'image/png' }), entry.id)
 
+    const med = await local.saveBreatheMed(
+      { name: 'Salbutamol', medType: 'reliever', reminderHour: 8 },
+      '550e8400-e29b-41d4-a716-446655440002',
+    )
+    await local.addBreatheDoseLog({ medId: med.id, date: '2026-08-16', time: '14:30' })
+    await local.saveBreatheCheckin(
+      {
+        date: '2026-08-16',
+        peakFlow: 480,
+        symptoms: 2,
+        sleep: 4,
+        activity: 3,
+        note: 'good day',
+      },
+      '550e8400-e29b-41d4-a716-446655440003',
+    )
+
     mockFetchResolves()
 
     const result = await migrateLocalToSupabase(local, remote)
@@ -81,6 +101,31 @@ describe('migrateLocalToSupabase', () => {
     expect(remoteZones).toHaveLength(1)
     expect(remoteZones[0].id).toBe(zone.id)
 
+    const remoteMeds = await remote.listBreatheMeds()
+    expect(remoteMeds).toHaveLength(1)
+    expect(remoteMeds[0]).toMatchObject({
+      id: med.id,
+      name: 'Salbutamol',
+      medType: 'reliever',
+      reminderHour: 8,
+    })
+
+    const remoteDoseLogs = await remote.listBreatheDoseLogs()
+    expect(remoteDoseLogs).toHaveLength(1)
+    expect(remoteDoseLogs[0]).toMatchObject({ medId: med.id, date: '2026-08-16', time: '14:30' })
+
+    const remoteCheckins = await remote.listBreatheCheckins()
+    expect(remoteCheckins).toHaveLength(1)
+    expect(remoteCheckins[0]).toMatchObject({
+      id: '550e8400-e29b-41d4-a716-446655440003',
+      date: '2026-08-16',
+      peakFlow: 480,
+      symptoms: 2,
+      sleep: 4,
+      activity: 3,
+      note: 'good day',
+    })
+
     expect(result.counts).toEqual({
       profiles: 1,
       pins: 2,
@@ -89,6 +134,9 @@ describe('migrateLocalToSupabase', () => {
       timelineEntries: 1,
       timelineZones: 1,
       timelineImages: 1,
+      breatheMeds: 1,
+      breatheCheckins: 1,
+      breatheDoseLogs: 1,
     })
   })
 
@@ -115,6 +163,21 @@ describe('migrateLocalToSupabase', () => {
     const result = await migrateLocalToSupabase(local, remote)
 
     expect(result).toEqual({ migrated: false, reason: 'no-local-data', counts: zeroCounts })
+  })
+
+  it('migrates breathe-only local data', async () => {
+    const local = new FakeRepository()
+    const remote = new FakeRepository()
+
+    const med = await local.saveBreatheMed({ name: 'Beclometasone', medType: 'controller' })
+
+    const result = await migrateLocalToSupabase(local, remote)
+
+    expect(result.migrated).toBe(true)
+    expect(result.counts).toEqual({ ...zeroCounts, breatheMeds: 1 })
+    const remoteMeds = await remote.listBreatheMeds()
+    expect(remoteMeds).toHaveLength(1)
+    expect(remoteMeds[0].id).toBe(med.id)
   })
 
   it('is idempotent on re-run', async () => {
