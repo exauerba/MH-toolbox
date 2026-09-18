@@ -24,7 +24,7 @@ import type {
   BreatheDoseLog,
   BreatheMed,
 } from '../../data/types'
-import { todayForResetHour } from '../../shared/day'
+import { fromISODate, todayForResetHour } from '../../shared/day'
 
 interface CheckinRitualProps {
   checkins: BreatheCheckin[]
@@ -360,6 +360,9 @@ export function BreatheScreen() {
   // Form states for Log Dose tab
   const [selectedMedId, setSelectedMedId] = useState<string | null>(null)
   const [doseTime, setDoseTime] = useState<string>('')
+  const [doseDate, setDoseDate] = useState<string>(todayForResetHour(0))
+  const [doseTriggers, setDoseTriggers] = useState<string[]>([])
+  const [editingDoseLog, setEditingDoseLog] = useState<BreatheDoseLog | null>(null)
 
   // Form states for Check-in tab
   const [checkinDate, setCheckinDate] = useState<string>('')
@@ -420,11 +423,9 @@ export function BreatheScreen() {
 
       try {
         setLoadingDoseLogs(true)
-        const todayStr = todayForResetHour(0)
         const doseLogsData = await repo.listBreatheDoseLogs()
-        const todaysDoseLogs = doseLogsData.filter(log => log.date === todayStr)
         if (!cancelled) {
-          setDoseLogs(todaysDoseLogs)
+          setDoseLogs(doseLogsData)
           setLoadingDoseLogs(false)
         }
       } catch {
@@ -464,26 +465,41 @@ export function BreatheScreen() {
     setDoseTime(time)
   }
 
+  const handleEditDose = (log: BreatheDoseLog) => {
+    setEditingDoseLog(log)
+    setSelectedMedId(log.medId)
+    setDoseDate(log.date)
+    setDoseTime(log.time ?? '')
+    setDoseTriggers(log.trigger)
+  }
+
+  const handleAddNewDose = () => {
+    setEditingDoseLog(null)
+    setDoseTime('')
+    setDoseTriggers([])
+  }
+
   const handleLogDose = async () => {
     if (!selectedMedId) return
 
     setErrorDoseLogs(null)
     try {
-      const date = todayForResetHour(0)
-      const time = doseTime || null
-
-      await repo.addBreatheDoseLog({
-        medId: selectedMedId,
-        date,
-        time,
-      })
+      await repo.addBreatheDoseLog(
+        {
+          medId: selectedMedId,
+          date: doseDate,
+          time: doseTime || null,
+          trigger: doseTriggers,
+        },
+        editingDoseLog?.id,
+      )
 
       setLoadingDoseLogs(true)
-      const todayStr = todayForResetHour(0)
       const doseLogsData = await repo.listBreatheDoseLogs()
-      const todaysDoseLogs = doseLogsData.filter(log => log.date === todayStr)
-      setDoseLogs(todaysDoseLogs)
+      setDoseLogs(doseLogsData)
+      setEditingDoseLog(null)
       setDoseTime('')
+      setDoseTriggers([])
     } catch (err) {
       console.error('Failed to log dose:', err)
       setErrorDoseLogs('Failed to log dose')
@@ -562,10 +578,8 @@ export function BreatheScreen() {
     try {
       await repo.deleteBreatheDoseLog(id)
       setLoadingDoseLogs(true)
-      const todayStr = todayForResetHour(0)
       const doseLogsData = await repo.listBreatheDoseLogs()
-      const todaysDoseLogs = doseLogsData.filter(log => log.date === todayStr)
-      setDoseLogs(todaysDoseLogs)
+      setDoseLogs(doseLogsData)
     } catch (err) {
       console.error('Failed to delete dose log:', err)
       setErrorDoseLogs('Failed to delete dose log')
@@ -618,10 +632,9 @@ export function BreatheScreen() {
         repo.listBreatheCheckins(),
         repo.listBreatheDoseLogs(),
       ])
-      const todayStr = todayForResetHour(0)
       setMeds(m)
       setCheckins(c)
-      setDoseLogs(d.filter(log => log.date === todayStr))
+      setDoseLogs(d)
     } catch (err) {
       console.error('Failed to refresh breathe data:', err)
     } finally {
@@ -689,6 +702,21 @@ export function BreatheScreen() {
     () => medDoseCountsByDay(meds, doseLogs, dates.slice(-7)),
     [meds, doseLogs, dates],
   )
+  const doseLogsForDay = useMemo(
+    () => doseLogs.filter((log) => log.date === doseDate),
+    [doseLogs, doseDate],
+  )
+  // Heading label for the day's list — "Today" beats a raw ISO string, and a
+  // past day gets its weekday so the list has context at a glance.
+  const doseDateLabel = !doseDate
+    ? 'No day selected'
+    : doseDate === todayForResetHour(0)
+      ? 'Today'
+      : fromISODate(doseDate).toLocaleDateString(undefined, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        })
 
   const rhoTone = (rho: number): string => {
     const strength = spearmanStrength(rho)
@@ -731,7 +759,7 @@ export function BreatheScreen() {
 
           {tab === 'log' && (
             <div className="animate-pop-in space-y-8">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <div className="space-y-2">
                   <label htmlFor="breathe-dose-medication" className="block text-sm font-medium text-ink-soft">
                     Medication
@@ -760,6 +788,19 @@ export function BreatheScreen() {
                   )}
                 </div>
                 <div className="space-y-2">
+                  <label htmlFor="breathe-dose-date" className="block text-sm font-medium text-ink-soft">
+                    Date
+                  </label>
+                  <input
+                    id="breathe-dose-date"
+                    type="date"
+                    max={todayForResetHour(0)}
+                    value={doseDate}
+                    onChange={(e) => setDoseDate(e.target.value)}
+                    className="h-11 w-full rounded-2xl border-none bg-airy-pink/60 px-4 text-ink transition-colors focus:bg-white focus:ring-2 focus:ring-airy-pink-accent"
+                  />
+                </div>
+                <div className="space-y-2">
                   <label htmlFor="breathe-dose-time" className="block text-sm font-medium text-ink-soft">
                     Time
                   </label>
@@ -773,34 +814,87 @@ export function BreatheScreen() {
                 </div>
               </div>
 
-              <Button
-                onClick={handleLogDose}
-                className="h-14 w-full rounded-full bg-airy-pink-accent text-ink shadow-tactile-mid transition-all hover:scale-[1.02] hover:bg-airy-pink-accent/90 active:scale-95"
-              >
-                Log Dose
-              </Button>
+              <div className="space-y-3">
+                <span className="block text-xs font-bold uppercase tracking-wider text-ink-soft">
+                  What triggered it? (optional)
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {activityPresets.map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      aria-pressed={doseTriggers.includes(a)}
+                      onClick={() =>
+                        setDoseTriggers(
+                          doseTriggers.includes(a)
+                            ? doseTriggers.filter((x) => x !== a)
+                            : [...doseTriggers, a],
+                        )
+                      }
+                      className={cx(
+                        'px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 pressable',
+                        doseTriggers.includes(a)
+                          ? 'bg-white text-ink shadow-tactile-mid scale-105'
+                          : 'bg-white/40 text-ink-soft hover:bg-white/60',
+                      )}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  onClick={handleLogDose}
+                  className="h-14 flex-1 rounded-full bg-airy-pink-accent text-ink shadow-tactile-mid transition-all hover:scale-[1.02] hover:bg-airy-pink-accent/90 active:scale-95"
+                >
+                  {editingDoseLog ? 'Update Dose' : 'Log Dose'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleAddNewDose}
+                  className="h-14 rounded-full px-6"
+                >
+                  {editingDoseLog ? 'Cancel' : 'Add new'}
+                </Button>
+              </div>
 
               <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft">Today's Dose Logs</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                  Dose Logs · {doseDateLabel}
+                </h3>
                 {loadingDoseLogs ? (
                   <div className="h-24 w-full animate-pulse rounded-2xl bg-airy-pink/40" />
                 ) : errorDoseLogs ? (
                   <p className="text-sm text-state-flare-ink">{errorDoseLogs}</p>
-                ) : doseLogs.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-ink-soft">No dose logs yet today. Log a dose to get started.</p>
+                ) : doseLogsForDay.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-ink-soft">No dose logs for this day. Log a dose to get started.</p>
                 ) : (
                   <ul className="space-y-2">
-                    {doseLogs.map((log) => (
-                      <li key={log.id} className="flex items-center justify-between rounded-2xl bg-airy-surface/60 p-4 shadow-tactile-low">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-airy-pink-accent/30 text-ink-soft">
-                            <Icon name="clock" size={16} />
+                    {doseLogsForDay.map((log) => {
+                      const med = meds.find((m) => m.id === log.medId)
+                      return (
+                        <li key={log.id} className="flex items-center justify-between rounded-2xl bg-airy-surface/60 p-4 shadow-tactile-low">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-airy-pink-accent/30 text-ink-soft">
+                              <Icon name="clock" size={16} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium text-ink">{log.time ?? 'No time'}</p>
+                              <p className="truncate text-xs text-ink-soft">
+                                {med?.name ?? 'Unknown med'}
+                                {log.trigger.length > 0 ? ` · ${log.trigger.join(', ')}` : ''}
+                              </p>
+                            </div>
                           </div>
-                          <p className="font-medium text-ink">{log.time ?? 'No time'}</p>
-                        </div>
-                        <IconButton icon="trash" label="Delete dose log" variant="ghost" onClick={() => handleDeleteDoseLog(log.id)} />
-                      </li>
-                    ))}
+                          <div className="flex items-center gap-1">
+                            <IconButton icon="edit" label="Edit dose log" variant="ghost" onClick={() => handleEditDose(log)} />
+                            <IconButton icon="trash" label="Delete dose log" variant="ghost" onClick={() => handleDeleteDoseLog(log.id)} />
+                          </div>
+                        </li>
+                      )
+                    })}
                   </ul>
                 )}
               </div>

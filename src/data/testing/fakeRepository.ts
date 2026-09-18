@@ -307,15 +307,43 @@ export class FakeRepository implements ToolboxRepository {
   }
 
   async listBreatheDoseLogs(): Promise<BreatheDoseLog[]> {
-    return [...this.breatheDoseLogs.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    // Backfill trigger for rows written before the field existed.
+    return [...this.breatheDoseLogs.values()]
+      .map((l) => ({ ...l, trigger: l.trigger ?? [] }))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
 
-  async addBreatheDoseLog(d: BreatheDoseLogInput): Promise<BreatheDoseLog> {
+  async addBreatheDoseLog(d: BreatheDoseLogInput, existingId?: string): Promise<BreatheDoseLog> {
+    if (existingId) {
+      const existing = this.breatheDoseLogs.get(existingId)
+      if (existing) {
+        const updated: BreatheDoseLog = {
+          ...existing,
+          medId: d.medId,
+          date: d.date,
+          time: d.time ?? null,
+          trigger: d.trigger ?? [],
+        }
+        this.breatheDoseLogs.set(existingId, updated)
+        return updated
+      }
+      const log: BreatheDoseLog = {
+        id: existingId,
+        medId: d.medId,
+        date: d.date,
+        time: d.time ?? null,
+        trigger: d.trigger ?? [],
+        createdAt: new Date().toISOString(),
+      }
+      this.breatheDoseLogs.set(log.id, log)
+      return log
+    }
     const log: BreatheDoseLog = {
       id: crypto.randomUUID(),
       medId: d.medId,
       date: d.date,
       time: d.time ?? null,
+      trigger: d.trigger ?? [],
       createdAt: new Date().toISOString(),
     }
     this.breatheDoseLogs.set(log.id, log)

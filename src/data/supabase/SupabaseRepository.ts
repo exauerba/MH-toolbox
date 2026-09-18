@@ -103,6 +103,7 @@ interface BreatheDoseLogRow {
   med_id: string
   date: string
   time: string | null
+  trigger: string[] | null
   created_at: string
 }
 
@@ -220,8 +221,21 @@ function breatheDoseLogFromRow(r: BreatheDoseLogRow): BreatheDoseLog {
     medId: r.med_id,
     date: r.date,
     time: r.time,
+    trigger: r.trigger ?? [],
     createdAt: iso(r.created_at) ?? '',
   }
+}
+
+function breatheDoseLogToRow(d: BreatheDoseLogInput, userId: string, existingId?: string) {
+  const row: Record<string, unknown> = {
+    user_id: userId,
+    med_id: d.medId,
+    date: d.date,
+    time: d.time ?? null,
+    trigger: d.trigger ?? [],
+  }
+  if (existingId) row.id = existingId
+  return row
 }
 
 export class SupabaseRepository implements ToolboxRepository {
@@ -671,16 +685,39 @@ export class SupabaseRepository implements ToolboxRepository {
     return (data ?? []).map(breatheDoseLogFromRow)
   }
 
-  async addBreatheDoseLog(d: BreatheDoseLogInput): Promise<BreatheDoseLog> {
+  async addBreatheDoseLog(d: BreatheDoseLogInput, existingId?: string): Promise<BreatheDoseLog> {
     const uid = await this.requireUserId()
+    if (existingId) {
+      const { data: existing } = await this.client
+        .from('steady_breathe_dose_logs')
+        .select('id')
+        .eq('id', existingId)
+        .eq('user_id', uid)
+        .maybeSingle()
+      if (existing) {
+        const row = breatheDoseLogToRow(d, uid)
+        delete row.user_id
+        const { data, error } = await this.client
+          .from('steady_breathe_dose_logs')
+          .update(row)
+          .eq('id', existingId)
+          .eq('user_id', uid)
+          .select()
+          .single()
+        if (error) throw error
+        return breatheDoseLogFromRow(data)
+      }
+      const { data, error } = await this.client
+        .from('steady_breathe_dose_logs')
+        .insert(breatheDoseLogToRow(d, uid, existingId))
+        .select()
+        .single()
+      if (error) throw error
+      return breatheDoseLogFromRow(data)
+    }
     const { data, error } = await this.client
       .from('steady_breathe_dose_logs')
-      .insert({
-        user_id: uid,
-        med_id: d.medId,
-        date: d.date,
-        time: d.time ?? null,
-      })
+      .insert(breatheDoseLogToRow(d, uid))
       .select()
       .single()
     if (error) throw error

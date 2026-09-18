@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { RepositoryProvider } from '../../data/RepositoryProvider'
 import { FakeRepository } from '../../data/testing/fakeRepository'
+import { todayForResetHour, toISODate } from '../../shared/day'
 import { BreatheScreen } from './BreatheScreen'
 
 function renderBreatheScreen(fake: FakeRepository) {
@@ -99,6 +100,61 @@ describe('BreatheScreen', () => {
 
     await waitFor(() => {
       expect(timeInput).toHaveValue('')
+    })
+  })
+
+  it('logs a dose for a chosen day with triggers and lists it under that day', async () => {
+    const fake = new FakeRepository()
+    const med = await fake.saveBreatheMed({ name: 'Ventolin', medType: 'reliever' })
+    const yesterday = toISODate(new Date(Date.now() - 24 * 60 * 60 * 1000))
+
+    renderBreatheScreen(fake)
+
+    const medicationSelect = await screen.findByRole('combobox')
+    await userEvent.selectOptions(medicationSelect, med.id)
+
+    fireEvent.change(screen.getByLabelText('Date'), { target: { value: yesterday } })
+    expect(await screen.findByText(/No dose logs for this day/i)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pollen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Log Dose' }))
+
+    await waitFor(async () => {
+      const logs = await fake.listBreatheDoseLogs()
+      expect(logs).toHaveLength(1)
+      expect(logs[0].date).toBe(yesterday)
+      expect(logs[0].trigger).toEqual(['Pollen'])
+    })
+
+    expect(await screen.findByText(/· Pollen/)).toBeInTheDocument()
+  })
+
+  it('edits an existing dose log instead of adding a new one', async () => {
+    const fake = new FakeRepository()
+    const med = await fake.saveBreatheMed({ name: 'Ventolin', medType: 'reliever' })
+    await fake.addBreatheDoseLog({
+      medId: med.id,
+      date: todayForResetHour(0),
+      time: '08:00',
+      trigger: ['Exercise'],
+    })
+
+    renderBreatheScreen(fake)
+
+    expect(await screen.findByText(/· Exercise/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Edit dose log' }))
+
+    expect(screen.getByRole('button', { name: 'Update Dose' })).toBeInTheDocument()
+    expect(screen.getByLabelText(/Time/i)).toHaveValue('08:00')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Exercise' })) // deselect
+    await userEvent.click(screen.getByRole('button', { name: 'Stress' })) // select
+    await userEvent.click(screen.getByRole('button', { name: 'Update Dose' }))
+
+    await waitFor(async () => {
+      const logs = await fake.listBreatheDoseLogs()
+      expect(logs).toHaveLength(1)
+      expect(logs[0].trigger).toEqual(['Stress'])
     })
   })
 })

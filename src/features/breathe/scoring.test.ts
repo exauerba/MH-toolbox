@@ -38,6 +38,7 @@ function dose(medId: string, date: string): BreatheDoseLog {
     medId,
     date,
     time: '08:00',
+    trigger: [],
     createdAt: '2026-09-01T08:00:00.000Z',
   }
 }

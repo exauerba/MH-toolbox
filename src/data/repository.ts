@@ -77,6 +77,7 @@ export interface ToolboxRepository {
   deleteBreatheCheckin(id: string): Promise<void>
 
   listBreatheDoseLogs(): Promise<BreatheDoseLog[]>
-  addBreatheDoseLog(d: BreatheDoseLogInput): Promise<BreatheDoseLog>
+  /** Upsert: `existingId` updates an existing log, absence creates one. */
+  addBreatheDoseLog(d: BreatheDoseLogInput, existingId?: string): Promise<BreatheDoseLog>
   deleteBreatheDoseLog(id: string): Promise<void>
 }

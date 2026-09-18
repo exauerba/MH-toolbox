@@ -368,6 +368,37 @@ export function runRepositorySuite(
       expect(left[0].id).toBe(d2.id)
     })
 
+    it('stores dose-log triggers and upserts by id', async () => {
+      const med = await repo.saveBreatheMed({ name: 'Reliever' })
+      const created = await repo.addBreatheDoseLog({
+        medId: med.id,
+        date: '2026-08-16',
+        time: '08:00',
+        trigger: ['Exercise', 'Pollen'],
+      })
+      expect(created.trigger).toEqual(['Exercise', 'Pollen'])
+
+      // Omitting the trigger defaults to an empty list.
+      const plain = await repo.addBreatheDoseLog({ medId: med.id, date: '2026-08-16' })
+      expect(plain.trigger).toEqual([])
+
+      const listed = await repo.listBreatheDoseLogs()
+      expect(listed.find((l) => l.id === created.id)!.trigger).toEqual(['Exercise', 'Pollen'])
+      expect(listed.find((l) => l.id === plain.id)!.trigger).toEqual([])
+
+      // Upsert: same id, createdAt preserved, fields replaced.
+      const updated = await repo.addBreatheDoseLog(
+        { medId: med.id, date: '2026-08-17', time: null, trigger: ['Stress'] },
+        created.id,
+      )
+      expect(updated.id).toBe(created.id)
+      expect(updated.date).toBe('2026-08-17')
+      expect(updated.time).toBeNull()
+      expect(updated.trigger).toEqual(['Stress'])
+      expect(updated.createdAt).toBe(created.createdAt)
+      expect(await repo.listBreatheDoseLogs()).toHaveLength(2)
+    })
+
     it('exports everything', async () => {
       await repo.setProfile({
         theme: 'system',

@@ -147,7 +147,10 @@ export async function migrateLocalToSupabase(
   }
 
   for (const log of bundle.breatheDoseLogs) {
-    await remote.addBreatheDoseLog({ medId: log.medId, date: log.date, time: log.time })
+    await remote.addBreatheDoseLog(
+      { medId: log.medId, date: log.date, time: log.time, trigger: log.trigger },
+      log.id,
+    )
     counts.breatheDoseLogs++
   }
 

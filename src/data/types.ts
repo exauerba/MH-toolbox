@@ -175,6 +175,8 @@ export interface BreatheDoseLog {
   date: string
   /** Optional time 'HH:MM'. */
   time: string | null
+  /** Optional irritants/triggers that preceded this dose. */
+  trigger: string[]
   createdAt: string
 }
 
@@ -182,6 +184,7 @@ export interface BreatheDoseLogInput {
   medId: string
   date: string
   time?: string | null
+  trigger?: string[]
 }
 
 /**
