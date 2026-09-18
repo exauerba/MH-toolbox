@@ -50,14 +50,14 @@ export function ExportCard() {
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg bg-surface-muted px-3 py-2">
+    <div className="flex flex-col gap-3 rounded-lg bg-surface-muted px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
         <p className="font-bold text-ink">Export your data</p>
         <p className="text-sm text-ink-soft">
           Export everything as a file you can keep or move.
         </p>
       </div>
-      <div className="flex shrink-0 gap-2">
+      <div className="flex gap-2 sm:shrink-0">
         <Button
           variant="primary"
           loading={exporting === 'json'}

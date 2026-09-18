@@ -52,6 +52,7 @@ export function AboutScreen() {
           <SegmentedControl
             label="Region"
             pixel
+            wrap
             value={region.id}
             onChange={setRegionId}
             options={CRISIS_REGIONS.map((r) => ({

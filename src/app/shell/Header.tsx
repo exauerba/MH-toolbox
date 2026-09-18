@@ -36,7 +36,7 @@ export function Header() {
       )}
     >
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-        <div className="flex h-16 items-center justify-between gap-2">
+        <div className="flex h-16 items-center justify-between gap-1 sm:gap-2">
           <p className="flex items-center gap-2.5">
             <Tile icon="leaf" />
             <span className="font-display text-xl font-bold text-ink">steady</span>
@@ -50,7 +50,9 @@ export function Header() {
                 end={item.end}
                 className={({ isActive }) =>
                   cx(
-                    'pressable flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-bold sm:px-4',
+                    // Icon-only below `sm`, so padding is the touch target — it
+                    // tightens at 320px or the theme toggle is pushed off screen.
+                    'pressable flex min-h-11 items-center gap-2 rounded-full px-2 text-sm font-bold sm:px-4',
                     isActive
                       ? 'bg-surface-strong text-ink'
                       : 'text-ink-soft hover:bg-surface-muted hover:text-ink',

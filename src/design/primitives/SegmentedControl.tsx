@@ -18,6 +18,13 @@ export interface SegmentedControlProps {
   disabled?: boolean
   /** Cozy 16-bit mode — render option icons as pixel sprites. */
   pixel?: boolean
+  /**
+   * Reflow into a two-column grid below `sm`, returning to a single row from
+   * `sm` up. Use it when four or more options (or long labels) would otherwise
+   * overflow a phone-width card — a one-row control cannot shrink past its
+   * longest word, so it would spill out of the card and clip.
+   */
+  wrap?: boolean
   className?: string
 }
 
@@ -34,6 +41,7 @@ export function SegmentedControl({
   label,
   disabled,
   pixel,
+  wrap,
   className,
 }: SegmentedControlProps) {
   const groupId = useId()
@@ -44,10 +52,15 @@ export function SegmentedControl({
       role="radiogroup"
       aria-label={label}
       className={cx(
-        'inline-flex w-full bg-surface-muted',
+        'w-full bg-surface-muted',
+        wrap
+          ? 'grid grid-cols-2 gap-1 [&>label:last-child:nth-child(odd)]:col-span-2 sm:flex sm:gap-0'
+          : 'inline-flex',
         pixel
           ? 'rounded-none border-2 border-line-strong p-0.5'
-          : 'rounded-full border border-line p-1',
+          : wrap
+            ? 'rounded-3xl border border-line p-1 sm:rounded-full'
+            : 'rounded-full border border-line p-1',
         className,
       )}
     >
@@ -84,6 +97,10 @@ export function SegmentedControl({
                 pixel={pixel}
                 aria-hidden={true}
                 filled={selected && option.icon === 'star'}
+                // In the wrapped grid the labels alone carry the meaning, and
+                // the icon would push long labels ("Medications") onto a second
+                // line. It comes back with the single row at `sm`.
+                className={cx(wrap && 'hidden sm:block')}
               />
             )}
             {option.label}

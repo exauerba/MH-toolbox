@@ -753,8 +753,9 @@ export function BreatheScreen() {
             label="Sections"
             value={tab}
             onChange={handleTabChange}
-            className="mb-8 border-airy-pink-accent/30 bg-airy-pink/50"
+            className="mb-6 border-airy-pink-accent/30 bg-airy-pink/50 sm:mb-8"
             options={tabs}
+            wrap
           />
 
           {tab === 'log' && (
