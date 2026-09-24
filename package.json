@@ -25,7 +25,7 @@
   "devDependencies": {
     "@eslint/js": "^9.24.0",
     "@lhci/cli": "^0.15.1",
-    "@playwright/test": "^1.53.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.1.4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
