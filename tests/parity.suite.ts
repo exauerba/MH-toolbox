@@ -7,6 +7,7 @@
  */
 import type { ToolboxRepository } from '../src/data/repository'
 import type { Profile } from '../src/data/types'
+import { MAX_IMAGES_PER_LEVEL } from '../src/data/imageRules'
 
 export interface RepositorySetup {
   repo: ToolboxRepository
@@ -20,6 +21,9 @@ export function runRepositorySuite(
   describe(`ToolboxRepository parity — ${name}`, () => {
     let repo: ToolboxRepository
     let teardown: (() => Promise<void>) | undefined
+
+    // Partner sharing is remote-only — the local (guest) repo has no shares.
+    const supportsShares = name === 'fake' || name === 'supabase'
 
     beforeEach(async () => {
       const s = await setup()
@@ -398,6 +402,170 @@ export function runRepositorySuite(
       expect(updated.createdAt).toBe(created.createdAt)
       expect(await repo.listBreatheDoseLogs()).toHaveLength(2)
     })
+
+    /* ---- Lantern ---------------------------------------------------- */
+
+    it('returns null for an unsaved lantern scale', async () => {
+      expect(await repo.getLanternScale()).toBeNull()
+    })
+
+    it('creates a lantern scale and orders levels by position', async () => {
+      const scale = await repo.saveLanternScale({
+        name: 'My Scale',
+        levelCount: 3,
+        levels: [
+          { id: 'l2', position: 2, label: 'Okay', description: 'fine', actions: ['talk'] },
+          { id: 'l3', position: 3, label: 'Crisis', description: 'urgent', actions: ['call'] },
+          { id: 'l1', position: 1, label: 'Grounded', description: 'steady', actions: ['breathe'] },
+        ],
+      })
+      expect(scale.id).toBeTruthy()
+      expect(scale.name).toBe('My Scale')
+      expect(scale.levelCount).toBe(3)
+      expect(scale.createdAt).toBeTruthy()
+      expect(scale.updatedAt).toBeTruthy()
+
+      const got = await repo.getLanternScale()
+      expect(got?.id).toBe(scale.id)
+      expect(got?.levels.map((l) => l.position)).toEqual([1, 2, 3])
+      expect(got?.levels.map((l) => l.id)).toEqual(['l1', 'l2', 'l3'])
+    })
+
+    it('updates a lantern scale in place, preserving createdAt', async () => {
+      const created = await repo.saveLanternScale({
+        name: 'First',
+        levelCount: 2,
+        levels: [
+          { id: 'a', position: 1, label: 'Grounded', description: '', actions: [] },
+          { id: 'b', position: 2, label: 'Crisis', description: '', actions: [] },
+        ],
+      })
+      const updated = await repo.saveLanternScale({
+        id: created.id,
+        name: 'Second',
+        levelCount: 1,
+        levels: [{ id: 'a', position: 1, label: 'Grounded', description: '', actions: [] }],
+      })
+      expect(updated.id).toBe(created.id)
+      expect(updated.name).toBe('Second')
+      expect(updated.levelCount).toBe(1)
+      expect(updated.createdAt).toBe(created.createdAt)
+      expect(updated.updatedAt).toBeTruthy()
+      expect((await repo.getLanternScale())?.levels).toHaveLength(1)
+    })
+
+    it('removes a level when the scale is re-saved without it', async () => {
+      const scale = await repo.saveLanternScale({
+        name: 'S',
+        levelCount: 2,
+        levels: [
+          { id: 'keep', position: 1, label: 'Grounded', description: '', actions: [] },
+          { id: 'drop', position: 2, label: 'Crisis', description: '', actions: [] },
+        ],
+      })
+      await repo.uploadLanternImage(new File(['x'], 'a.png', { type: 'image/png' }), 'drop')
+
+      await repo.saveLanternScale({
+        id: scale.id,
+        name: 'S',
+        levelCount: 1,
+        levels: [{ id: 'keep', position: 1, label: 'Grounded', description: '', actions: [] }],
+      })
+
+      const got = await repo.getLanternScale()
+      expect(got?.levels.map((l) => l.id)).toEqual(['keep'])
+      expect(await repo.listLanternImages('drop')).toEqual([])
+    })
+
+    it('uploads, lists (newest first), and deletes lantern images', async () => {
+      await repo.saveLanternScale({
+        name: 'S',
+        levelCount: 1,
+        levels: [{ id: 'lv', position: 1, label: 'Grounded', description: '', actions: [] }],
+      })
+      const levelId = 'lv'
+      const file = new File(['x'], 'a.png', { type: 'image/png' })
+      const ref1 = await repo.uploadLanternImage(file, levelId)
+      expect(ref1.id).toBeTruthy()
+      expect(ref1.entryId).toBe(levelId)
+      expect(ref1.url).toBeTruthy()
+      expect(ref1.createdAt).toBeTruthy()
+
+      await repo.uploadLanternImage(file, levelId)
+      const images = await repo.listLanternImages(levelId)
+      expect(images).toHaveLength(2)
+      // newest first (ties allowed — createdAt must be non-increasing)
+      for (let i = 1; i < images.length; i++) {
+        expect(images[i - 1].createdAt >= images[i].createdAt).toBe(true)
+      }
+
+      await repo.deleteLanternImage(ref1)
+      expect(await repo.listLanternImages(levelId)).toHaveLength(1)
+    })
+
+    it('rejects more than MAX_IMAGES_PER_LEVEL lantern images', async () => {
+      await repo.saveLanternScale({
+        name: 'S',
+        levelCount: 1,
+        levels: [{ id: 'lv', position: 1, label: 'Grounded', description: '', actions: [] }],
+      })
+      const levelId = 'lv'
+      const file = new File(['x'], 'a.png', { type: 'image/png' })
+      for (let i = 0; i < MAX_IMAGES_PER_LEVEL; i++) {
+        await repo.uploadLanternImage(file, levelId)
+      }
+      await expect(repo.uploadLanternImage(file, levelId)).rejects.toThrow(
+        `Max ${MAX_IMAGES_PER_LEVEL} images per level`,
+      )
+    })
+
+    it('exports lantern scale and image metadata, then wipes them', async () => {
+      const scale = await repo.saveLanternScale({
+        name: 'Export',
+        levelCount: 1,
+        levels: [{ id: 'lv', position: 1, label: 'Grounded', description: '', actions: [] }],
+      })
+      const levelId = 'lv'
+      const ref = await repo.uploadLanternImage(
+        new File(['x'], 'a.png', { type: 'image/png' }),
+        levelId,
+      )
+
+      const bundle = await repo.exportAll()
+      expect(bundle.lanternScale?.id).toBe(scale.id)
+      expect(bundle.lanternScale?.levels.map((l) => l.position)).toEqual([1])
+      expect(bundle.lanternImages).toHaveLength(1)
+      expect(bundle.lanternImages[0]).toMatchObject({
+        id: ref.id,
+        levelId,
+        storagePath: ref.storagePath ?? ref.id,
+        createdAt: ref.createdAt,
+      })
+
+      await repo.deleteAllData()
+      expect(await repo.getLanternScale()).toBeNull()
+      expect(await repo.listLanternImages(levelId)).toEqual([])
+    })
+
+    if (supportsShares) {
+      it('creates, lists, and revokes lantern shares', async () => {
+        const share = await repo.createLanternShare('Partner')
+        expect(share.id).toBeTruthy()
+        expect(share.label).toBe('Partner')
+        expect(share.token).toBeTruthy()
+        expect(share.createdAt).toBeTruthy()
+        expect(share.revokedAt).toBeNull()
+
+        const listed = await repo.listLanternShares()
+        expect(listed).toHaveLength(1)
+        expect(listed[0].id).toBe(share.id)
+
+        await repo.revokeLanternShare(share.id)
+        const after = await repo.listLanternShares()
+        expect(after).toHaveLength(1)
+        expect(after[0].revokedAt).toBeTruthy()
+      })
+    }
 
     it('exports everything', async () => {
       await repo.setProfile({

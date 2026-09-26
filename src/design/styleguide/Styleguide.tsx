@@ -26,6 +26,7 @@ import { JarHero } from '../hero/JarHero'
 import { TimelineHero } from '../hero/TimelineHero'
 import { HubHero } from '../hero/HubHero'
 import { BreatheHero } from '../hero/BreatheHero'
+import { LanternHero } from '../hero/LanternHero'
 import { cx } from '../cx'
 
 /* ---- colour utilities for live contrast badges ----------------------- */
@@ -279,7 +280,7 @@ export default function Styleguide() {
           </DemoCard>
 
           <DemoCard label="Per-tool accents — distinct, yet one family">
-            <div className="grid gap-8 sm:grid-cols-3">
+            <div className="grid gap-8 sm:grid-cols-2">
               <div>
                 <p className="mb-3 text-sm font-extrabold text-ink">Energy Jar — honey</p>
                 <div className="grid grid-cols-4 gap-2">
@@ -314,6 +315,20 @@ export default function Styleguide() {
                 <RampNote>
                   bloom's own hexes, verbatim. Its text accent is <code>bloom-600</code> (#a84f6b);{' '}
                   <code>bloom-400</code> (#f472b6) is the signature pink and is decorative.
+                </RampNote>
+              </div>
+              <div>
+                <p className="mb-3 text-sm font-extrabold text-ink">Lantern — sea-glass</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {Object.entries(colors.lantern)
+                    .filter(([step]) => step !== '900')
+                    .map(([step, hex]) => (
+                      <Swatch key={step} name={step} hex={hex} fg={step >= '500' ? '#fffdfa' : '#12332d'} />
+                    ))}
+                </div>
+                <RampNote>
+                  Text uses <code>lantern-700</code> on light fills; <code>lantern-600</code> (#377066) is the accent
+                  text on light (5.3:1).
                 </RampNote>
               </div>
             </div>
@@ -702,10 +717,19 @@ export default function Styleguide() {
                Simple breath cycles to calm the nervous system — choose a pattern, follow the visual, and return to your
                baseline. Build by WP10.
              </p>
-             <BreatheHero />
-           </div>
-         </div>
-       </Section>
+<BreatheHero />
+            </div>
+
+            <div>
+              <h3 className="mb-1 text-2xl font-extrabold text-ink">The Lantern</h3>
+              <p className="mb-5 max-w-2xl text-base leading-relaxed text-ink-soft">
+                A scale of distress and what helps — the lantern glows brighter as the level climbs, so the hand-over
+                moment is felt before it's read. Build by WP12.
+              </p>
+              <LanternHero />
+            </div>
+          </div>
+        </Section>
 
       <footer className="mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-sm text-ink-faint">
         <p>steady design direction · WP3 · tokens, primitives, hero visuals, styleguide</p>

@@ -147,6 +147,18 @@
   --color-breathe-800: #6326f0;
   --color-breathe-900: #4c15b0;
 
+  /* ---- Lantern — warm sea-glass teal ---------------------------- */
+  --color-lantern-50: #eef7f5;
+  --color-lantern-100: #dcefec;
+  --color-lantern-200: #bde0da;
+  --color-lantern-300: #97cbc2;
+  --color-lantern-400: #6fb2a6;
+  --color-lantern-500: #54988c;
+  --color-lantern-600: #377066; /* accent text on light (5.3:1) */
+  --color-lantern-700: #2b5a52;
+  --color-lantern-800: #22463f;
+  --color-lantern-900: #1a3530;
+
   /* Bloom-style airy palette (Pink Mood Tracker) */
   --color-airy-pink: #fdf2f5;
   --color-airy-pink-accent: #f8bbd0;
@@ -290,6 +302,10 @@
 
   --color-bloom-200: #f8d4e3;
   --color-bloom-300: #f6a8cd;
+
+  --color-lantern-200: #bde0da;
+  --color-lantern-300: #97cbc2;
+  --color-lantern-400: #6fb2a6;
 
   --color-info-ink: #a8c3e0;
   --color-info-soft: #1c2833;

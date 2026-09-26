@@ -57,6 +57,7 @@ export type IconName =
   | 'info'
   | 'inhaler'
   | 'jar'
+  | 'lantern'
   | 'leaf'
   | 'lock'
   | 'logout'
@@ -322,6 +323,17 @@ const ICON_PATHS: Record<IconName, (filled: boolean) => ReactNode> = {
       <path d="M5 4v2h14V4" />
       <path d="M7 6h10v13a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3z" />
       <path d="M9 11h6" />
+    </g>
+  ),
+  lantern: () => (
+    <g {...strokeProps()}>
+      <path d="M8 4h8" />
+      <path d="M8 4v2" />
+      <path d="M16 4v2" />
+      <path d="M6 8c0-2.2 2.7-4 6-4s6 1.8 6 4" />
+      <path d="M6 8v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8" />
+      <path d="M9 21h6" />
+      <path d="M12 10.5c1.4 1.4 2.3 2.4 2.3 3.7a2.3 2.3 0 0 1-4.6 0c0-1.3.9-2.3 2.3-3.7z" />
     </g>
   ),
   leaf: () => (

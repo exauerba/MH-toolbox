@@ -6,9 +6,9 @@ import type { IconName } from '../design';
  * from this array; new tools are one entry here plus a route in AppShell.
  */
 
-export type ToolId = 'jar' | 'bloom' | 'timeline' | 'more' | 'breathe';
+export type ToolId = 'jar' | 'bloom' | 'timeline' | 'more' | 'breathe' | 'lantern';
 
-export type ToolAccent = 'hub' | 'bloom' | 'jar' | 'timeline' | 'breathe';
+export type ToolAccent = 'hub' | 'bloom' | 'jar' | 'timeline' | 'breathe' | 'lantern';
 
 export interface ToolConfig {
   id: ToolId;
@@ -74,6 +74,17 @@ export const TOOLS: ToolConfig[] = [
       route: '/tools/breathe',
       pinnedByDefault: true,
       beta: true,
+    },
+    {
+      id: 'lantern',
+      name: 'Lantern',
+      tagline: 'A scale of distress, and what helps — for the people who love you.',
+      description:
+        'Name where you are on your own scale, and hand your people the exact words and actions that help in the moment.',
+      icon: 'lantern',
+      accent: 'lantern',
+      route: '/tools/lantern',
+      pinnedByDefault: true,
     },
     {
       id: 'more',

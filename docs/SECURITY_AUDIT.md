@@ -159,6 +159,30 @@ upstream fix).
 
 ---
 
+## Lantern (migration 009) — security posture
+
+The Lantern module (`steady_lantern_scales/levels/images/shares`) follows the
+same owner-scoped RLS rules as every other `steady_*` table: `auth.uid()`
+INSERT ownership, no `USING(true)`, no anon grants. Photos live in the private
+`steady-media` bucket at `{uid}/{levelId}/{uuid}{ext}` with transient signed
+URLs (TTL 1h) — the timeline pattern.
+
+One deliberate exception: **`get_shared_scale(p_token uuid)` is a
+`SECURITY DEFINER` function** — the only door anon users may use, and the only
+way a shared lantern is read. It is locked down:
+
+- `set search_path = public`; `revoke all … from public`; `grant execute` to
+  `anon, authenticated` only.
+- Returns **text-only** data (name, levelCount, levels with label/description/
+  actions). It never returns image paths, scale ids, user ids, or share rows.
+- Requires a valid, un-revoked share token; a revoked or unknown token returns
+  `null` (rendered as "This lantern isn't lit").
+- Anon cannot select from any `steady_lantern_*` table directly — the RLS
+  suite (`tests/rls-security.test.ts`) asserts owner isolation on all four
+  tables and anonymous select/insert denial.
+
+---
+
 ## Low / Info
 
 - **L1** — Login lockout is client-side only (`authCore.ts`); server brute-force relies

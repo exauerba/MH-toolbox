@@ -187,6 +187,65 @@ export interface BreatheDoseLogInput {
   trigger?: string[]
 }
 
+/* ------------------------------------------------------------------ *
+ * Lantern — distress/support scale
+ * ------------------------------------------------------------------ */
+
+/**
+ * One level of the scale. `position` runs 1 (most grounded) up to
+ * `levelCount` (crisis). `actions` are the things people nearby can do
+ * to help in that moment.
+ */
+export interface LanternLevel {
+  id: string
+  position: number
+  label: string
+  description: string
+  actions: string[]
+}
+
+/**
+ * The user's single lantern scale. `levelCount` is 3–12 (default 10);
+ * `levels` is always ordered by position.
+ */
+export interface LanternScale {
+  id: string
+  name: string
+  levelCount: number
+  levels: LanternLevel[]
+  createdAt: string
+  updatedAt: string
+}
+
+/** `id` present = update the existing scale; absent = create. */
+export interface LanternScaleInput {
+  id?: string
+  name: string
+  levelCount: number
+  levels: LanternLevel[]
+}
+
+/** Image metadata row (child of a lantern level). */
+export interface LanternImage {
+  id: string
+  levelId: string
+  /** Storage path on Supabase; blob key in guest mode. */
+  storagePath: string
+  createdAt: string
+}
+
+/**
+ * A partner share link. `token` is the uuid used in the public share URL;
+ * `revokedAt` null = active. Remote-only (guest mode has no shares).
+ */
+export interface LanternShare {
+  id: string
+  label: string
+  token: string
+  createdAt: string
+  revokedAt: string | null
+}
+
 /**
  * Full JSON export. Image blobs are intentionally excluded (metadata only) —
  * the export is a data backup; images are restored via the migration path.
@@ -204,4 +263,7 @@ export interface ExportBundle {
   breatheMeds: BreatheMed[]
   breatheCheckins: BreatheCheckin[]
   breatheDoseLogs: BreatheDoseLog[]
+  /** Lantern data (added with the lantern tool). */
+  lanternScale: LanternScale | null
+  lanternImages: LanternImage[]
 }

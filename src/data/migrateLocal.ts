@@ -23,6 +23,8 @@ export interface MigrationResult {
     breatheMeds: number
     breatheCheckins: number
     breatheDoseLogs: number
+    lanternScales: number
+    lanternImages: number
   }
 }
 
@@ -46,6 +48,8 @@ const zeroCounts = (): MigrationResult['counts'] => ({
   breatheMeds: 0,
   breatheCheckins: 0,
   breatheDoseLogs: 0,
+  lanternScales: 0,
+  lanternImages: 0,
 })
 
 function hasLocalData(bundle: ExportBundle): boolean {
@@ -59,7 +63,9 @@ function hasLocalData(bundle: ExportBundle): boolean {
     bundle.timelineImages.length > 0 ||
     bundle.breatheMeds.length > 0 ||
     bundle.breatheCheckins.length > 0 ||
-    bundle.breatheDoseLogs.length > 0
+    bundle.breatheDoseLogs.length > 0 ||
+    bundle.lanternScale !== null ||
+    bundle.lanternImages.length > 0
   )
 }
 
@@ -167,6 +173,32 @@ export async function migrateLocalToSupabase(
       checkin.id,
     )
     counts.breatheCheckins++
+  }
+
+  // Lantern scale first (ids preserved so level images stay attached), then
+  // re-upload level images from the local blob store.
+  if (bundle.lanternScale) {
+    await remote.saveLanternScale({
+      id: bundle.lanternScale.id,
+      name: bundle.lanternScale.name,
+      levelCount: bundle.lanternScale.levelCount,
+      levels: bundle.lanternScale.levels,
+    })
+    counts.lanternScales++
+  }
+
+  for (const img of bundle.lanternImages) {
+    try {
+      const refs = await local.listLanternImages(img.levelId)
+      const ref = refs.find((r) => r.id === img.id)
+      if (!ref) continue
+      const blob = await fetch(ref.url).then((r) => r.blob())
+      const file = new File([blob], 'image', { type: blob.type })
+      await remote.uploadLanternImage(file, img.levelId)
+      counts.lanternImages++
+    } catch {
+      // Blob unavailable — skip this image rather than failing the migration.
+    }
   }
 
   const current = (await remote.getProfile()) ?? DEFAULT_PROFILE

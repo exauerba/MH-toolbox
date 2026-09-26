@@ -19,13 +19,17 @@ import type {
   JarDay,
   JarLog,
   JarLogInput,
+  LanternLevel,
+  LanternScale,
+  LanternScaleInput,
+  LanternShare,
   Profile,
   TimelineEntry,
   TimelineEntryInput,
   TimelineZone,
   TimelineZoneInput,
 } from '../types'
-import { assertImageAllowed, MAX_IMAGES_PER_ENTRY } from '../imageRules'
+import { assertImageAllowed, MAX_IMAGES_PER_ENTRY, MAX_IMAGES_PER_LEVEL } from '../imageRules'
 
 export class FakeRepository implements ToolboxRepository {
   profile: Profile | null = null
@@ -38,6 +42,10 @@ export class FakeRepository implements ToolboxRepository {
   breatheMeds = new Map<string, BreatheMed>()
   breatheCheckins = new Map<string, BreatheCheckin>()
   breatheDoseLogs = new Map<string, BreatheDoseLog>()
+  lanternScale: LanternScale | null = null
+  lanternLevels = new Map<string, LanternLevel & { scaleId: string }>()
+  lanternImages = new Map<string, ImageRef>()
+  lanternShares = new Map<string, LanternShare>()
 
   async getProfile(): Promise<Profile | null> {
     return this.profile
@@ -354,6 +362,102 @@ export class FakeRepository implements ToolboxRepository {
     this.breatheDoseLogs.delete(id)
   }
 
+  async getLanternScale(): Promise<LanternScale | null> {
+    const scale = this.lanternScale
+    if (!scale) return null
+    const levels = [...this.lanternLevels.values()]
+      .filter((l) => l.scaleId === scale.id)
+      .map(({ scaleId: _scaleId, ...level }) => level)
+      .sort((a, b) => a.position - b.position)
+    return { ...scale, levels }
+  }
+
+  async saveLanternScale(s: LanternScaleInput): Promise<LanternScale> {
+    const now = new Date().toISOString()
+    let scale: LanternScale
+    if (s.id && this.lanternScale) {
+      scale = { ...this.lanternScale, name: s.name, levelCount: s.levelCount, updatedAt: now }
+    } else if (s.id) {
+      scale = {
+        id: s.id,
+        name: s.name,
+        levelCount: s.levelCount,
+        levels: [],
+        createdAt: now,
+        updatedAt: now,
+      }
+    } else {
+      scale = {
+        id: crypto.randomUUID(),
+        name: s.name,
+        levelCount: s.levelCount,
+        levels: [],
+        createdAt: now,
+        updatedAt: now,
+      }
+    }
+    this.lanternScale = scale
+
+    const kept = new Set<string>()
+    for (const level of s.levels) {
+      this.lanternLevels.set(level.id, { ...level, scaleId: scale.id })
+      kept.add(level.id)
+    }
+    for (const [key, stored] of this.lanternLevels) {
+      if (stored.scaleId === scale.id && !kept.has(key)) {
+        this.lanternLevels.delete(key)
+        for (const [imgKey, img] of this.lanternImages) {
+          if (img.entryId === key) this.lanternImages.delete(imgKey)
+        }
+      }
+    }
+
+    return (await this.getLanternScale())!
+  }
+
+  async listLanternImages(levelId: string): Promise<ImageRef[]> {
+    return [...this.lanternImages.values()]
+      .filter((img) => img.entryId === levelId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  async uploadLanternImage(file: File, levelId: string): Promise<ImageRef> {
+    assertImageAllowed(file)
+    const count = [...this.lanternImages.values()].filter((img) => img.entryId === levelId).length
+    if (count >= MAX_IMAGES_PER_LEVEL) throw new Error(`Max ${MAX_IMAGES_PER_LEVEL} images per level`)
+    const id = crypto.randomUUID()
+    const ref: ImageRef = { id, entryId: levelId, url: `fake://image/${id}`, createdAt: new Date().toISOString() }
+    this.lanternImages.set(id, ref)
+    return ref
+  }
+
+  async deleteLanternImage(ref: ImageRef): Promise<void> {
+    this.lanternImages.delete(ref.id)
+  }
+
+  async listLanternShares(): Promise<LanternShare[]> {
+    return [...this.lanternShares.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  async createLanternShare(label: string): Promise<LanternShare> {
+    const share: LanternShare = {
+      id: crypto.randomUUID(),
+      label,
+      token: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      revokedAt: null,
+    }
+    this.lanternShares.set(share.id, share)
+    return share
+  }
+
+  async revokeLanternShare(id: string): Promise<void> {
+    const share = this.lanternShares.get(id)
+    if (share) {
+      this.lanternShares.set(id, { ...share, revokedAt: new Date().toISOString() })
+    }
+  }
+
   async exportAll(): Promise<ExportBundle> {
     return {
       exportedAt: new Date().toISOString(),
@@ -372,6 +476,13 @@ export class FakeRepository implements ToolboxRepository {
       breatheMeds: [...this.breatheMeds.values()],
       breatheCheckins: [...this.breatheCheckins.values()],
       breatheDoseLogs: [...this.breatheDoseLogs.values()],
+      lanternScale: await this.getLanternScale(),
+      lanternImages: [...this.lanternImages.values()].map((img) => ({
+        id: img.id,
+        levelId: img.entryId,
+        storagePath: img.storagePath ?? img.id,
+        createdAt: img.createdAt,
+      })),
     }
   }
 
@@ -386,5 +497,9 @@ export class FakeRepository implements ToolboxRepository {
     this.breatheMeds.clear()
     this.breatheCheckins.clear()
     this.breatheDoseLogs.clear()
+    this.lanternScale = null
+    this.lanternLevels.clear()
+    this.lanternImages.clear()
+    this.lanternShares.clear()
   }
 }

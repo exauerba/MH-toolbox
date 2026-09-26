@@ -14,13 +14,15 @@ export function Shell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   // The styleguide is a dev-only surface — keep it free of app chrome.
   const isStyleguide = pathname === '/styleguide';
+  // Shared lantern links are for visitors — no guest banner, just the lantern.
+  const isShared = pathname.startsWith('/share');
 
   return (
     <div className="flex min-h-dvh flex-col">
       <Header />
       <main className="w-full flex-1">
         <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-          {!isStyleguide && (
+          {!isStyleguide && !isShared && (
             <div className="mb-6">
               <GuestBanner />
             </div>

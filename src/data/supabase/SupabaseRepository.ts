@@ -21,13 +21,17 @@ import type {
   JarDay,
   JarLog,
   JarLogInput,
+  LanternLevel,
+  LanternScale,
+  LanternScaleInput,
+  LanternShare,
   Profile,
   TimelineEntry,
   TimelineEntryInput,
   TimelineZone,
   TimelineZoneInput,
 } from '../types'
-import { assertImageAllowed, MAX_IMAGES_PER_ENTRY } from '../imageRules'
+import { assertImageAllowed, MAX_IMAGES_PER_ENTRY, MAX_IMAGES_PER_LEVEL } from '../imageRules'
 
 const BUCKET = 'steady-media'
 const SIGNED_URL_TTL_SECONDS = 3600
@@ -105,6 +109,45 @@ interface BreatheDoseLogRow {
   time: string | null
   trigger: string[] | null
   created_at: string
+}
+
+interface LanternScaleRow {
+  id: string
+  user_id: string
+  name: string
+  level_count: number
+  created_at: string
+  updated_at: string
+}
+
+interface LanternLevelRow {
+  id: string
+  user_id: string
+  scale_id: string
+  position: number
+  label: string
+  description: string
+  actions: string[] | null
+  created_at: string
+  updated_at: string
+}
+
+interface LanternImageRow {
+  id: string
+  user_id: string
+  level_id: string
+  storage_path: string
+  created_at: string
+}
+
+interface LanternShareRow {
+  id: string
+  user_id: string
+  scale_id: string
+  token: string
+  label: string
+  created_at: string
+  revoked_at: string | null
 }
 
 /** Canonicalize Postgres timestamptz output (`...+00:00`) to ISO `.000Z`. */
@@ -236,6 +279,37 @@ function breatheDoseLogToRow(d: BreatheDoseLogInput, userId: string, existingId?
   }
   if (existingId) row.id = existingId
   return row
+}
+
+function lanternScaleFromRow(r: LanternScaleRow): LanternScale {
+  return {
+    id: r.id,
+    name: r.name,
+    levelCount: r.level_count,
+    levels: [],
+    createdAt: iso(r.created_at) ?? '',
+    updatedAt: iso(r.updated_at) ?? '',
+  }
+}
+
+function lanternLevelFromRow(r: LanternLevelRow): LanternLevel {
+  return {
+    id: r.id,
+    position: r.position,
+    label: r.label,
+    description: r.description,
+    actions: r.actions ?? [],
+  }
+}
+
+function lanternShareFromRow(r: LanternShareRow): LanternShare {
+  return {
+    id: r.id,
+    label: r.label,
+    token: r.token,
+    createdAt: iso(r.created_at) ?? '',
+    revokedAt: iso(r.revoked_at),
+  }
 }
 
 export class SupabaseRepository implements ToolboxRepository {
@@ -730,9 +804,244 @@ export class SupabaseRepository implements ToolboxRepository {
     if (error) throw error
   }
 
+  /* ---- Lantern ---------------------------------------------------- */
+
+  async getLanternScale(): Promise<LanternScale | null> {
+    const uid = await this.requireUserId()
+    const { data: scale, error } = await this.client
+      .from('steady_lantern_scales')
+      .select('*')
+      .eq('user_id', uid)
+      .maybeSingle()
+    if (error) throw error
+    if (!scale) return null
+    const { data: levels, error: levelErr } = await this.client
+      .from('steady_lantern_levels')
+      .select('*')
+      .eq('scale_id', scale.id)
+      .order('position', { ascending: true })
+    if (levelErr) throw levelErr
+    return { ...lanternScaleFromRow(scale), levels: (levels ?? []).map(lanternLevelFromRow) }
+  }
+
+  async saveLanternScale(s: LanternScaleInput): Promise<LanternScale> {
+    const uid = await this.requireUserId()
+    let scaleId = s.id
+    if (scaleId) {
+      const { data: existing } = await this.client
+        .from('steady_lantern_scales')
+        .select('id')
+        .eq('id', scaleId)
+        .eq('user_id', uid)
+        .maybeSingle()
+      if (existing) {
+        const { error } = await this.client
+          .from('steady_lantern_scales')
+          .update({ name: s.name, level_count: s.levelCount, updated_at: new Date().toISOString() })
+          .eq('id', scaleId)
+          .eq('user_id', uid)
+        if (error) throw error
+      } else {
+        const { error } = await this.client
+          .from('steady_lantern_scales')
+          .insert({ id: scaleId, user_id: uid, name: s.name, level_count: s.levelCount })
+        if (error) throw error
+      }
+    } else {
+      const { data, error } = await this.client
+        .from('steady_lantern_scales')
+        .insert({ user_id: uid, name: s.name, level_count: s.levelCount })
+        .select()
+        .single()
+      if (error) throw error
+      scaleId = data.id
+    }
+    if (!scaleId) throw new Error('Missing scale id')
+
+    for (const level of s.levels) {
+      await this.upsertLanternLevel(uid, scaleId, level)
+    }
+
+    const keepIds = new Set(s.levels.map((l) => l.id))
+    const { data: existingLevels, error: listErr } = await this.client
+      .from('steady_lantern_levels')
+      .select('id')
+      .eq('scale_id', scaleId)
+      .eq('user_id', uid)
+    if (listErr) throw listErr
+    const stale = (existingLevels ?? []).filter((r) => !keepIds.has(r.id)).map((r) => r.id)
+    if (stale.length > 0) {
+      const { error } = await this.client.from('steady_lantern_levels').delete().in('id', stale).eq('user_id', uid)
+      if (error) throw error
+    }
+
+    const { data: scale, error: scaleErr } = await this.client
+      .from('steady_lantern_scales')
+      .select('*')
+      .eq('id', scaleId)
+      .eq('user_id', uid)
+      .maybeSingle()
+    if (scaleErr) throw scaleErr
+    if (!scale) throw new Error('Scale not found')
+    const { data: levels, error: levelErr } = await this.client
+      .from('steady_lantern_levels')
+      .select('*')
+      .eq('scale_id', scale.id)
+      .order('position', { ascending: true })
+    if (levelErr) throw levelErr
+    return { ...lanternScaleFromRow(scale), levels: (levels ?? []).map(lanternLevelFromRow) }
+  }
+
+  private async upsertLanternLevel(uid: string, scaleId: string, level: LanternLevel): Promise<void> {
+    const { data: existing } = await this.client
+      .from('steady_lantern_levels')
+      .select('id')
+      .eq('id', level.id)
+      .eq('user_id', uid)
+      .maybeSingle()
+    if (existing) {
+      const { error } = await this.client
+        .from('steady_lantern_levels')
+        .update({
+          position: level.position,
+          label: level.label,
+          description: level.description,
+          actions: level.actions,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', level.id)
+        .eq('user_id', uid)
+      if (error) throw error
+    } else {
+      const { error } = await this.client
+        .from('steady_lantern_levels')
+        .insert({
+          id: level.id,
+          user_id: uid,
+          scale_id: scaleId,
+          position: level.position,
+          label: level.label,
+          description: level.description,
+          actions: level.actions,
+        })
+      if (error) throw error
+    }
+  }
+
+  async listLanternImages(levelId: string): Promise<ImageRef[]> {
+    const uid = await this.requireUserId()
+    const { data, error } = await this.client
+      .from('steady_lantern_images')
+      .select('*')
+      .eq('user_id', uid)
+      .eq('level_id', levelId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    const refs: ImageRef[] = []
+    for (const row of data ?? []) {
+      const { data: signed } = await this.client.storage
+        .from(BUCKET)
+        .createSignedUrl(row.storage_path, SIGNED_URL_TTL_SECONDS)
+      if (signed) {
+        refs.push({
+          id: row.id,
+          entryId: row.level_id,
+          url: signed.signedUrl,
+          storagePath: row.storage_path,
+          createdAt: iso(row.created_at) ?? '',
+        })
+      }
+    }
+    return refs
+  }
+
+  async uploadLanternImage(file: File, levelId: string): Promise<ImageRef> {
+    assertImageAllowed(file)
+    const uid = await this.requireUserId()
+    const { count, error: countErr } = await this.client
+      .from('steady_lantern_images')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', uid)
+      .eq('level_id', levelId)
+    if (countErr) throw countErr
+    if ((count ?? 0) >= MAX_IMAGES_PER_LEVEL) throw new Error(`Max ${MAX_IMAGES_PER_LEVEL} images per level`)
+
+    const id = crypto.randomUUID()
+    const path = `${uid}/${levelId}/${id}${extensionFor(file.type)}`
+    const { error: upErr } = await this.client.storage.from(BUCKET).upload(path, file, {
+      contentType: file.type,
+    })
+    if (upErr) throw upErr
+    const { error: insErr } = await this.client
+      .from('steady_lantern_images')
+      .insert({ id, user_id: uid, level_id: levelId, storage_path: path })
+    if (insErr) throw insErr
+
+    const { data: signed } = await this.client.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL_SECONDS)
+    return {
+      id,
+      entryId: levelId,
+      url: signed?.signedUrl ?? '',
+      storagePath: path,
+      createdAt: new Date().toISOString(),
+    }
+  }
+
+  async deleteLanternImage(ref: ImageRef): Promise<void> {
+    const uid = await this.requireUserId()
+    if (ref.storagePath) {
+      const { error } = await this.client.storage.from(BUCKET).remove([ref.storagePath])
+      if (error) throw error
+    }
+    const { error } = await this.client
+      .from('steady_lantern_images')
+      .delete()
+      .eq('id', ref.id)
+      .eq('user_id', uid)
+    if (error) throw error
+  }
+
+  async listLanternShares(): Promise<LanternShare[]> {
+    const uid = await this.requireUserId()
+    const { data, error } = await this.client
+      .from('steady_lantern_shares')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return (data ?? []).map(lanternShareFromRow)
+  }
+
+  async createLanternShare(label: string): Promise<LanternShare> {
+    const uid = await this.requireUserId()
+    const { data: scale } = await this.client
+      .from('steady_lantern_scales')
+      .select('id')
+      .eq('user_id', uid)
+      .maybeSingle()
+    if (!scale) throw new Error('Create your scale before sharing it')
+    const { data, error } = await this.client
+      .from('steady_lantern_shares')
+      .insert({ user_id: uid, scale_id: scale.id, label })
+      .select()
+      .single()
+    if (error) throw error
+    return lanternShareFromRow(data)
+  }
+
+  async revokeLanternShare(id: string): Promise<void> {
+    const uid = await this.requireUserId()
+    const { error } = await this.client
+      .from('steady_lantern_shares')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', uid)
+    if (error) throw error
+  }
+
   async exportAll(): Promise<ExportBundle> {
     const uid = await this.requireUserId()
-    const [profile, pins, jarDays, jarLogs, entries, zones, images, meds, checkins, doseLogs] = await Promise.all([
+    const [profile, pins, jarDays, jarLogs, entries, zones, images, meds, checkins, doseLogs, scale, levels, lImages, shares] = await Promise.all([
       this.getProfile(),
       this.getPins(),
       this.client.from('steady_jar_days').select('*').eq('user_id', uid),
@@ -743,10 +1052,23 @@ export class SupabaseRepository implements ToolboxRepository {
       this.client.from('steady_breathe_meds').select('*').eq('user_id', uid),
       this.client.from('steady_breathe_checkins').select('*').eq('user_id', uid),
       this.client.from('steady_breathe_dose_logs').select('*').eq('user_id', uid),
+      this.client.from('steady_lantern_scales').select('*').eq('user_id', uid).maybeSingle(),
+      this.client.from('steady_lantern_levels').select('*').eq('user_id', uid),
+      this.client.from('steady_lantern_images').select('*').eq('user_id', uid),
+      this.client.from('steady_lantern_shares').select('*').eq('user_id', uid),
     ])
-    for (const r of [jarDays, jarLogs, entries, zones, images, meds, checkins, doseLogs]) {
+    for (const r of [jarDays, jarLogs, entries, zones, images, meds, checkins, doseLogs, scale, levels, lImages, shares]) {
       if (r.error) throw r.error
     }
+    const lanternScale = scale?.data
+      ? {
+          ...lanternScaleFromRow(scale.data),
+          levels: (levels?.data ?? [])
+            .filter((r: LanternLevelRow) => r.scale_id === scale.data.id)
+            .sort((a: LanternLevelRow, b: LanternLevelRow) => a.position - b.position)
+            .map(lanternLevelFromRow),
+        }
+      : null
     return {
       exportedAt: new Date().toISOString(),
       profile,
@@ -764,6 +1086,13 @@ export class SupabaseRepository implements ToolboxRepository {
       breatheMeds: (meds.data ?? []).map(breatheMedFromRow),
       breatheCheckins: (checkins.data ?? []).map(breatheCheckinFromRow),
       breatheDoseLogs: (doseLogs.data ?? []).map(breatheDoseLogFromRow),
+      lanternScale,
+      lanternImages: (lImages?.data ?? []).map((r: LanternImageRow) => ({
+        id: r.id,
+        levelId: r.level_id,
+        storagePath: r.storage_path,
+        createdAt: iso(r.created_at) ?? '',
+      })),
     }
   }
 
@@ -780,6 +1109,10 @@ export class SupabaseRepository implements ToolboxRepository {
       'steady_breathe_meds',
       'steady_breathe_checkins',
       'steady_breathe_dose_logs',
+      'steady_lantern_scales',
+      'steady_lantern_levels',
+      'steady_lantern_images',
+      'steady_lantern_shares',
     ]
     for (const t of tables) {
       const { error } = await this.client.from(t).delete().eq('user_id', uid)

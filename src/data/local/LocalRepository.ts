@@ -18,13 +18,16 @@ import type {
   JarDay,
   JarLog,
   JarLogInput,
+  LanternScale,
+  LanternScaleInput,
+  LanternShare,
   Profile,
   TimelineEntry,
   TimelineEntryInput,
   TimelineZone,
   TimelineZoneInput,
 } from '../types'
-import { assertImageAllowed, MAX_IMAGES_PER_ENTRY } from '../imageRules'
+import { assertImageAllowed, MAX_IMAGES_PER_ENTRY, MAX_IMAGES_PER_LEVEL } from '../imageRules'
 import { createSteadyDB, type SteadyDB } from './db'
 
 function blobUrl(blob: Blob): string {
@@ -368,10 +371,94 @@ export class LocalRepository implements ToolboxRepository {
     await this.db.breatheDoseLogs.delete(id)
   }
 
+  /* ---- Lantern ---------------------------------------------------- */
+
+  async getLanternScale(): Promise<LanternScale | null> {
+    const scale = await this.db.lanternScales.toCollection().first()
+    if (!scale) return null
+    const levels = await this.db.lanternLevels.where('scaleId').equals(scale.id).toArray()
+    return {
+      ...scale,
+      levels: levels
+        .map(({ scaleId: _scaleId, ...level }) => level)
+        .sort((a, b) => a.position - b.position),
+    }
+  }
+
+  async saveLanternScale(s: LanternScaleInput): Promise<LanternScale> {
+    let id: string
+    let createdAt: string
+    if (s.id) {
+      const existing = await this.db.lanternScales.get(s.id)
+      if (existing) {
+        id = existing.id
+        createdAt = existing.createdAt
+      } else {
+        id = s.id
+        createdAt = new Date().toISOString()
+      }
+    } else {
+      id = crypto.randomUUID()
+      createdAt = new Date().toISOString()
+    }
+    await this.db.lanternScales.put({
+      id,
+      name: s.name,
+      levelCount: s.levelCount,
+      levels: s.levels,
+      createdAt,
+      updatedAt: new Date().toISOString(),
+    })
+
+    await Promise.all(s.levels.map((l) => this.db.lanternLevels.put({ ...l, scaleId: id })))
+
+    const keepIds = new Set(s.levels.map((l) => l.id))
+    const existingLevels = await this.db.lanternLevels.where('scaleId').equals(id).toArray()
+    const removed = existingLevels.filter((l) => !keepIds.has(l.id))
+    await Promise.all([
+      ...removed.map((l) => this.db.lanternLevels.delete(l.id)),
+      ...removed.map((l) => this.db.lanternImages.where('levelId').equals(l.id).delete()),
+    ])
+
+    return (await this.getLanternScale())!
+  }
+
+  async listLanternImages(levelId: string): Promise<ImageRef[]> {
+    const images = await this.db.lanternImages.where('levelId').equals(levelId).toArray()
+    return images
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((img) => ({ id: img.id, entryId: img.levelId, url: blobUrl(img.blob), createdAt: img.createdAt }))
+  }
+
+  async uploadLanternImage(file: File, levelId: string): Promise<ImageRef> {
+    assertImageAllowed(file)
+    const count = await this.db.lanternImages.where('levelId').equals(levelId).count()
+    if (count >= MAX_IMAGES_PER_LEVEL) throw new Error(`Max ${MAX_IMAGES_PER_LEVEL} images per level`)
+    const id = crypto.randomUUID()
+    const createdAt = new Date().toISOString()
+    await this.db.lanternImages.put({ id, levelId, blob: file, createdAt })
+    return { id, entryId: levelId, url: blobUrl(file), createdAt }
+  }
+
+  async deleteLanternImage(ref: ImageRef): Promise<void> {
+    revokeBlobUrl(ref.url)
+    await this.db.lanternImages.delete(ref.id)
+  }
+
+  async listLanternShares(): Promise<LanternShare[]> {
+    return []
+  }
+
+  async createLanternShare(_label: string): Promise<LanternShare> {
+    throw new Error('Sharing requires an account')
+  }
+
+  async revokeLanternShare(_id: string): Promise<void> {}
+
   async exportAll(): Promise<ExportBundle> {
     const [
       profile, pins, jarDays, jarLogs, timelineEntries, timelineZones, images,
-      breatheMeds, breatheCheckins, breatheDoseLogs,
+      breatheMeds, breatheCheckins, breatheDoseLogs, lanternImages, lanternScale,
     ] = await Promise.all([
       this.getProfile(),
       this.getPins(),
@@ -383,6 +470,8 @@ export class LocalRepository implements ToolboxRepository {
       this.db.breatheMeds.toArray(),
       this.db.breatheCheckins.toArray(),
       this.db.breatheDoseLogs.toArray(),
+      this.db.lanternImages.toArray(),
+      this.getLanternScale(),
     ])
     return {
       exportedAt: new Date().toISOString(),
@@ -401,6 +490,13 @@ export class LocalRepository implements ToolboxRepository {
       breatheMeds,
       breatheCheckins,
       breatheDoseLogs,
+      lanternScale,
+      lanternImages: lanternImages.map((img) => ({
+        id: img.id,
+        levelId: img.levelId,
+        storagePath: img.id,
+        createdAt: img.createdAt,
+      })),
     }
   }
 
@@ -416,6 +512,10 @@ export class LocalRepository implements ToolboxRepository {
       this.db.breatheMeds.clear(),
       this.db.breatheCheckins.clear(),
       this.db.breatheDoseLogs.clear(),
+      this.db.lanternScales.clear(),
+      this.db.lanternLevels.clear(),
+      this.db.lanternImages.clear(),
+      this.db.lanternShares.clear(),
     ])
   }
 }

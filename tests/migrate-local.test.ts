@@ -13,6 +13,8 @@ const zeroCounts = {
   breatheMeds: 0,
   breatheCheckins: 0,
   breatheDoseLogs: 0,
+  lanternScales: 0,
+  lanternImages: 0,
 }
 
 function mockFetchResolves(): void {
@@ -137,6 +139,8 @@ describe('migrateLocalToSupabase', () => {
       breatheMeds: 1,
       breatheCheckins: 1,
       breatheDoseLogs: 1,
+      lanternScales: 0,
+      lanternImages: 0,
     })
   })
 

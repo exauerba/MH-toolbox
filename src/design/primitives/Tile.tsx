@@ -2,7 +2,7 @@ import type { IconName } from '../icons'
 import { Icon } from '../icons'
 import { cx } from '../cx'
 
-export type TileAccent = 'hub' | 'bloom' | 'jar' | 'timeline' | 'breathe' | 'warning'
+export type TileAccent = 'hub' | 'bloom' | 'jar' | 'timeline' | 'breathe' | 'lantern' | 'warning'
 
 const tileAccentClass: Record<TileAccent, string> = {
   hub: 'bg-brand-100 text-brand-700 dark:bg-brand-300/20 dark:text-brand-300',
@@ -10,6 +10,7 @@ const tileAccentClass: Record<TileAccent, string> = {
   jar: 'bg-jar-100 text-jar-700 dark:bg-jar-300/20 dark:text-jar-300',
   timeline: 'bg-timeline-100 text-timeline-700 dark:bg-timeline-300/20 dark:text-timeline-300',
   breathe: 'bg-breathe-100 text-breathe-700 dark:bg-breathe-300/20 dark:text-breathe-300',
+  lantern: 'bg-lantern-100 text-lantern-700 dark:bg-lantern-300/20 dark:text-lantern-300',
   warning: 'bg-warning-soft text-warning-ink',
 }
 

@@ -111,6 +111,10 @@ suite('RLS security', () => {
   let entryBId = ''
   let medAId = ''
   let medBId = ''
+  let scaleAId = ''
+  let scaleBId = ''
+  let levelAId = ''
+  let levelBId = ''
 
   const specs: TableSpec[] = [
     {
@@ -210,6 +214,92 @@ suite('RLS security', () => {
         medBId = mb?.[0]?.id ?? ''
         if (!medAId || !medBId) {
           throw new Error('could not create parent meds for dose logs spec')
+        }
+      },
+    },
+    {
+      table: 'steady_lantern_scales',
+      makeRowA: (uid) => ({ user_id: uid, name: 'A scale', level_count: 10 }),
+      makeRowB: (uid) => ({ user_id: uid, name: 'B scale', level_count: 10 }),
+      filterB: (rowB) => ({ user_id: rowB.user_id, name: rowB.name }),
+      mutate: { column: 'name', value: 'hacked' },
+    },
+    {
+      table: 'steady_lantern_levels',
+      makeRowA: (uid) => ({ user_id: uid, id: uuid(), scale_id: scaleAId, position: 1, label: 'A level', description: '', actions: [] }),
+      makeRowB: (uid) => ({ user_id: uid, id: uuid(), scale_id: scaleBId, position: 1, label: 'B level', description: '', actions: [] }),
+      filterB: (rowB) => ({ id: rowB.id }),
+      mutate: { column: 'label', value: 'hacked' },
+      before: async () => {
+        const { data: sa } = await clientA
+          .from('steady_lantern_scales')
+          .insert({ user_id: userA?.id, name: 'A level scale', level_count: 10 })
+          .select()
+        const { data: sb } = await clientB
+          .from('steady_lantern_scales')
+          .insert({ user_id: userB?.id, name: 'B level scale', level_count: 10 })
+          .select()
+        scaleAId = sa?.[0]?.id ?? ''
+        scaleBId = sb?.[0]?.id ?? ''
+        if (!scaleAId || !scaleBId) {
+          throw new Error('could not create parent scales for levels spec')
+        }
+      },
+    },
+    {
+      table: 'steady_lantern_images',
+      makeRowA: () => ({ user_id: userA?.id, id: uuid(), level_id: levelAId, storage_path: `a/${levelAId}/a.jpg` }),
+      makeRowB: () => ({ user_id: userB?.id, id: uuid(), level_id: levelBId, storage_path: `b/${levelBId}/b.jpg` }),
+      filterB: (rowB) => ({ id: rowB.id }),
+      mutate: { column: 'storage_path', value: 'hacked.jpg' },
+      before: async () => {
+        const { data: sa } = await clientA
+          .from('steady_lantern_scales')
+          .insert({ user_id: userA?.id, name: 'A image scale', level_count: 10 })
+          .select()
+        const { data: sb } = await clientB
+          .from('steady_lantern_scales')
+          .insert({ user_id: userB?.id, name: 'B image scale', level_count: 10 })
+          .select()
+        const scaleA = sa?.[0]?.id ?? ''
+        const scaleB = sb?.[0]?.id ?? ''
+        if (!scaleA || !scaleB) {
+          throw new Error('could not create parent scales for images spec')
+        }
+        const { data: la } = await clientA
+          .from('steady_lantern_levels')
+          .insert({ user_id: userA?.id, id: uuid(), scale_id: scaleA, position: 1, label: 'A image level', description: '', actions: [] })
+          .select()
+        const { data: lb } = await clientB
+          .from('steady_lantern_levels')
+          .insert({ user_id: userB?.id, id: uuid(), scale_id: scaleB, position: 1, label: 'B image level', description: '', actions: [] })
+          .select()
+        levelAId = la?.[0]?.id ?? ''
+        levelBId = lb?.[0]?.id ?? ''
+        if (!levelAId || !levelBId) {
+          throw new Error('could not create parent levels for images spec')
+        }
+      },
+    },
+    {
+      table: 'steady_lantern_shares',
+      makeRowA: (uid) => ({ user_id: uid, scale_id: scaleAId, label: 'A share' }),
+      makeRowB: (uid) => ({ user_id: uid, scale_id: scaleBId, label: 'B share' }),
+      filterB: (rowB) => ({ user_id: rowB.user_id, label: rowB.label }),
+      mutate: { column: 'label', value: 'hacked' },
+      before: async () => {
+        const { data: sa } = await clientA
+          .from('steady_lantern_scales')
+          .insert({ user_id: userA?.id, name: 'A share scale', level_count: 10 })
+          .select()
+        const { data: sb } = await clientB
+          .from('steady_lantern_scales')
+          .insert({ user_id: userB?.id, name: 'B share scale', level_count: 10 })
+          .select()
+        scaleAId = sa?.[0]?.id ?? ''
+        scaleBId = sb?.[0]?.id ?? ''
+        if (!scaleAId || !scaleBId) {
+          throw new Error('could not create parent scales for shares spec')
         }
       },
     },

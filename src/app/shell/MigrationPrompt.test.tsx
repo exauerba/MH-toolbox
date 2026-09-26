@@ -29,6 +29,8 @@ const emptyBundle: ExportBundle = {
   breatheMeds: [],
   breatheCheckins: [],
   breatheDoseLogs: [],
+  lanternScale: null,
+  lanternImages: [],
 }
 
 const dataBundle: ExportBundle = {

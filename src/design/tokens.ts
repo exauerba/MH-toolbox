@@ -98,6 +98,20 @@ export const colors = {
     900: '#4c15b0',
   },
 
+  /* Lantern — warm sea-glass teal */
+  lantern: {
+    50: '#eef7f5',
+    100: '#dcefec',
+    200: '#bde0da',
+    300: '#97cbc2',
+    400: '#6fb2a6',
+    500: '#54988c',
+    600: '#377066',
+    700: '#2b5a52',
+    800: '#22463f',
+    900: '#1a3530',
+  },
+
   /* Status (never color-alone: always icon + label + pattern) */
   info: { ink: '#3d6286', soft: '#e9eff6', line: '#c2d0e0', strong: '#2d4a68' },
   success: { ink: '#2f6b46', soft: '#e7f1e6', line: '#bdd7be', strong: '#24533a' },
@@ -136,6 +150,7 @@ export const colorsDark = {
   jar: { 200: '#f6d795', 300: '#eebc5d', 400: '#e19e33' },
   timeline: { 200: '#c4d5bb', 300: '#a7c09d' },
   bloom: { 200: '#f8d4e3', 300: '#f6a8cd' },
+  lantern: { 200: '#bde0da', 300: '#97cbc2', 400: '#6fb2a6' },
   info: { ink: '#a8c3e0', soft: '#1c2833', line: '#2a3d52' },
   success: { ink: '#a9d0ae', soft: '#24301f', line: '#3a5335' },
   warning: { ink: '#e6c07a', soft: '#332a17', line: '#5a4a1e' },
@@ -248,6 +263,7 @@ export const toolAccents = {
   jar: { family: 'jar', label: 'honey' },
   timeline: { family: 'timeline', label: 'sage' },
   breathe: { family: 'breathe', label: 'lilac' },
+  lantern: { family: 'lantern', label: 'sea-glass' },
 } as const
 
 /** Timeline zone palette — user-selectable, all AA on canvas. */

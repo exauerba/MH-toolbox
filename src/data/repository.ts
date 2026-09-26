@@ -23,6 +23,9 @@ import type {
   JarDay,
   JarLog,
   JarLogInput,
+  LanternScale,
+  LanternScaleInput,
+  LanternShare,
   Profile,
   TimelineEntry,
   TimelineEntryInput,
@@ -80,4 +83,23 @@ export interface ToolboxRepository {
   /** Upsert: `existingId` updates an existing log, absence creates one. */
   addBreatheDoseLog(d: BreatheDoseLogInput, existingId?: string): Promise<BreatheDoseLog>
   deleteBreatheDoseLog(id: string): Promise<void>
+
+  /* ---- Lantern ---------------------------------------------------- */
+  /** The user's single scale, or null before first save. */
+  getLanternScale(): Promise<LanternScale | null>
+  /**
+   * Upsert the scale and replace its levels: levels whose id is absent from
+   * the input are deleted (whole-doc replace, idempotent re-runs).
+   */
+  saveLanternScale(s: LanternScaleInput): Promise<LanternScale>
+
+  /** Images for one level, newest first. */
+  listLanternImages(levelId: string): Promise<ImageRef[]>
+  uploadLanternImage(file: File, levelId: string): Promise<ImageRef>
+  deleteLanternImage(ref: ImageRef): Promise<void>
+
+  /* Partner sharing — remote-only. Guest mode returns [] / throws. */
+  listLanternShares(): Promise<LanternShare[]>
+  createLanternShare(label: string): Promise<LanternShare>
+  revokeLanternShare(id: string): Promise<void>
 }

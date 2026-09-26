@@ -7,6 +7,8 @@ import { HubHome } from '../features/hub/HubHome'
 import { JarScreen } from '../features/jar/JarScreen'
 import { TimelineScreen } from '../features/timeline/TimelineScreen'
 import { BreatheScreen } from '../features/breathe/BreatheScreen'
+import { LanternScreen } from '../features/lantern/LanternScreen'
+import { SharedLantern } from '../features/lantern/SharedLantern'
 import { SettingsScreen } from '../features/settings/SettingsScreen'
 import { AboutScreen } from '../features/about/AboutScreen'
 
@@ -21,6 +23,8 @@ export default function AppShell() {
                <Route path="/tools/jar" element={<JarScreen />} />
                <Route path="/tools/timeline" element={<TimelineScreen />} />
                <Route path="/tools/breathe" element={<BreatheScreen />} />
+               <Route path="/tools/lantern" element={<LanternScreen />} />
+               <Route path="/share/:token" element={<SharedLantern />} />
                <Route path="/settings" element={<SettingsScreen />} />
                <Route path="/about" element={<AboutScreen />} />
                {/* WP3 sanctioned addition: design styleguide, not linked from any nav */}

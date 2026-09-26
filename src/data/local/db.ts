@@ -5,7 +5,7 @@
  */
 import Dexie, { type EntityTable } from 'dexie'
 
-import type { BreatheCheckin, BreatheDoseLog, BreatheMed, JarDay, JarLog, Profile, TimelineEntry, TimelineZone } from '../types'
+import type { BreatheCheckin, BreatheDoseLog, BreatheMed, JarDay, JarLog, LanternLevel, LanternScale, LanternShare, Profile, TimelineEntry, TimelineZone } from '../types'
 
 /** Single-row wrapper for the profile store (one guest profile). */
 export interface ProfileRow {
@@ -27,6 +27,14 @@ export interface LocalImage {
   createdAt: string
 }
 
+/** Lantern image row: metadata plus the raw blob (mirror of LocalImage). */
+export interface LocalLanternImage {
+  id: string
+  levelId: string
+  blob: Blob
+  createdAt: string
+}
+
 export interface SteadyDB extends Dexie {
   profiles: EntityTable<ProfileRow, 'key'>
   pins: EntityTable<PinRow, 'key'>
@@ -38,6 +46,10 @@ export interface SteadyDB extends Dexie {
   breatheMeds: EntityTable<BreatheMed, 'id'>
   breatheCheckins: EntityTable<BreatheCheckin, 'id'>
   breatheDoseLogs: EntityTable<BreatheDoseLog, 'id'>
+  lanternScales: EntityTable<LanternScale, 'id'>
+  lanternLevels: EntityTable<LanternLevel & { scaleId: string }, 'id'>
+  lanternImages: EntityTable<LocalLanternImage, 'id'>
+  lanternShares: EntityTable<LanternShare, 'id'>
 }
 
 export function createSteadyDB(name = 'steady'): SteadyDB {
@@ -62,6 +74,22 @@ export function createSteadyDB(name = 'steady'): SteadyDB {
     breatheMeds: 'id',
     breatheCheckins: 'id, date',
     breatheDoseLogs: 'id, date, medId',
+  })
+  db.version(3).stores({
+    profiles: 'key',
+    pins: 'key',
+    jarDays: 'date',
+    jarLogs: 'id',
+    timelineEntries: 'id',
+    timelineZones: 'id',
+    images: 'id, entryId',
+    breatheMeds: 'id',
+    breatheCheckins: 'id, date',
+    breatheDoseLogs: 'id, date, medId',
+    lanternScales: 'id',
+    lanternLevels: 'id, scaleId',
+    lanternImages: 'id, levelId',
+    lanternShares: 'id',
   })
   return db
 }
