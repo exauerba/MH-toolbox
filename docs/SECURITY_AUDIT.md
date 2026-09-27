@@ -183,6 +183,116 @@ way a shared lantern is read. It is locked down:
 
 ---
 
+## Lantern Partners (migration 010) — security posture
+
+Partners adds two tables and two RPCs. The remote model is the same
+`auth.uid()`-scoped RLS as everywhere else, with one structural difference:
+**a partnership is inherently two-party**, so it is the only table in the schema
+scoped by a *pair* of columns rather than a single `user_id`.
+
+`steady_lantern_partnerships` holds one row per pair — `sharer_id` owns the
+scale, `partner_id` is the viewer, `status` moves `pending → active | revoked`,
+with `unique (sharer_id, partner_id)` and a `sharer_id <> partner_id` check so
+nobody can share with themselves. Two parties are involved, so the policies are
+split by command rather than expressed as one `for all` per side:
+
+- sharer — `for select`, `for insert with check (auth.uid() = sharer_id and
+  status = 'pending')`, `for update with check (auth.uid() = sharer_id and
+  status <> 'active')`, `for delete`
+- partner — `for select using (auth.uid() = partner_id)`, `for update using (…)
+  with check (auth.uid() = partner_id)`; no insert, no delete
+
+The partner therefore accepts and declines, and can never put itself on the
+sharer's side of a row. The sharer's UPDATE check deliberately excludes
+`'active'`, so a sharer cannot accept their own invitation — the UI says
+"Waiting for them to accept" and the database has to mean it. The sharer can
+still move a row between `pending` and `revoked` to withdraw and, in principle,
+to re-invite. Re-inviting someone who previously declined is *not* wired up
+client-side yet — `addPartner` still issues a plain `insert`, so it trips
+`unique (sharer_id, partner_id)` on the revoked row. The policy permits the
+`update` that would fix this; the client does not issue it yet.
+
+**Why the participant columns are locked by a trigger, not a policy.** RLS
+cannot make `sharer_id`/`partner_id` immutable. A `WITH CHECK` clause only sees
+the *new* row, and Postgres OR-combines the checks of every policy that applies
+to the command — so a side's check pins only *its own* column. The partner
+policy, pinning `partner_id` alone, therefore left `sharer_id` rewriteable on a
+row the caller was invited to: `update … set sharer_id = <any uuid>, status =
+'active'` passed, and combined with `find_user_by_username` (below) a user
+invited *once* could re-point their own row at any other account and read that
+account's whole lantern through `get_partner_status()` — a cross-tenant read of
+the most sensitive data in the app. Pinning the counterpart column in the same
+`WITH CHECK` does not work, for the OR reason above. A `BEFORE UPDATE` trigger
+(`steady_lantern_partnerships_lock_ids`, `security definer`-free `plpgsql`,
+`set search_path = public`) is the only place that can compare the old row to
+the new one, so it raises `insufficient_privilege` if either column changes. It
+is defence in depth: RLS still decides *which rows* a caller may touch, and the
+trigger decides *how those rows may be edited*.
+
+`tests/rls-security.test.ts` asserts both properties directly: a sharer's
+`status = 'active'` write returns no rows and leaves the row `pending`, and an
+invitee's re-point attempt is refused with an error and leaves both `sharer_id`
+and `status` untouched.
+
+`steady_lantern_current_levels` is plain single-owner: `unique (user_id)`
+(one row per user, so a re-set replaces rather than appends), one
+`for all … using (auth.uid() = user_id) with check (auth.uid() = user_id)`
+policy, and no anon grant. A partner never selects this table at all — they
+read it through the RPC. `level_id` FK-cascades from
+`steady_lantern_levels`, so a scale edit that removes a level also clears the
+status, which is the correct outcome: a level that no longer exists cannot be
+presented as current. The window itself is client-side — `expires_at` is
+`set_at + 60 min` (`CURRENT_LEVEL_TTL_MINUTES`) and is evaluated for display by
+`currentLevelState`, with no cron, so a stale signal settles by itself.
+
+Two `SECURITY DEFINER` functions were added. Each is `set search_path =
+public`, `revoke all … from public`, and `grant execute … to authenticated`
+only — never `anon` — so neither is reachable without a real account:
+
+- **`find_user_by_username(text)`** returns a single `jsonb` object containing
+  **only** `{id, username}` for a username that already exists, and never the
+  caller themselves (the `u.id <> auth.uid()` clause makes self-inviting
+  impossible). It exists because steady signs people in by username, which is
+  the local part of their hidden Supabase email, and `auth.users` is not
+  readable by authenticated clients. It is a **user-enumeration surface by
+  design**: any authenticated user can confirm that a given username is
+  registered and learn its account id. That is the accepted residual risk for
+  an invite-by-username flow — the disclosure is one uuid, only for a name the
+  caller already knows, never the email, and it is bounded by requiring an
+  account.
+- **`get_partner_status()`** takes **no arguments** — the caller is derived
+  from `auth.uid()` inside the function, so it cannot be asked about anyone
+  else, and it filters to `partner_id = auth.uid() and status = 'active'`. What
+  it returns is text plus timestamps: the sharer's username, scale name, level
+  count, and per-level `position` / `label` / `description` / `actions`, plus
+  the sharer's current level as `setAt` / `expiresAt` and the same text fields.
+  It never returns image paths, `storage_path` values, the scale id, or email
+  addresses. Two uuid leaks are worth naming precisely rather than glossing:
+  the entry carries `sharerId`, and the `currentLevel` object carries its own
+  row `id` plus `levelId`. Those are inert — every `steady_lantern_*` table is
+  RLS-scoped to its owner and no RPC accepts an id, so a partner holding one
+  still cannot read a row with it. The *scale's* level objects are genuinely
+  id-free, which is why the repository synthesizes `LanternLevel.id` from
+  `sharerId:position` and matches the live level by position.
+
+One deliberate lifecycle choice: the current level is **excluded from the
+export bundle**. It is live, time-boxed state rather than a record, so an
+export has nothing to write down — but it *is* carried across the guest →
+account migration (`migrateLocal.ts` reads it straight from the local
+repository and re-sets it after the scale save, because its `levelId` points
+into the levels that migration just wrote). Partnerships are never migrated:
+they are remote-only from the start.
+
+Neither RPC is called from `tests/rls-security.test.ts` — that harness signs
+in with the anon key plus a password, which is not the JWT shape PostgREST
+requires for a `SECURITY DEFINER` call, and both flows are already exercised
+end-to-end by `tests/parity.suite.ts`. The table-level RLS for both new tables
+is covered there; `steady_lantern_partnerships` is asserted longhand rather
+than through the shared `TableSpec` harness, because the harness assumes a
+single `user_id` owner and a two-party table inverts half of its assertions.
+
+---
+
 ## Low / Info
 
 - **L1** — Login lockout is client-side only (`authCore.ts`); server brute-force relies

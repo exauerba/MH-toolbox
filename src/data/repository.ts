@@ -23,9 +23,12 @@ import type {
   JarDay,
   JarLog,
   JarLogInput,
+  LanternCurrentLevel,
+  LanternPartnership,
   LanternScale,
   LanternScaleInput,
   LanternShare,
+  PartnerStatus,
   Profile,
   TimelineEntry,
   TimelineEntryInput,
@@ -102,4 +105,30 @@ export interface ToolboxRepository {
   listLanternShares(): Promise<LanternShare[]>
   createLanternShare(label: string): Promise<LanternShare>
   revokeLanternShare(id: string): Promise<void>
+
+  /**
+   * The user's current level, as their partners see it. Works in every mode
+   * (guest value migrates with the account) because naming where you are
+   * helps the user regardless of who is watching. One row per user;
+   * `expiresAt` is set +60 min, and the UI treats an expired value as
+   * "last updated" rather than as an active signal.
+   */
+  getCurrentLevel(): Promise<LanternCurrentLevel | null>
+  /** Set (or re-set — the "still true?" refresh) the current level. */
+  setCurrentLevel(levelId: string): Promise<LanternCurrentLevel>
+  clearCurrentLevel(): Promise<void>
+
+  /* Partnerships — remote-only (guest mode returns [] / throws / no-ops). */
+  /** Outgoing and incoming partnerships for the signed-in user, newest first. */
+  listPartnerships(): Promise<LanternPartnership[]>
+  /** Look up someone by username. Null when no such account exists. */
+  findUserByUsername(username: string): Promise<{ id: string; username: string } | null>
+  /** Send a pending invitation. Throws 'Partners need an account' in guest mode. */
+  addPartner(username: string): Promise<LanternPartnership>
+  acceptPartnership(id: string): Promise<void>
+  declinePartnership(id: string): Promise<void>
+  /** Withdraw an invitation or disconnect an active partnership. */
+  revokePartnership(id: string): Promise<void>
+  /** Active partnerships where I am the partner — the read-only pane data. */
+  getPartnerStatus(): Promise<PartnerStatus[]>
 }

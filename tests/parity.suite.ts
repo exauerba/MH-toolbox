@@ -25,6 +25,15 @@ export function runRepositorySuite(
     // Partner sharing is remote-only — the local (guest) repo has no shares.
     const supportsShares = name === 'fake' || name === 'supabase'
 
+    // The *lifecycle* of an invitation needs a second real account, because
+    // addPartner() resolves a username against auth.users: on a hosted run the
+    // only credential available is the single test user, so 'sam' may not
+    // exist. Two-account rules (who may accept, who may re-point a row, what
+    // get_partner_status() returns to a partner) are covered by
+    // tests/rls-security.test.ts, which mints its own throwaway users. What one
+    // account *can* reach on every remote is asserted below, unrestrained.
+    const supportsPartnerInvites = name === 'fake'
+
     beforeEach(async () => {
       const s = await setup()
       repo = s.repo
@@ -564,6 +573,118 @@ export function runRepositorySuite(
         const after = await repo.listLanternShares()
         expect(after).toHaveLength(1)
         expect(after[0].revokedAt).toBeTruthy()
+      })
+    }
+
+    /* ---- Lantern current level ------------------------------------- */
+
+    // A real uuid, not a readable label: steady_lantern_levels.id is a uuid
+    // column on Postgres, so a 'lv'-style id would be rejected there while
+    // passing fine against the fake and Dexie.
+    const SEED_LEVEL_ID = '00000000-0000-4000-8000-000000000001'
+
+    const seedScale = async (levelId: string): Promise<void> => {
+      await repo.saveLanternScale({
+        name: 'S',
+        levelCount: 1,
+        levels: [{ id: levelId, position: 1, label: 'Grounded', description: '', actions: [] }],
+      })
+    }
+
+    it('has no current level before one is set', async () => {
+      expect(await repo.getCurrentLevel()).toBeNull()
+    })
+
+    it('round-trips the current level', async () => {
+      await seedScale(SEED_LEVEL_ID)
+      const set = await repo.setCurrentLevel('lv')
+      expect(set.id).toBeTruthy()
+      expect(set.levelId).toBe('lv')
+      expect(set.setAt).toBeTruthy()
+      expect(set.expiresAt).toBeTruthy()
+      expect(Date.parse(set.expiresAt)).toBeGreaterThan(Date.parse(set.setAt))
+
+      const got = await repo.getCurrentLevel()
+      expect(got?.id).toBe(set.id)
+      expect(got?.levelId).toBe('lv')
+      expect(got?.setAt).toBe(set.setAt)
+      expect(got?.expiresAt).toBe(set.expiresAt)
+    })
+
+    it('re-setting the current level refreshes it without duplicating', async () => {
+      await seedScale(SEED_LEVEL_ID)
+      const first = await repo.setCurrentLevel('lv')
+      const second = await repo.setCurrentLevel('lv')
+
+      expect(second.id).toBe(first.id)
+      expect(Date.parse(second.expiresAt)).toBeGreaterThanOrEqual(Date.parse(first.expiresAt))
+      expect(Date.parse(second.expiresAt)).toBeGreaterThan(Date.parse(second.setAt))
+
+      const got = await repo.getCurrentLevel()
+      expect(got?.id).toBe(first.id)
+      expect(got?.levelId).toBe('lv')
+    })
+
+    it('clears the current level', async () => {
+      await seedScale(SEED_LEVEL_ID)
+      await repo.setCurrentLevel('lv')
+      await repo.clearCurrentLevel()
+      expect(await repo.getCurrentLevel()).toBeNull()
+    })
+
+    it('wipes the current level with the rest of the data', async () => {
+      await seedScale(SEED_LEVEL_ID)
+      await repo.setCurrentLevel('lv')
+      await repo.deleteAllData()
+      expect(await repo.getCurrentLevel()).toBeNull()
+    })
+
+    if (supportsShares) {
+      // Both RPCs, reachable with one account: neither has anybody to name, so
+      // the honest assertion is that they answer rather than that they find a
+      // partner. This is the part of partner sharing a single CI credential
+      // can actually verify.
+      it('resolves an unknown username to null and returns an empty partner status', async () => {
+        expect(await repo.findUserByUsername('nobody-with-this-name')).toBeNull()
+        expect(await repo.getPartnerStatus()).toEqual([])
+      })
+    }
+
+    if (supportsPartnerInvites) {
+      it('adds a partner and lists the pending partnership', async () => {
+        expect(await repo.listPartnerships()).toEqual([])
+        const p = await repo.addPartner('sam')
+        expect(p.id).toBeTruthy()
+        expect(p.status).toBe('pending')
+        expect(p.createdAt).toBeTruthy()
+
+        const listed = await repo.listPartnerships()
+        expect(listed).toHaveLength(1)
+        expect(listed[0].id).toBe(p.id)
+        expect(listed[0].status).toBe('pending')
+      })
+
+      it('accepts a partnership into active', async () => {
+        const p = await repo.addPartner('sam')
+        await repo.acceptPartnership(p.id)
+        const row = (await repo.listPartnerships()).find((x) => x.id === p.id)
+        expect(row?.status).toBe('active')
+      })
+
+      it('revokes a partnership', async () => {
+        const p = await repo.addPartner('sam')
+        await repo.revokePartnership(p.id)
+        const row = (await repo.listPartnerships()).find((x) => x.id === p.id)
+        expect(row?.status).toBe('revoked')
+      })
+
+      it('returns partner status as an array', async () => {
+        // Deliberately loose: whether a scale exists (and therefore whether the
+        // array has rows) differs between the fake and a real remote account.
+        await seedScale(SEED_LEVEL_ID)
+        const p = await repo.addPartner('sam')
+        await repo.acceptPartnership(p.id)
+        expect(Array.isArray(await repo.getPartnerStatus())).toBe(true)
       })
     }
 

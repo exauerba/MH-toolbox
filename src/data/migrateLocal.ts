@@ -25,6 +25,7 @@ export interface MigrationResult {
     breatheDoseLogs: number
     lanternScales: number
     lanternImages: number
+    lanternCurrentLevels: number
   }
 }
 
@@ -50,6 +51,7 @@ const zeroCounts = (): MigrationResult['counts'] => ({
   breatheDoseLogs: 0,
   lanternScales: 0,
   lanternImages: 0,
+  lanternCurrentLevels: 0,
 })
 
 function hasLocalData(bundle: ExportBundle): boolean {
@@ -198,6 +200,19 @@ export async function migrateLocalToSupabase(
       counts.lanternImages++
     } catch {
       // Blob unavailable — skip this image rather than failing the migration.
+    }
+  }
+
+  // The current level is deliberately not in the export bundle (it is live,
+  // time-boxed state, not a record), so read it straight from the local repo.
+  // It must come after the scale save: its levelId points into those levels.
+  const currentLevel = await local.getCurrentLevel()
+  if (currentLevel) {
+    try {
+      await remote.setCurrentLevel(currentLevel.levelId)
+      counts.lanternCurrentLevels++
+    } catch {
+      // The level may have been removed since it was set — skip it.
     }
   }
 

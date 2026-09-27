@@ -246,6 +246,70 @@ export interface LanternShare {
   revokedAt: string | null
 }
 
+/* ------------------------------------------------------------------ *
+ * Lantern partners — a read-only view of someone's scale + level
+ * ------------------------------------------------------------------ */
+
+/**
+ * Pending = invitation sent, not yet accepted. Active = the partner can see
+ * the read-only pane. Revoked = declined or withdrawn (kept for history).
+ */
+export type LanternPartnershipStatus = 'pending' | 'active' | 'revoked'
+
+/**
+ * Which side of the connection the signed-in user is on. `outgoing` = they
+ * added this person and share their own scale; `incoming` = this person added
+ * them, so their level is the one on display. Computed per viewer, never
+ * stored.
+ */
+export type LanternPartnershipSide = 'incoming' | 'outgoing'
+
+/**
+ * A connection between a `sharer` (whose scale is shared) and a `partner`
+ * (who views it). Remote-only — partnerships need two real accounts.
+ * The username fields are display-only joins, never stored on the row.
+ */
+export interface LanternPartnership {
+  id: string
+  sharerId: string
+  partnerId: string
+  side: LanternPartnershipSide
+  status: LanternPartnershipStatus
+  createdAt: string
+  updatedAt: string
+  sharerUsername?: string
+  partnerUsername?: string
+}
+
+/**
+ * The user's current level, as seen by their partners. Deliberately
+ * time-boxed: it auto-expires so a stale signal never becomes an alarm.
+ * Re-setting the same levelId is the "still true?" refresh.
+ */
+export interface LanternCurrentLevel {
+  id: string
+  levelId: string
+  setAt: string
+  expiresAt: string
+}
+
+/** What a partner sees for one active partnership. Read-only, text-only. */
+export interface PartnerStatus {
+  sharerId: string
+  sharerUsername: string
+  scaleName: string
+  levelCount: number
+  levels: LanternLevel[]
+  currentLevel:
+    | (LanternCurrentLevel & {
+        position: number
+        label: string
+        description: string
+        actions: string[]
+      })
+    | null
+}
+
 /**
  * Full JSON export. Image blobs are intentionally excluded (metadata only) —
  * the export is a data backup; images are restored via the migration path.

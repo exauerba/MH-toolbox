@@ -18,9 +18,12 @@ import type {
   JarDay,
   JarLog,
   JarLogInput,
+  LanternCurrentLevel,
+  LanternPartnership,
   LanternScale,
   LanternScaleInput,
   LanternShare,
+  PartnerStatus,
   Profile,
   TimelineEntry,
   TimelineEntryInput,
@@ -28,6 +31,7 @@ import type {
   TimelineZoneInput,
 } from '../types'
 import { assertImageAllowed, MAX_IMAGES_PER_ENTRY, MAX_IMAGES_PER_LEVEL } from '../imageRules'
+import { currentLevelExpiresAt } from '../lanternTtl'
 import { createSteadyDB, type SteadyDB } from './db'
 
 function blobUrl(blob: Blob): string {
@@ -455,6 +459,57 @@ export class LocalRepository implements ToolboxRepository {
 
   async revokeLanternShare(_id: string): Promise<void> {}
 
+  /**
+   * The current level works in guest mode too: naming where you are helps the
+   * user regardless of who is watching, and the row migrates when they sign in.
+   * One row only — re-setting reuses the id so nothing duplicates.
+   */
+  async getCurrentLevel(): Promise<LanternCurrentLevel | null> {
+    const row = await this.db.lanternCurrentLevels.toCollection().first()
+    return row ?? null
+  }
+
+  async setCurrentLevel(levelId: string): Promise<LanternCurrentLevel> {
+    const existing = await this.db.lanternCurrentLevels.toCollection().first()
+    const now = new Date()
+    const row: LanternCurrentLevel = {
+      id: existing?.id ?? crypto.randomUUID(),
+      levelId,
+      setAt: now.toISOString(),
+      expiresAt: currentLevelExpiresAt(now),
+    }
+    await this.db.lanternCurrentLevels.put(row)
+    return row
+  }
+
+  async clearCurrentLevel(): Promise<void> {
+    await this.db.lanternCurrentLevels.clear()
+  }
+
+  /* Partnerships — remote-only; guest mode has no second account to share with. */
+
+  async listPartnerships(): Promise<LanternPartnership[]> {
+    return []
+  }
+
+  async findUserByUsername(_username: string): Promise<{ id: string; username: string } | null> {
+    return null
+  }
+
+  async addPartner(_username: string): Promise<LanternPartnership> {
+    throw new Error('Partners need an account')
+  }
+
+  async acceptPartnership(_id: string): Promise<void> {}
+
+  async declinePartnership(_id: string): Promise<void> {}
+
+  async revokePartnership(_id: string): Promise<void> {}
+
+  async getPartnerStatus(): Promise<PartnerStatus[]> {
+    return []
+  }
+
   async exportAll(): Promise<ExportBundle> {
     const [
       profile, pins, jarDays, jarLogs, timelineEntries, timelineZones, images,
@@ -516,6 +571,7 @@ export class LocalRepository implements ToolboxRepository {
       this.db.lanternLevels.clear(),
       this.db.lanternImages.clear(),
       this.db.lanternShares.clear(),
+      this.db.lanternCurrentLevels.clear(),
     ])
   }
 }

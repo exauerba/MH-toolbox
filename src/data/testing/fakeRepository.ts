@@ -19,10 +19,13 @@ import type {
   JarDay,
   JarLog,
   JarLogInput,
+  LanternCurrentLevel,
   LanternLevel,
+  LanternPartnership,
   LanternScale,
   LanternScaleInput,
   LanternShare,
+  PartnerStatus,
   Profile,
   TimelineEntry,
   TimelineEntryInput,
@@ -30,6 +33,21 @@ import type {
   TimelineZoneInput,
 } from '../types'
 import { assertImageAllowed, MAX_IMAGES_PER_ENTRY, MAX_IMAGES_PER_LEVEL } from '../imageRules'
+import { currentLevelExpiresAt } from '../lanternTtl'
+
+/**
+ * The accounts this fake knows about.
+ *
+ * A real `find_user_by_username` resolves a name against `auth.users`, so it can
+ * legitimately come back empty. Fabricating a user for whatever string it is
+ * handed would hide that branch, which is the one PartnersTab renders as "no
+ * account by that name" — so the roster is finite and the lookup can miss.
+ */
+export const FAKE_ACCOUNTS: readonly { id: string; username: string }[] = [
+  { id: 'user-sam', username: 'sam' },
+  { id: 'user-ada', username: 'ada' },
+  { id: 'user-noor', username: 'noor' },
+]
 
 export class FakeRepository implements ToolboxRepository {
   profile: Profile | null = null
@@ -46,6 +64,8 @@ export class FakeRepository implements ToolboxRepository {
   lanternLevels = new Map<string, LanternLevel & { scaleId: string }>()
   lanternImages = new Map<string, ImageRef>()
   lanternShares = new Map<string, LanternShare>()
+  lanternCurrentLevel: LanternCurrentLevel | null = null
+  lanternPartnerships = new Map<string, LanternPartnership>()
 
   async getProfile(): Promise<Profile | null> {
     return this.profile
@@ -458,6 +478,125 @@ export class FakeRepository implements ToolboxRepository {
     }
   }
 
+  async getCurrentLevel(): Promise<LanternCurrentLevel | null> {
+    return this.lanternCurrentLevel
+  }
+
+  async setCurrentLevel(levelId: string): Promise<LanternCurrentLevel> {
+    const setAt = new Date()
+    const current: LanternCurrentLevel = {
+      id: this.lanternCurrentLevel?.id ?? crypto.randomUUID(),
+      levelId,
+      setAt: setAt.toISOString(),
+      expiresAt: currentLevelExpiresAt(setAt),
+    }
+    this.lanternCurrentLevel = current
+    return current
+  }
+
+  async clearCurrentLevel(): Promise<void> {
+    this.lanternCurrentLevel = null
+  }
+
+  async listPartnerships(): Promise<LanternPartnership[]> {
+    return [...this.lanternPartnerships.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  }
+
+  async findUserByUsername(username: string): Promise<{ id: string; username: string } | null> {
+    // Mirrors find_user_by_username: trim, match case-insensitively, and return
+    // null when there is no such account.
+    const wanted = username.trim().toLowerCase()
+    if (!wanted) return null
+    const hit = FAKE_ACCOUNTS.find((u) => u.username === wanted)
+    return hit ? { id: hit.id, username: hit.username } : null
+  }
+
+  async addPartner(username: string): Promise<LanternPartnership> {
+    const found = await this.findUserByUsername(username)
+    if (!found) throw new Error('No account with that username')
+    for (const p of this.lanternPartnerships.values()) {
+      if (p.sharerId === 'me' && p.partnerId === found.id) {
+        throw new Error('That person is already connected')
+      }
+    }
+    const now = new Date().toISOString()
+    const partnership: LanternPartnership = {
+      id: crypto.randomUUID(),
+      sharerId: 'me',
+      partnerId: found.id,
+      // The fake only ever models the signed-in user as the sharer; tests that
+      // need the incoming side override listPartnerships/getPartnerStatus.
+      side: 'outgoing',
+      status: 'pending',
+      createdAt: now,
+      updatedAt: now,
+      partnerUsername: username,
+    }
+    this.lanternPartnerships.set(partnership.id, partnership)
+    return partnership
+  }
+
+  async acceptPartnership(id: string): Promise<void> {
+    const existing = this.lanternPartnerships.get(id)
+    if (existing) {
+      this.lanternPartnerships.set(id, {
+        ...existing,
+        status: 'active',
+        updatedAt: new Date().toISOString(),
+      })
+    }
+  }
+
+  async declinePartnership(id: string): Promise<void> {
+    const existing = this.lanternPartnerships.get(id)
+    if (existing) {
+      this.lanternPartnerships.set(id, {
+        ...existing,
+        status: 'revoked',
+        updatedAt: new Date().toISOString(),
+      })
+    }
+  }
+
+  async revokePartnership(id: string): Promise<void> {
+    const existing = this.lanternPartnerships.get(id)
+    if (existing) {
+      this.lanternPartnerships.set(id, {
+        ...existing,
+        status: 'revoked',
+        updatedAt: new Date().toISOString(),
+      })
+    }
+  }
+
+  async getPartnerStatus(): Promise<PartnerStatus[]> {
+    const scale = await this.getLanternScale()
+    if (!scale) return []
+    const levels = [...scale.levels].sort((a, b) => a.position - b.position)
+    const current = this.lanternCurrentLevel
+    const match = current ? levels.find((l) => l.id === current.levelId) : undefined
+    const currentLevel =
+      current && match
+        ? {
+            ...current,
+            position: match.position,
+            label: match.label,
+            description: match.description,
+            actions: match.actions,
+          }
+        : null
+    return [...this.lanternPartnerships.values()]
+      .filter((p) => p.status === 'active')
+      .map((p) => ({
+        sharerId: p.sharerId,
+        sharerUsername: p.sharerUsername ?? 'them',
+        scaleName: scale.name,
+        levelCount: scale.levelCount,
+        levels,
+        currentLevel,
+      }))
+  }
+
   async exportAll(): Promise<ExportBundle> {
     return {
       exportedAt: new Date().toISOString(),
@@ -501,5 +640,7 @@ export class FakeRepository implements ToolboxRepository {
     this.lanternLevels.clear()
     this.lanternImages.clear()
     this.lanternShares.clear()
+    this.lanternCurrentLevel = null
+    this.lanternPartnerships.clear()
   }
 }

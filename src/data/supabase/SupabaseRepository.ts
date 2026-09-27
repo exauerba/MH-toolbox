@@ -21,10 +21,15 @@ import type {
   JarDay,
   JarLog,
   JarLogInput,
+  LanternCurrentLevel,
   LanternLevel,
+  LanternPartnership,
+  LanternPartnershipStatus,
+  LanternPartnershipSide,
   LanternScale,
   LanternScaleInput,
   LanternShare,
+  PartnerStatus,
   Profile,
   TimelineEntry,
   TimelineEntryInput,
@@ -32,6 +37,7 @@ import type {
   TimelineZoneInput,
 } from '../types'
 import { assertImageAllowed, MAX_IMAGES_PER_ENTRY, MAX_IMAGES_PER_LEVEL } from '../imageRules'
+import { currentLevelExpiresAt } from '../lanternTtl'
 
 const BUCKET = 'steady-media'
 const SIGNED_URL_TTL_SECONDS = 3600
@@ -148,6 +154,55 @@ interface LanternShareRow {
   label: string
   created_at: string
   revoked_at: string | null
+}
+
+/** One row per user (unique `user_id`) — where they are right now. */
+interface LanternCurrentLevelRow {
+  id: string
+  user_id: string
+  level_id: string
+  set_at: string
+  expires_at: string
+}
+
+/** Asymmetric pair: `sharer_id` owns the scale, `partner_id` views it. */
+interface LanternPartnershipRow {
+  id: string
+  sharer_id: string
+  partner_id: string
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * One entry of the `get_partner_status()` array. The RPC is text-only and
+ * already camelCase, so it needs its own interface rather than
+ * `LanternLevelRow` — note it projects no level ids (see
+ * `partnerLevelFromRpc`).
+ */
+interface PartnerStatusRpcLevel {
+  position: number
+  label: string
+  description: string
+  actions: string[] | null
+}
+
+interface PartnerStatusRpcCurrentLevel extends PartnerStatusRpcLevel {
+  id: string
+  levelId: string
+  setAt: string
+  expiresAt: string
+}
+
+interface PartnerStatusRpcRow {
+  sharerId: string
+  sharerUsername: string | null
+  /** Null when the sharer has not saved a scale yet (the RPC left-joins it). */
+  scaleName: string | null
+  levelCount: number | null
+  levels: PartnerStatusRpcLevel[] | null
+  currentLevel: PartnerStatusRpcCurrentLevel | null
 }
 
 /** Canonicalize Postgres timestamptz output (`...+00:00`) to ISO `.000Z`. */
@@ -309,6 +364,77 @@ function lanternShareFromRow(r: LanternShareRow): LanternShare {
     token: r.token,
     createdAt: iso(r.created_at) ?? '',
     revokedAt: iso(r.revoked_at),
+  }
+}
+
+function currentLevelFromRow(r: LanternCurrentLevelRow): LanternCurrentLevel {
+  return {
+    id: r.id,
+    levelId: r.level_id,
+    setAt: iso(r.set_at) ?? '',
+    expiresAt: iso(r.expires_at) ?? '',
+  }
+}
+
+// `side` is which way round the relationship runs for the signed-in viewer, so
+// it is decided by the query that fetched the row, not by the row itself.
+function partnershipFromRow(
+  r: LanternPartnershipRow,
+  side: LanternPartnershipSide,
+): LanternPartnership {
+  return {
+    id: r.id,
+    sharerId: r.sharer_id,
+    partnerId: r.partner_id,
+    // The column is text with a check constraint over exactly these three
+    // values, so the cast cannot produce an unknown status.
+    status: r.status as LanternPartnershipStatus,
+    side,
+    createdAt: iso(r.created_at) ?? '',
+    updatedAt: iso(r.updated_at) ?? '',
+  }
+}
+
+/**
+ * The partner pane never sees level ids: `get_partner_status()` projects the
+ * text of each level and nothing else. `LanternLevel.id` is therefore
+ * synthesized from the sharer + position so React keys stay unique across
+ * panes; match the live level by `position`, not by id.
+ */
+function partnerLevelFromRpc(sharerId: string, l: PartnerStatusRpcLevel): LanternLevel {
+  return {
+    id: `${sharerId}:${l.position}`,
+    position: l.position,
+    label: l.label,
+    description: l.description,
+    actions: l.actions ?? [],
+  }
+}
+
+function partnerStatusFromRpc(r: PartnerStatusRpcRow): PartnerStatus {
+  const cl = r.currentLevel
+  return {
+    sharerId: r.sharerId,
+    sharerUsername: r.sharerUsername ?? '',
+    // Empty name / zero levels = the sharer has not saved a scale yet; the
+    // pane decides what to say about that.
+    scaleName: r.scaleName ?? '',
+    levelCount: Number(r.levelCount ?? 0),
+    levels: (r.levels ?? [])
+      .map((l) => partnerLevelFromRpc(r.sharerId, l))
+      .sort((a: LanternLevel, b: LanternLevel) => a.position - b.position),
+    currentLevel: cl
+      ? {
+          id: cl.id,
+          levelId: cl.levelId,
+          setAt: iso(cl.setAt) ?? '',
+          expiresAt: iso(cl.expiresAt) ?? '',
+          position: cl.position,
+          label: cl.label,
+          description: cl.description,
+          actions: cl.actions ?? [],
+        }
+      : null,
   }
 }
 
@@ -1039,6 +1165,145 @@ export class SupabaseRepository implements ToolboxRepository {
     if (error) throw error
   }
 
+  /* ---- Current level + partnerships ------------------------------- */
+
+  async getCurrentLevel(): Promise<LanternCurrentLevel | null> {
+    const uid = await this.requireUserId()
+    const { data, error } = await this.client
+      .from('steady_lantern_current_levels')
+      .select('*')
+      .eq('user_id', uid)
+      .maybeSingle()
+    if (error) throw error
+    return data ? currentLevelFromRow(data) : null
+  }
+
+  async setCurrentLevel(levelId: string): Promise<LanternCurrentLevel> {
+    const uid = await this.requireUserId()
+    const setAt = new Date()
+    // The table is unique on (user_id), so an upsert on that constraint is the
+    // whole "one row per user" rule: re-setting the same level refreshes the
+    // expiry in place instead of appending a second row. The FK to
+    // steady_lantern_levels rejects an unknown level id, and the owner RLS on
+    // that table is what keeps the level the caller's own.
+    const { data, error } = await this.client
+      .from('steady_lantern_current_levels')
+      .upsert(
+        {
+          user_id: uid,
+          level_id: levelId,
+          set_at: setAt.toISOString(),
+          expires_at: currentLevelExpiresAt(setAt),
+        },
+        { onConflict: 'user_id' },
+      )
+      .select()
+      .single()
+    if (error) throw error
+    return currentLevelFromRow(data)
+  }
+
+  async clearCurrentLevel(): Promise<void> {
+    const uid = await this.requireUserId()
+    const { error } = await this.client
+      .from('steady_lantern_current_levels')
+      .delete()
+      .eq('user_id', uid)
+    if (error) throw error
+  }
+
+  async listPartnerships(): Promise<LanternPartnership[]> {
+    const uid = await this.requireUserId()
+    const [outgoing, incoming] = await Promise.all([
+      this.client.from('steady_lantern_partnerships').select('*').eq('sharer_id', uid),
+      this.client.from('steady_lantern_partnerships').select('*').eq('partner_id', uid),
+    ])
+    if (outgoing.error) throw outgoing.error
+    if (incoming.error) throw incoming.error
+    // Rows carry no usernames and we cannot join them: this client is the anon
+    // key, auth.users is not readable by authenticated clients (only the
+    // SECURITY DEFINER RPCs can reach it), and no view exposes it — checked
+    // across src/data and src/auth (authCore's userFromSupabase only maps the
+    // signed-in user's own row). The optional username fields are therefore left
+    // unset here; the partner pane gets the sharer's username from
+    // getPartnerStatus() instead. A row is only ever on one side, so no dedupe.
+const mine = (rows: LanternPartnershipRow[] | null, side: LanternPartnership['side']) =>
+    (rows ?? []).map((r) => partnershipFromRow(r, side))
+    return [...mine(outgoing.data, 'outgoing'), ...mine(incoming.data, 'incoming')].sort(
+      (a: LanternPartnership, b: LanternPartnership) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt),
+    )
+  }
+
+  async findUserByUsername(username: string): Promise<{ id: string; username: string } | null> {
+    await this.requireUserId()
+    const { data, error } = await this.client.rpc('find_user_by_username', { p_username: username })
+    if (error) throw error
+    if (!data) return null
+    const row = data as { id: string; username: string }
+    return { id: row.id, username: row.username }
+  }
+
+  async addPartner(username: string): Promise<LanternPartnership> {
+    const uid = await this.requireUserId()
+    const found = await this.findUserByUsername(username)
+    if (!found) throw new Error('No one with that username')
+    const { data, error } = await this.client
+      .from('steady_lantern_partnerships')
+      .insert({ sharer_id: uid, partner_id: found.id, status: 'pending' })
+      .select()
+      .single()
+    if (error) {
+      // 23505 = the unique (sharer_id, partner_id) pair is already there, i.e.
+      // already invited or already connected. Say so plainly rather than
+      // surfacing a Postgres message.
+      if (error.code === '23505' || /duplicate|already exists/i.test(error.message)) {
+        throw new Error('That person is already connected')
+      }
+      throw error
+    }
+    // The username is the caller's own input, echoed back by the rpc, so it can
+    // be attached without reading anyone else's account. Adding someone is
+    // always the outgoing side: the caller is the sharer.
+    return { ...partnershipFromRow(data, 'outgoing'), partnerUsername: found.username }
+  }
+
+  async acceptPartnership(id: string): Promise<void> {
+    await this.setPartnershipStatus(id, 'active')
+  }
+
+  async declinePartnership(id: string): Promise<void> {
+    await this.setPartnershipStatus(id, 'revoked')
+  }
+
+  async revokePartnership(id: string): Promise<void> {
+    await this.setPartnershipStatus(id, 'revoked')
+  }
+
+  /**
+   * No owner filter: RLS decides which side may write — the partner on an
+   * incoming row (accept/decline), the sharer on an outgoing one (withdraw).
+   * `updated_at` is client-set throughout this schema, and listPartnerships
+   * sorts by it, so an answer floats to the top of the list.
+   */
+  private async setPartnershipStatus(id: string, status: LanternPartnershipStatus): Promise<void> {
+    await this.requireUserId()
+    const { error } = await this.client
+      .from('steady_lantern_partnerships')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id)
+    if (error) throw error
+  }
+
+  async getPartnerStatus(): Promise<PartnerStatus[]> {
+    await this.requireUserId()
+    const { data, error } = await this.client.rpc('get_partner_status')
+    if (error) throw error
+    // The function coalesces to an array, but a scalar object would break the
+    // contract, so guard rather than trust it.
+    const rows: PartnerStatusRpcRow[] = Array.isArray(data) ? data : []
+    return rows.map(partnerStatusFromRpc)
+  }
+
   async exportAll(): Promise<ExportBundle> {
     const uid = await this.requireUserId()
     const [profile, pins, jarDays, jarLogs, entries, zones, images, meds, checkins, doseLogs, scale, levels, lImages, shares] = await Promise.all([
@@ -1113,9 +1378,19 @@ export class SupabaseRepository implements ToolboxRepository {
       'steady_lantern_levels',
       'steady_lantern_images',
       'steady_lantern_shares',
+      'steady_lantern_current_levels',
     ]
     for (const t of tables) {
       const { error } = await this.client.from(t).delete().eq('user_id', uid)
+      if (error) throw error
+    }
+    // Partnerships have no user_id — the pair is owner-scoped by role, so both
+    // sides are cleared with their own column.
+    for (const [t, col] of [
+      ['steady_lantern_partnerships', 'sharer_id'],
+      ['steady_lantern_partnerships', 'partner_id'],
+    ] as const) {
+      const { error } = await this.client.from(t).delete().eq(col, uid)
       if (error) throw error
     }
     await this.deleteUserStorage(uid)

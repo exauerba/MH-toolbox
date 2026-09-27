@@ -15,6 +15,7 @@ const zeroCounts = {
   breatheDoseLogs: 0,
   lanternScales: 0,
   lanternImages: 0,
+  lanternCurrentLevels: 0,
 }
 
 function mockFetchResolves(): void {
@@ -141,6 +142,7 @@ describe('migrateLocalToSupabase', () => {
       breatheDoseLogs: 1,
       lanternScales: 0,
       lanternImages: 0,
+      lanternCurrentLevels: 0,
     })
   })
 
@@ -182,6 +184,33 @@ describe('migrateLocalToSupabase', () => {
     const remoteMeds = await remote.listBreatheMeds()
     expect(remoteMeds).toHaveLength(1)
     expect(remoteMeds[0].id).toBe(med.id)
+  })
+
+  it('migrates the current lantern level alongside the scale', async () => {
+    const local = new FakeRepository()
+    const remote = new FakeRepository()
+
+    const scale = await local.saveLanternScale({
+      name: 'My Lantern',
+      levelCount: 3,
+      levels: [
+        { id: 'lv-a', position: 1, label: 'Grounded', description: 'Steady.', actions: ['Sit with me'] },
+        { id: 'lv-b', position: 2, label: 'Strained', description: 'Heavy.', actions: ['Quiet please'] },
+        { id: 'lv-c', position: 3, label: 'Not safe alone', description: 'I need you.', actions: ['Stay'] },
+      ],
+    })
+    await local.setCurrentLevel(scale.levels[1].id)
+
+    const result = await migrateLocalToSupabase(local, remote)
+
+    expect(result.migrated).toBe(true)
+    expect(result.counts.lanternScales).toBe(1)
+    expect(result.counts.lanternCurrentLevels).toBe(1)
+
+    const remoteCurrent = await remote.getCurrentLevel()
+    expect(remoteCurrent).not.toBeNull()
+    // Level ids are preserved, so the migrated status still points at level 2.
+    expect(remoteCurrent?.levelId).toBe('lv-b')
   })
 
   it('is idempotent on re-run', async () => {

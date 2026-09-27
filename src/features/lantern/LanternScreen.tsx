@@ -5,11 +5,12 @@ import type { IconName } from '../../design'
 import { useRepository } from '../../data/RepositoryProvider'
 import type { ImageRef, LanternLevel, LanternScale, LanternScaleInput } from '../../data/types'
 import { seedStarterScale } from './demoData'
+import { PartnersTab } from './PartnersTab'
 import { PresentMode } from './PresentMode'
 import { ScaleTab } from './ScaleTab'
 import { ShareTab } from './ShareTab'
 
-type LanternTab = 'scale' | 'show' | 'share'
+type LanternTab = 'scale' | 'show' | 'share' | 'partners'
 
 export function LanternScreen() {
   const repo = useRepository()
@@ -127,6 +128,7 @@ export function LanternScreen() {
     { value: 'scale', label: 'Scale', icon: 'lantern' },
     { value: 'show', label: 'Show', icon: 'play' },
     { value: 'share', label: 'Share', icon: 'share' },
+    { value: 'partners', label: 'Partners', icon: 'user' },
   ]
 
   return (
@@ -205,6 +207,8 @@ export function LanternScreen() {
                 Start presenting
               </Button>
             </div>
+          ) : tab === 'partners' ? (
+            <PartnersTab scale={scale} onError={setError} />
           ) : (
             <ShareTab scale={scale} onError={setError} />
           )}

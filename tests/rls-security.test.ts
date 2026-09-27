@@ -12,6 +12,15 @@
  *   (b) user A can insert + select their own row,
  *   (c) user A CANNOT select / update / delete user B's row,
  *   (d) anonymous insert is blocked by RLS.
+ *
+ * The one exception to (c) is steady_lantern_partnerships, which is two-party
+ * (sharer_id AND partner_id) rather than single-owner, so it is asserted
+ * longhand at the bottom of this file instead of through the shared harness.
+ *
+ * The SECURITY DEFINER RPCs added by migration 010 (find_user_by_username,
+ * get_partner_status) are NOT called from here: this harness signs in with the
+ * anon key plus a password, which is not the JWT shape PostgREST needs for a
+ * definer call, and the flows behind them are covered by tests/parity.suite.ts.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
@@ -33,6 +42,11 @@ function uuid(): string {
 }
 
 const PASSWORD = 'rls-test-password-123'
+
+// A live 60-minute window, matching CURRENT_LEVEL_TTL_MINUTES. Fixed at module
+// load so the two ends of a current-level row never drift apart.
+const SET_AT = new Date().toISOString()
+const EXPIRES_AT = new Date(Date.now() + 60 * 60_000).toISOString()
 
 interface TableSpec {
   table: string
@@ -115,6 +129,8 @@ suite('RLS security', () => {
   let scaleBId = ''
   let levelAId = ''
   let levelBId = ''
+  let currentLevelAId = ''
+  let currentLevelBId = ''
 
   const specs: TableSpec[] = [
     {
@@ -303,6 +319,41 @@ suite('RLS security', () => {
         }
       },
     },
+    {
+      table: 'steady_lantern_current_levels',
+      makeRowA: (uid) => ({ user_id: uid, id: uuid(), level_id: currentLevelAId, set_at: SET_AT, expires_at: EXPIRES_AT }),
+      makeRowB: (uid) => ({ user_id: uid, id: uuid(), level_id: currentLevelBId, set_at: SET_AT, expires_at: EXPIRES_AT }),
+      filterB: (rowB) => ({ user_id: rowB.user_id, id: rowB.id }),
+      mutate: { column: 'expires_at', value: '2099-01-01T00:00:00.000Z' },
+      before: async () => {
+        const { data: sa } = await clientA
+          .from('steady_lantern_scales')
+          .insert({ user_id: userA?.id, name: 'A current scale', level_count: 10 })
+          .select()
+        const { data: sb } = await clientB
+          .from('steady_lantern_scales')
+          .insert({ user_id: userB?.id, name: 'B current scale', level_count: 10 })
+          .select()
+        const scaleA = sa?.[0]?.id ?? ''
+        const scaleB = sb?.[0]?.id ?? ''
+        if (!scaleA || !scaleB) {
+          throw new Error('could not create parent scales for current levels spec')
+        }
+        const { data: la } = await clientA
+          .from('steady_lantern_levels')
+          .insert({ user_id: userA?.id, id: uuid(), scale_id: scaleA, position: 1, label: 'A current level', description: '', actions: [] })
+          .select()
+        const { data: lb } = await clientB
+          .from('steady_lantern_levels')
+          .insert({ user_id: userB?.id, id: uuid(), scale_id: scaleB, position: 1, label: 'B current level', description: '', actions: [] })
+          .select()
+        currentLevelAId = la?.[0]?.id ?? ''
+        currentLevelBId = lb?.[0]?.id ?? ''
+        if (!currentLevelAId || !currentLevelBId) {
+          throw new Error('could not create parent levels for current levels spec')
+        }
+      },
+    },
   ]
 
   const zeroRows = (res: { error: unknown; data: unknown[] | null }): boolean =>
@@ -379,5 +430,244 @@ suite('RLS security', () => {
 
   it.each(specs)('$table is owner-isolated', async (spec) => {
     await assertTableIsolation(spec)
+  })
+
+  /**
+   * steady_lantern_partnerships — bespoke, deliberately not a TableSpec.
+   *
+   * The table has no `user_id`: ownership is the PAIR (sharer_id, partner_id),
+   * and the generic harness is built on the single-owner shape. It reads the
+   * caller's own row back with a hard-coded `.match({ user_id: userAId })`,
+   * which errors out here, and it asserts that A is blind to "B's row" — but
+   * a two-party table inverts that: the row B invited A to is A's own row
+   * (partner policy), and the row A sent is invisible to B until B is added to
+   * it. A generic spec would therefore assert the wrong thing, so the pair
+   * semantics are written out longhand below.
+   *
+   * A third throwaway account is created because with only A and B every row
+   * involves both of them, and "cannot see a stranger's row" is then untestable.
+   */
+  it('steady_lantern_partnerships is scoped to the sharer/partner pair', async () => {
+    const userAId = userA?.id as string
+    const userBId = userB?.id as string
+
+    const { data: createdC, error: errC } = await admin.auth.admin.createUser({
+      email: `rls-c-${uuid()}@bloom.app`,
+      password: PASSWORD,
+      email_confirm: true,
+    })
+    if (errC || !createdC.user) {
+      throw new Error(`could not create the third RLS test user: ${errC?.message ?? ''}`)
+    }
+    const userCId = createdC.user.id
+    const clientC = createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    const { error: signInC } = await clientC.auth.signInWithPassword({
+      email: createdC.user.email as string,
+      password: PASSWORD,
+    })
+    if (signInC) {
+      throw new Error(`could not sign in the third RLS test user: ${signInC.message}`)
+    }
+
+    try {
+      // A invites B. The sharer policy owns both ends of this write.
+      const invAB = await clientA
+        .from('steady_lantern_partnerships')
+        .insert({ sharer_id: userAId, partner_id: userBId, status: 'pending' })
+        .select()
+      expect(invAB.error, 'A invite to B failed').toBeNull()
+      const rowAB = (invAB.data ?? [])[0] as { id: string } | undefined
+      expect(rowAB?.id, 'A invite to B returned a row').toBeTruthy()
+
+      // A cannot forge the mirror invite: the partner has no INSERT policy and
+      // the sharer policy's WITH CHECK pins sharer_id to auth.uid(), so A can
+      // never put itself on the sharer side of someone else's invitation.
+      const forged = await clientA
+        .from('steady_lantern_partnerships')
+        .insert({ sharer_id: userBId, partner_id: userAId, status: 'active' })
+        .select()
+      expect(zeroRows(forged), 'A must not insert a row that makes B the sharer').toBe(true)
+      const forgedRows = await admin
+        .from('steady_lantern_partnerships')
+        .select('id')
+        .match({ sharer_id: userBId, partner_id: userAId })
+      expect((forgedRows.data ?? []).length, 'the forged row must not exist').toBe(0)
+
+      // Nobody may share with themselves (steady_lantern_partnerships_distinct_people).
+      const selfish = await clientA
+        .from('steady_lantern_partnerships')
+        .insert({ sharer_id: userAId, partner_id: userAId })
+        .select()
+      expect(zeroRows(selfish), 'a self-partnership must be rejected').toBe(true)
+
+      // B invites A — the incoming side, the one the partner pane reads.
+      const invBA = await clientB
+        .from('steady_lantern_partnerships')
+        .insert({ sharer_id: userBId, partner_id: userAId, status: 'pending' })
+        .select()
+      expect(invBA.error, 'B invite to A failed').toBeNull()
+      const rowBA = (invBA.data ?? [])[0] as { id: string } | undefined
+      expect(rowBA?.id, 'B invite to A returned a row').toBeTruthy()
+
+      // B invites C, so there is one row that involves neither test user.
+      const invBC = await clientB
+        .from('steady_lantern_partnerships')
+        .insert({ sharer_id: userBId, partner_id: userCId, status: 'pending' })
+        .select()
+      expect(invBC.error, 'B invite to C failed').toBeNull()
+      const rowBC = (invBC.data ?? [])[0] as { id: string } | undefined
+      expect(rowBC?.id, 'B invite to C returned a row').toBeTruthy()
+
+      // Both sides of a pair are visible to both members, and nobody else.
+      const aSees = await clientA.from('steady_lantern_partnerships').select('*')
+      expect(aSees.error, 'A select failed').toBeNull()
+      expect((aSees.data ?? []).length, 'A sees the pair A is in, and only that').toBe(2)
+      const cSees = await clientC.from('steady_lantern_partnerships').select('*')
+      expect((cSees.data ?? []).length, 'C sees only the pair C is in').toBe(1)
+
+      // A cannot reach the row B sent to C — not read it, change it, or delete it.
+      const crossSel = await clientA.from('steady_lantern_partnerships').select('*').match({ id: rowBC?.id })
+      expect((crossSel.data ?? []).length, 'A must not see a pair A is not in').toBe(0)
+      const crossUpd = await clientA
+        .from('steady_lantern_partnerships')
+        .update({ status: 'revoked' })
+        .match({ id: rowBC?.id })
+        .select()
+      expect(zeroRows(crossUpd), 'A must not update a pair A is not in').toBe(true)
+      const crossDel = await clientA
+        .from('steady_lantern_partnerships')
+        .delete()
+        .match({ id: rowBC?.id })
+        .select()
+      expect(zeroRows(crossDel), 'A must not delete a pair A is not in').toBe(true)
+      const bcAfter = await admin
+        .from('steady_lantern_partnerships')
+        .select('status')
+        .match({ id: rowBC?.id })
+        .single()
+      expect(bcAfter.data?.status, 'B and C keep their pair').toBe('pending')
+
+      // The partner side answers its invitation: accept, then decline. Both are
+      // the same status-only update on the row the sharer sent.
+      const accept = await clientA
+        .from('steady_lantern_partnerships')
+        .update({ status: 'active' })
+        .match({ id: rowBA?.id })
+        .select()
+      expect((accept.data ?? []).length, 'the invitee can accept').toBe(1)
+      const decline = await clientA
+        .from('steady_lantern_partnerships')
+        .update({ status: 'revoked' })
+        .match({ id: rowBA?.id })
+        .select()
+      expect((decline.data ?? []).length, 'the invitee can decline').toBe(1)
+      const baAfter = await admin
+        .from('steady_lantern_partnerships')
+        .select('status')
+        .match({ id: rowBA?.id })
+        .single()
+      expect(baAfter.data?.status, 'the decline stuck').toBe('revoked')
+
+      // The partner side may answer but never remove: only the sharer can.
+      const partnerDel = await clientA
+        .from('steady_lantern_partnerships')
+        .delete()
+        .match({ id: rowBA?.id })
+        .select()
+      expect(zeroRows(partnerDel), 'the invitee must not delete the pair').toBe(true)
+      const baStill = await admin
+        .from('steady_lantern_partnerships')
+        .select('id')
+        .match({ id: rowBA?.id })
+        .single()
+      expect(baStill.data, 'the pair survives the invitee delete').toBeTruthy()
+
+      // The sharer side withdraws its own invitation.
+      const revoke = await clientB
+        .from('steady_lantern_partnerships')
+        .update({ status: 'revoked' })
+        .match({ id: rowAB?.id })
+        .select()
+      expect((revoke.data ?? []).length, 'the sharer can withdraw').toBe(1)
+      const abAfter = await admin
+        .from('steady_lantern_partnerships')
+        .select('status')
+        .match({ id: rowAB?.id })
+        .single()
+      expect(abAfter.data?.status, 'the withdrawal stuck').toBe('revoked')
+
+      // The same shape, far smaller consequence: the sharer policy is `for all`,
+      // so a sharer can flip its own invitation to 'active' without the invitee
+      // ever answering, while the UI says "Waiting for them to accept". Not a
+      // leak — the sharer could already insert the row and flip it — but it is
+      // a promise the database does not keep, so it is pinned here too.
+      const selfInvited = await clientA
+        .from('steady_lantern_partnerships')
+        .insert({ sharer_id: userAId, partner_id: userCId, status: 'pending' })
+        .select()
+      const selfRow = (selfInvited.data ?? [])[0] as { id: string } | undefined
+      expect(selfRow?.id, 'A invite to C returned a row').toBeTruthy()
+      const selfAccept = await clientA
+        .from('steady_lantern_partnerships')
+        .update({ status: 'active' })
+        .match({ id: selfRow?.id })
+        .select()
+      expect(
+        (selfAccept.data ?? []).length,
+        'a sharer must not activate its own invite — only the partner may',
+      ).toBe(0)
+      const selfStillPending = await admin
+        .from('steady_lantern_partnerships')
+        .select('status')
+        .match({ id: selfRow?.id })
+        .single()
+      expect(selfStillPending.data?.status, 'the self-accept did not take effect').toBe('pending')
+
+      // The identity of a pair is immutable. RLS alone cannot enforce this: a
+      // WITH CHECK clause only sees the NEW row, and Postgres ORs the checks of
+      // every policy that applies to the command — so the partner policy (which
+      // pins partner_id) left sharer_id rewriteable. Migration 010 therefore
+      // locks both columns with a BEFORE UPDATE trigger, the only place that
+      // can compare the old row to the new one. Without it, an invitee could
+      // re-point sharer_id at a third account and then read that account's
+      // whole lantern through get_partner_status().
+      const hijack = await clientA
+        .from('steady_lantern_partnerships')
+        .update({ sharer_id: userCId, status: 'active' })
+        .match({ id: rowBA?.id })
+        .select()
+      expect((hijack.data ?? []).length, 'the invitee must not re-point the sharer').toBe(0)
+      expect(hijack.error, 'the re-point is refused outright, not silently filtered').not.toBeNull()
+      const baAfterRepoint = await admin
+        .from('steady_lantern_partnerships')
+        .select('sharer_id, status')
+        .match({ id: rowBA?.id })
+        .single()
+      expect(baAfterRepoint.data?.sharer_id, 'the sharer is unchanged').toBe(userBId)
+      expect(
+        baAfterRepoint.data?.status,
+        'and a rejected re-point cannot smuggle in an activation',
+      ).not.toBe('active')
+
+      // (a) + (d) from the file header: anon reads nothing and writes nothing.
+      const anonSel = await anon.from('steady_lantern_partnerships').select('*')
+      expect(
+        zeroRows(anonSel as { error: unknown; data: unknown[] | null }),
+        'anonymous select must return nothing',
+      ).toBe(true)
+      const anonIns = await anon
+        .from('steady_lantern_partnerships')
+        // A pair no test user holds, so only RLS can be what blocks it.
+        .insert({ sharer_id: userCId, partner_id: userBId })
+        .select()
+      expect(
+        zeroRows(anonIns as { error: unknown; data: unknown[] | null }),
+        'anonymous insert must be blocked',
+      ).toBe(true)
+    } finally {
+      await admin.auth.admin.deleteUser(userCId)
+    }
   })
 })
